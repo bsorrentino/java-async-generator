@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="5050751f-d4cd-47f9-98ba-9d7dab7a0528" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/cody_history.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/bsc/async/AsyncFunction.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/bsc/async/AsyncGenerator.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/bsc/async/AsyncGeneratorQueue.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/org/bsc/async/AsyncGeneratorQueueTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/org/bsc/async/AsyncGeneratorTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/resources/logging.properties" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CodyActiveAccount">
+    <option name="activeAccountId" value="VXNlcjo4Njk2MA==" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Interface" />
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectId" id="2ePA76qwpHofuwf0oyroP37wCn1" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "JUnit.AsyncGeneratorPublisherTest.asyncPublisherDirectTest.executor": "Run",
+    "JUnit.AsyncGeneratorPublisherTest.asyncPublisherForEachExceptionTest.executor": "Run",
+    "JUnit.AsyncGeneratorPublisherTest.asyncPublisherIteratorExceptionTest.executor": "Run",
+    "JUnit.AsyncGeneratorPublisherTest.asyncPublisherToStreamTest.executor": "Run",
+    "JUnit.AsyncGeneratorPublisherTest.executor": "Run",
+    "JUnit.AsyncGeneratorQueueTest.asyncQueueDirectTest.executor": "Run",
+    "JUnit.AsyncGeneratorQueueTest.asyncQueueForEachExceptionTest.executor": "Run",
+    "JUnit.AsyncGeneratorQueueTest.asyncQueueIteratorExceptionTest.executor": "Run",
+    "JUnit.AsyncGeneratorQueueTest.asyncQueueToStreamTest.executor": "Run",
+    "JUnit.AsyncGeneratorQueueTest.exceptionAutocloseableTest.executor": "Run",
+    "JUnit.AsyncGeneratorQueueTest.exceptionTest.executor": "Run",
+    "JUnit.AsyncGeneratorQueueTest.executor": "Run",
+    "JUnit.AsyncGeneratorTest.asyncIteratorForEachTest.executor": "Run",
+    "JUnit.AsyncGeneratorTest.asyncIteratorIteratorTest.executor": "Run",
+    "JUnit.AsyncGeneratorTest.asyncIteratorTest.executor": "Run",
+    "JUnit.AsyncGeneratorTest.executor": "Run",
+    "Maven. [org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate].executor": "Run",
+    "Maven.async-generator [clean].executor": "Run",
+    "Maven.async-generator [install].executor": "Run",
+    "Maven.async-generator [package].executor": "Run",
+    "Maven.async-generator [test].executor": "Run",
+    "Maven.async-generator [validate].executor": "Run",
+    "OverrideImplement.generate.javadoc": "true",
+    "RunOnceActivity.CodyConvertUrlToCodebaseName": "true",
+    "RunOnceActivity.CodyHistoryLlmMigration": "true",
+    "RunOnceActivity.CodyProjectSettingsMigration": "true",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/Users/bsorrentino/WORKSPACES/INCUBATOR/JAVA/async-generator/async-generator/src/test/java",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/test/java" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="org.bsc.async" />
+    </key>
+  </component>
+  <component name="RunManager" selected="JUnit.AsyncGeneratorQueueTest.asyncQueueToStreamTest">
+    <configuration name="AsyncGeneratorPublisherTest.asyncPublisherDirectTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="async-generator" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.bsc.async.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="org.bsc.async" />
+      <option name="MAIN_CLASS_NAME" value="org.bsc.async.AsyncGeneratorPublisherTest" />
+      <option name="METHOD_NAME" value="asyncPublisherDirectTest" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="AsyncGeneratorPublisherTest.asyncPublisherIteratorExceptionTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="async-generator" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.bsc.async.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="org.bsc.async" />
+      <option name="MAIN_CLASS_NAME" value="org.bsc.async.AsyncGeneratorPublisherTest" />
+      <option name="METHOD_NAME" value="asyncPublisherIteratorExceptionTest" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="AsyncGeneratorPublisherTest.asyncPublisherToStreamTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="async-generator" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.bsc.async.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="org.bsc.async" />
+      <option name="MAIN_CLASS_NAME" value="org.bsc.async.AsyncGeneratorPublisherTest" />
+      <option name="METHOD_NAME" value="asyncPublisherToStreamTest" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="AsyncGeneratorQueueTest.asyncQueueDirectTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="async-generator" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.bsc.async.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="org.bsc.async" />
+      <option name="MAIN_CLASS_NAME" value="org.bsc.async.AsyncGeneratorQueueTest" />
+      <option name="METHOD_NAME" value="asyncQueueDirectTest" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="AsyncGeneratorQueueTest.asyncQueueToStreamTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="async-generator" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.bsc.async.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="org.bsc.async" />
+      <option name="MAIN_CLASS_NAME" value="org.bsc.async.AsyncGeneratorQueueTest" />
+      <option name="METHOD_NAME" value="asyncQueueToStreamTest" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="JUnit.AsyncGeneratorQueueTest.asyncQueueToStreamTest" />
+        <item itemvalue="JUnit.AsyncGeneratorQueueTest.asyncQueueDirectTest" />
+        <item itemvalue="JUnit.AsyncGeneratorPublisherTest.asyncPublisherDirectTest" />
+        <item itemvalue="JUnit.AsyncGeneratorPublisherTest.asyncPublisherToStreamTest" />
+        <item itemvalue="JUnit.AsyncGeneratorPublisherTest.asyncPublisherIteratorExceptionTest" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="jdk-11.0.21-liberica-11.0.21-249ae16d76d6-3adecf9f" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="5050751f-d4cd-47f9-98ba-9d7dab7a0528" name="Changes" comment="" />
+      <created>1711795671196</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1711795671196</updated>
+    </task>
+    <servers />
+  </component>
+</project>
