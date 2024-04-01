@@ -8,7 +8,44 @@
   <packaging>jar</packaging>
 
   <name>async-generator</name>
-  <url>http://maven.apache.org</url>
+  <url>https://github.com/bsorrentino/java-async-generator</url>
+
+  <licenses>
+    <license>
+      <name>MIT</name>
+      <url>https://opensource.org/license/mit</url>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>bsorrentino</id>
+      <name>Bartolomeo Sorrentino</name>
+      <email>bartolomeo.sorrentino@gmail.com</email>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:https://github.com/bsorrentino/java-async-generator.git</connection>
+    <developerConnection>scm:git:https://github.com/bsorrentino/java-async-generator.git</developerConnection>
+    <url>https://github.com/bsorrentino/java-async-generator</url>
+    <tag>HEAD</tag>
+  </scm>
+  <issueManagement>
+    <system>github</system>
+    <url>https://github.com/bsorrentino/java-async-generator/issues</url>
+  </issueManagement>
+
+  <distributionManagement>
+    <repository>
+      <id>${release.repo.id}</id>
+      <name>central</name>
+      <url>${release.repo.url}</url>
+    </repository>
+    <snapshotRepository>
+      <id>${snapshot.repo.id}</id>
+      <name>snapshots</name>
+      <url>${snapshot.repo.url}</url>
+    </snapshotRepository>
+  </distributionManagement>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -42,7 +79,9 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
         <configuration>
           <systemProperties>
             <property>
