@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.ForkJoinPool.commonPool;
-import static org.bsc.async.AsyncFunction.consumer_async;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class AsyncGeneratorQueueTest {
@@ -21,7 +21,7 @@ public class AsyncGeneratorQueueTest {
         commonPool().execute( () -> {
             try {
                 for( int i = 0 ; i < 10 ; ++i ) {
-                    asyncGenerator.put("e"+i );
+                    asyncGenerator.put(completedFuture("e"+i) );
                 }
             } catch (Exception e) {
                 asyncGenerator.closeExceptionally(e);
@@ -43,7 +43,7 @@ public class AsyncGeneratorQueueTest {
         commonPool().execute( () -> {
             try {
                 for( int i = 0 ; i < 10 ; ++i ) {
-                    asyncGenerator.put("e"+i );
+                    asyncGenerator.put(completedFuture("e"+i) );
                 }
                 asyncGenerator.closeExceptionally(ex);
 
@@ -75,7 +75,7 @@ public class AsyncGeneratorQueueTest {
 
         System.out.println("Finished");
 
-        generator.forEachAsync( consumer_async(result::add)).thenAccept( t -> {
+        generator.forEachAsync( result::add ).thenAccept( t -> {
             System.out.println( "Finished");
 
         });
@@ -121,7 +121,7 @@ public class AsyncGeneratorQueueTest {
         // AsyncQueue initialized with a direct executor. No thread is used on next() invocation
         final AsyncGenerator<String> generator = generateTestDataWithException(new Exception("test"));
 
-        assertThrows( Exception.class, () -> generator.forEachAsync( consumer_async(System.out::println) ).get() );
+        assertThrows( Exception.class, () -> generator.forEachAsync( System.out::println ).get() );
 
     }
 

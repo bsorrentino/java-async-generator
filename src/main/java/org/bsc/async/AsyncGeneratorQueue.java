@@ -75,7 +75,7 @@ public class AsyncGeneratorQueue<E> implements AsyncGenerator<E> {
             return this;
         }
         public AsyncGeneratorQueue<T> build() {
-            return new AsyncGeneratorQueue<>(queue, executor, fetchTimeout, timeoutUnit);
+            return new AsyncGeneratorQueue<>(queue, fetchTimeout, timeoutUnit);
         }
     }
 
@@ -85,17 +85,12 @@ public class AsyncGeneratorQueue<E> implements AsyncGenerator<E> {
 
     final BlockingQueue<Item<E>> queue;
 
-    private final Executor executor;
-
     private final Long fetchTimeout;
     private final TimeUnit timeoutUnit;
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
-    private AsyncGeneratorQueue(BlockingQueue<Item<E>> queue, Executor executor, Long fetchTimeout, TimeUnit timeoutUnit) {
+    private AsyncGeneratorQueue(BlockingQueue<Item<E>> queue, Long fetchTimeout, TimeUnit timeoutUnit) {
         if( queue == null ) {
             queue = new SynchronousQueue<>();
-        }
-        if( executor == null ) {
-            executor = Runnable::run;
         }
 
         if( fetchTimeout != null && timeoutUnit == null   ) {
@@ -103,7 +98,6 @@ public class AsyncGeneratorQueue<E> implements AsyncGenerator<E> {
         }
 
         this.queue = queue;
-        this.executor = executor;
         this.fetchTimeout = fetchTimeout;
         this.timeoutUnit = timeoutUnit;
     }
@@ -119,34 +113,32 @@ public class AsyncGeneratorQueue<E> implements AsyncGenerator<E> {
         return result;
     }
     @Override
-    public final CompletableFuture<AsyncGenerator.Data<E>> next() {
+    public final AsyncGenerator.Data<E> next() {
         // GUARD: call next after close generator
         if( isClosed.get() && queue.peek()==null ) {
-            return CompletableFuture.completedFuture(null);
+            return Data.done();
         }
-        return CompletableFuture.supplyAsync( () -> {
-            try {
-                Item<E> result = waitForNext();
-                if (result.isError()) {
-                    trace("next error: [%s]", result.error.getMessage());
-                    throw new RuntimeException(result.error);
-                }
-                if( result.isEnd() ) {
-                    trace("end [%s]", result.data.data);
-                    return result.data;
-                }
-                trace("next [%s]", result.data.data);
+        try {
+            Item<E> result = waitForNext();
+            if (result.isError()) {
+                trace("next error: [%s]", result.error.getMessage());
+                throw new RuntimeException(result.error);
+            }
+            if( result.isEnd() ) {
+                trace("end [%s]", result.data.data);
                 return result.data;
-            } catch (InterruptedException e ) {
-                throw new RuntimeException(e);
             }
-            catch( TimeoutException e ) {
-                if( isClosed.get() ) {
-                    return null;
-                }
-                throw new RuntimeException(e);
+            trace("next [%s]", result.data.data);
+            return result.data;
+        } catch (InterruptedException e ) {
+            throw new RuntimeException(e);
+        }
+        catch( TimeoutException e ) {
+            if( isClosed.get() ) {
+                return null;
             }
-        }, executor);
+            throw new RuntimeException(e);
+        }
     }
 
     public final boolean close() {
@@ -173,7 +165,7 @@ public class AsyncGeneratorQueue<E> implements AsyncGenerator<E> {
      * {@code true} upon success and throwing an
      * {@code IllegalStateException} if no space is currently available.
      * When using a capacity-restricted queue, it is generally preferable to
-     * use {@link #offer(Object) offer}.
+     * use {@link #offer(CompletableFuture) offer}.
      *
      * @param eItem the element to add
      * @return {@code true} (as specified by {@link Collection#add})
@@ -185,7 +177,7 @@ public class AsyncGeneratorQueue<E> implements AsyncGenerator<E> {
      * @throws IllegalArgumentException if some property of the specified
      *                                  element prevents it from being added to this queue
      */
-    public boolean add(E eItem) {
+    public boolean add( CompletableFuture<E> eItem) {
         if( isClosed.get()) {
             throw new IllegalStateException("generator is closed");
         }
@@ -209,7 +201,7 @@ public class AsyncGeneratorQueue<E> implements AsyncGenerator<E> {
      * @throws IllegalArgumentException if some property of the specified
      *                                  element prevents it from being added to this queue
      */
-    public boolean offer(E eItem) {
+    public boolean offer(CompletableFuture<E> eItem) {
         if( isClosed.get()) {
             throw new IllegalStateException("generator is closed");
         }
@@ -228,7 +220,7 @@ public class AsyncGeneratorQueue<E> implements AsyncGenerator<E> {
      * @throws IllegalArgumentException if some property of the specified
      *                                  element prevents it from being added to this queue
      */
-    public void put(E eItem) throws InterruptedException {
+    public void put(CompletableFuture<E> eItem) throws InterruptedException {
         if( isClosed.get()) {
             throw new IllegalStateException("generator is closed");
         }
@@ -253,7 +245,7 @@ public class AsyncGeneratorQueue<E> implements AsyncGenerator<E> {
      * @throws IllegalArgumentException if some property of the specified
      *                                  element prevents it from being added to this queue
      */
-    public boolean offer(E eItem, long timeout, TimeUnit unit) throws InterruptedException {
+    public boolean offer(CompletableFuture<E> eItem, long timeout, TimeUnit unit) throws InterruptedException {
         if( isClosed.get()) {
             throw new IllegalStateException("generator is closed");
         }

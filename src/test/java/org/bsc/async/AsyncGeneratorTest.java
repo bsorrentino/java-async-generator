@@ -5,11 +5,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.bsc.async.AsyncFunction.consumer_async;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 
@@ -22,13 +20,14 @@ public class AsyncGeneratorTest {
 
 
         @Override
-        public CompletableFuture<AsyncGenerator.Data<String>> next() {
+        public AsyncGenerator.Data<String> next() {
 
             if (cursor == data.length) {
-                return completedFuture(new Data<>(null, true) );
+                return Data.done();
             }
 
-            return completedFuture(new Data<>(data[cursor++], false));
+
+            return Data.of( completedFuture(data[cursor++]));
         }
 
     }
@@ -38,7 +37,7 @@ public class AsyncGeneratorTest {
         final SimpleAsyncGenerator it = new SimpleAsyncGenerator();
 
         List<String> forEachResult = new ArrayList<>();
-        it.forEachAsync( consumer_async(forEachResult::add)).thenAccept( t -> {
+        it.forEachAsync( forEachResult::add ).thenAccept( t -> {
             System.out.println( "Finished forEach");
         });
 
@@ -66,7 +65,7 @@ public class AsyncGeneratorTest {
         System.out.println( "Finished iteration " + iterationResult);
 
         List<String> forEachResult = new ArrayList<>();
-        it.forEachAsync( consumer_async(forEachResult::add)).thenAccept( t -> {
+        it.forEachAsync( forEachResult::add ).thenAccept( t -> {
             System.out.println( "Finished forEach");
         });
 
@@ -83,7 +82,7 @@ public class AsyncGeneratorTest {
         System.out.println( "Finished iteration " + iterationResult);
 
         List<String> forEachResult = new ArrayList<>();
-        it.forEachAsync( consumer_async(forEachResult::add)).thenAccept( t -> {
+        it.forEachAsync( forEachResult::add ).thenAccept( t -> {
             System.out.println( "Finished forEach");
         });
 
