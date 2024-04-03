@@ -1,163 +1,101 @@
 package org.bsc.async;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.ForkJoinPool.commonPool;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 
 public class AsyncGeneratorQueueTest {
 
-    private AsyncGenerator<String> generateTestData() {
+    @Test
+    public void asyncGeneratorForEachTest() throws Exception {
 
-        final AsyncGeneratorQueue<String> asyncGenerator =
-                AsyncGeneratorQueue.<String>builder()
-                        .build();
+        final BlockingQueue<AsyncGenerator.Data<String>> queue = new LinkedBlockingQueue<>();
 
-        commonPool().execute( () -> {
-            try {
-                for( int i = 0 ; i < 10 ; ++i ) {
-                    asyncGenerator.put(completedFuture("e"+i) );
-                }
-            } catch (Exception e) {
-                asyncGenerator.closeExceptionally(e);
+        final String[] data = { "e1", "e2", "e3", "e4", "e5"};
+
+        final AsyncGenerator<String> it = AsyncGeneratorQueue.of( queue, q -> {
+            for( String value: data ) {
+                queue.add(AsyncGenerator.Data.of(completedFuture(value)));
             }
-            finally {
-                asyncGenerator.close();
-            }
-
         });
 
-        return asyncGenerator;
+        List<String> forEachResult = new ArrayList<>();
+        it.forEachAsync( forEachResult::add ).thenAccept( t -> {
+            System.out.println( "Finished forEach");
+        }).join();
+
+        List<String> iterationResult = new ArrayList<>();
+        for (var i : it) {
+            iterationResult.add(i);
+            System.out.println(i);
+        }
+        System.out.println( "Finished iteration");
+
+        assertEquals( data.length, forEachResult.size() );
+        assertIterableEquals( List.of(data), forEachResult );
+        assertEquals( 0, iterationResult.size() );
     }
-    private AsyncGenerator<String> generateTestDataWithException( Throwable ex ) {
+    @Test
+    public void asyncGeneratorIteratorTest() throws Exception {
 
-        final AsyncGeneratorQueue<String> asyncGenerator =
-                AsyncGeneratorQueue.<String>builder()
-                        .build();
+        final BlockingQueue<AsyncGenerator.Data<String>> queue = new LinkedBlockingQueue<>();
 
-        commonPool().execute( () -> {
-            try {
-                for( int i = 0 ; i < 10 ; ++i ) {
-                    asyncGenerator.put(completedFuture("e"+i) );
-                }
-                asyncGenerator.closeExceptionally(ex);
+        final String[] data = { "e1", "e2", "e3", "e4", "e5"};
 
-            } catch (Exception e) {
-                asyncGenerator.closeExceptionally(e);
+        final AsyncGenerator<String> it = AsyncGeneratorQueue.of( queue, q -> {
+            for( String value: data ) {
+                queue.add(AsyncGenerator.Data.of(completedFuture(value)));
             }
-            finally {
-                asyncGenerator.close();
-            }
-
         });
 
-        return asyncGenerator;
-    }
-
-    @Test
-    //@Disabled
-    public void asyncQueueDirectTest() throws Exception {
-
-        // AsyncQueue initialized with a direct executor. No thread is used on next() invocation
-
-        AsyncGenerator<String> generator = generateTestData();
-
-        List<String> result = new ArrayList<>();
-
-        for (var i : generator) {
-            result.add(i);
+        List<String> iterationResult = new ArrayList<>();
+        for (String i : it) {
+            iterationResult.add(i);
+            System.out.println(i);
         }
+        System.out.println( "Finished iteration " + iterationResult);
 
-        System.out.println("Finished");
+        List<String> forEachResult = new ArrayList<>();
+        it.forEachAsync( forEachResult::add ).thenAccept( t -> {
+            System.out.println( "Finished forEach");
+        }).join();
 
-        generator.forEachAsync( result::add ).thenAccept( t -> {
-            System.out.println( "Finished");
+        assertEquals(  data.length, iterationResult.size() );
+        assertIterableEquals( List.of(data), iterationResult );
+        assertEquals( 0, forEachResult.size() );
+    }
+    @Test
+    public void asyncGeneratorStreamTest() throws Exception {
 
+        final BlockingQueue<AsyncGenerator.Data<String>> queue = new LinkedBlockingQueue<>();
+
+        final String[] data = { "e1", "e2", "e3", "e4", "e5"};
+
+        final AsyncGenerator<String> it = AsyncGeneratorQueue.of( queue, q -> {
+            for( String value: data ) {
+                queue.add(AsyncGenerator.Data.of(completedFuture(value)));
+            }
         });
+        List<String> iterationResult = it.stream().collect(Collectors.toList());
+        System.out.println( "Finished iteration " + iterationResult);
 
-        assertEquals( result.size(), 10 );
-        assertIterableEquals(result, List.of("e0", "e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8", "e9"));
+        List<String> forEachResult = new ArrayList<>();
+        it.forEachAsync( forEachResult::add ).thenAccept( t -> {
+            System.out.println( "Finished forEach");
+        }).join();
 
+        assertEquals(  data.length, iterationResult.size() );
+        assertIterableEquals( List.of(data), iterationResult );
+        assertEquals( 0, forEachResult.size() );
     }
-
-    @Test
-    //@Disabled
-    public void asyncQueueToStreamTest() throws Exception {
-
-        // AsyncQueue initialized with a direct executor. No thread is used on next() invocation
-        final AsyncGenerator<String> generator = generateTestData();
-
-        var result = generator.stream();
-
-        var lastElement =   result.reduce((a, b) -> b);
-
-        assertTrue( lastElement.isPresent());
-        assertEquals( lastElement.get(), "e9" );
-
-    }
-
-    @Test
-    //@Disabled
-    public void asyncQueueIteratorExceptionTest() throws Exception {
-
-        // AsyncQueue initialized with a direct executor. No thread is used on next() invocation
-        final AsyncGenerator<String> generator = generateTestDataWithException(new Exception("test"));
-
-        var result = generator.stream();
-
-        assertThrows( Exception.class,  () -> result.reduce((a, b) -> b ));
-
-    }
-
-    @Test
-    //@Disabled
-    public void asyncQueueForEachExceptionTest() throws Exception {
-
-        // AsyncQueue initialized with a direct executor. No thread is used on next() invocation
-        final AsyncGenerator<String> generator = generateTestDataWithException(new Exception("test"));
-
-        assertThrows( Exception.class, () -> generator.forEachAsync( System.out::println ).get() );
-
-    }
-
-    @Test
-    @Disabled
-    public void exceptionTest() throws Exception {
-        try {
-            throw new Exception("test");
-        }
-        catch (Exception e) {
-            System.out.println( "Exception: " + e.getMessage());
-        }
-        finally {
-            System.out.println( "Finally: ");
-        }
-    }
-
-    class testAutocloseable implements AutoCloseable {
-
-        @Override
-        public void close() throws Exception {
-            System.out.println("AutoCloseable: ");
-        }
-    }
-    @Test
-    @Disabled
-    public void exceptionAutocloseableTest() throws Exception {
-        try( testAutocloseable t = new testAutocloseable() ) {
-            throw new Exception("test");
-        }
-        catch (Exception e) {
-            System.out.println( "Exception: " + e.getMessage());
-        }
-        finally {
-            System.out.println( "Finally: ");
-        }
-    }
-
 }
+
