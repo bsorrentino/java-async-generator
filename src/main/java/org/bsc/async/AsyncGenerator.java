@@ -1,12 +1,12 @@
 package org.bsc.async;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Spliterator;
-import java.util.Spliterators;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -22,17 +22,66 @@ public interface AsyncGenerator<E> extends Iterable<E> {
             this.done = done;
         }
 
-        static <E> Data<E> of(CompletableFuture<E> data) {
+        public static <E> Data<E> of(CompletableFuture<E> data) {
             return new Data<>(data, false);
         }
 
-        static <E> Data<E> done() {
+        public static <E> Data<E> done() {
             return new Data<>(null, true);
         }
 
     }
 
     Data<E> next();
+
+    static <E> AsyncGenerator<E> empty() {
+        return Data::done;
+    }
+
+    static <E,U> AsyncGenerator<U> map(Iterator<E> iterator, Function<E, CompletableFuture<U>> mapFunction ) {
+        return () -> {
+            if( !iterator.hasNext() ) {
+                return Data.done();
+            }
+            return Data.of(mapFunction.apply( iterator.next() ));
+        };
+    }
+    static <E,U> AsyncGenerator<U> collect(Iterator<E> iterator, BiConsumer<E, Consumer<CompletableFuture<U>>> consumer ) {
+        final List<CompletableFuture<U>> accumulator = new ArrayList<>();
+
+        final Consumer<CompletableFuture<U>> addElement = accumulator::add;
+        while( iterator.hasNext() ) {
+            consumer.accept(iterator.next(), addElement );
+        }
+
+        final Iterator<CompletableFuture<U>> it = accumulator.iterator();
+        return () -> {
+            if( !it.hasNext() ) {
+                return Data.done();
+            }
+            return Data.of(it.next());
+        };
+    }
+    static <E,U> AsyncGenerator<U> map( Collection<E> collection, Function<E,CompletableFuture<U>> mapFunction ) {
+        if( collection == null || collection.isEmpty()) {
+            return empty();
+        }
+        return map( collection.iterator(), mapFunction);
+    }
+    static <E,U> AsyncGenerator<U> collect( Collection<E> collection, BiConsumer<E, Consumer<CompletableFuture<U>>> consumer ) {
+        if( collection == null || collection.isEmpty()) {
+            return empty();
+        }
+        return collect( collection.iterator(), consumer);
+    }
+
+    default CompletableFuture<Void>  toCompletableFuture() {
+        final Data<E> next = next();
+        if( next.done ) {
+            return completedFuture(null);
+        }
+        return next.data.thenCompose(v -> toCompletableFuture());
+    }
 
     default CompletableFuture<Void> forEachAsync( Consumer<E> consumer) {
 
@@ -70,7 +119,6 @@ public interface AsyncGenerator<E> extends Iterable<E> {
             private final AtomicReference<Data<E>> currentFetchedData = new AtomicReference<>();
 
             {
-
                 currentFetchedData.set(  AsyncGenerator.this.next() );
             }
             @Override
