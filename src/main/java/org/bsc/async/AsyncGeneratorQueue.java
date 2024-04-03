@@ -2,6 +2,7 @@ package org.bsc.async;
 
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
@@ -46,6 +47,11 @@ public class AsyncGeneratorQueue    {
         executor.execute( () -> {
             try {
                 consumer.accept(queue);
+            }
+            catch( Throwable ex ) {
+                CompletableFuture<E> error = new CompletableFuture<>();
+                error.completeExceptionally(ex);
+                queue.add( AsyncGenerator.Data.of(error ));
             }
             finally {
                 queue.add(Data.done());
