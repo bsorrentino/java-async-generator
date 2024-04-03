@@ -7,24 +7,29 @@ a Java version of Javascript async generator
  
 ```java
 
-AsyncGenerator<Response> makeMultipleApiCalls(List<RequestData> resquestData) {
-    return AsyncGenerator.map(requestData, requestData -> {
+AsyncGenerator<Response> makeMultipleApiCalls(List<RequestData> requestsData) {
+    return AsyncGenerator.map(requestsData, requestData -> {
 
-                CompletableFuture<Response> response = asyncApiCall( requestData );
+                CompletableFuture<Response> res = asyncApiCall( requestData );
 
-                return response;
+                return res;
     });
     
 }
 
 
-List<RequestData> resquestData = .... 
+List<RequestData> resquestsData = .... 
 
-makeMultipleApiCalls( requestData )
+// can iterate using lambda function (Consumer)
+makeMultipleApiCalls( resquestsData )
         .forEachAsync( response -> logger.info( "Api response: " + response ) )
         .join();
-        
 
+// can iterate using classic for( : )
+AsyncGenerator<Response> generator = makeMultipleApiCalls( resquestsData );
 
+for( Response response : generator ) {
+    logger.info( "Api response: " + response )
+}        
 
 ```
