@@ -1,4 +1,7 @@
+<a href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22async-generator%22"><img src="https://img.shields.io/maven-central/v/rg.bsc.async/async-generator.svg">
+</a>
 # java-async-generator
+
 a Java version of Javascript async generator
 
 # Samples
@@ -16,7 +19,6 @@ AsyncGenerator<Response> makeMultipleApiCalls(List<RequestData> requestsData) {
     });
     
 }
-
 
 List<RequestData> resquestsData = .... 
 
