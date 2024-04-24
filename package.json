@@ -1,0 +1,13 @@
+{
+  "name": "async-generator",
+  "version": "1.0.0",
+  "description": "a Java version of Javascript async generator",
+  "scripts": {
+    "changelog:tag": "mvn git-changelog-maven-plugin:git-changelog -N -DtoRef=refs/tags/v$npm_package_version",
+    "changelog:release": "mvn git-changelog-maven-plugin:git-changelog -N -DtoRef=refs/heads/release/$npm_package_version"
+
+  },
+  "keywords": [],
+  "author": "bsorrentino <bartolomeo.sorrentino@gmail.com> (http://soulsoftware-bsc.blogspot.it/)",
+  "license": "MIT"
+}

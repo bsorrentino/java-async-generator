@@ -92,6 +92,12 @@
           <version>3.3.0</version>
         </plugin>
 
+        <plugin>
+          <groupId>se.bjurr.gitchangelog</groupId>
+          <artifactId>git-changelog-maven-plugin</artifactId>
+          <version>1.89</version>
+        </plugin>
+
       </plugins>
     </pluginManagement>
     <plugins>
@@ -124,6 +130,16 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>se.bjurr.gitchangelog</groupId>
+        <artifactId>git-changelog-maven-plugin</artifactId>
+        <inherited>false</inherited>
+        <!-- Minimal config // -->
+        <configuration>
+          <settingsFile>changelog.json</settingsFile>
+          <file>CHANGELOG.md</file>
+        </configuration>
       </plugin>
 
     </plugins>
