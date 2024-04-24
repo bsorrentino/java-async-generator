@@ -6,6 +6,7 @@
   <artifactId>async-generator</artifactId>
   <version>1.0.0</version>
   <packaging>jar</packaging>
+  <description>a Java version of Javascript async generator</description>
 
   <name>async-generator</name>
   <url>https://github.com/bsorrentino/java-async-generator</url>
