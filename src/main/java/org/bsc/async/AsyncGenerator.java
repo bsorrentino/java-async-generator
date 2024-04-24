@@ -11,6 +11,11 @@ import java.util.stream.StreamSupport;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
+/**
+ * An asynchronous generator interface that allows generating asynchronous elements.
+ *
+ * @param <E> the type of elements. The generator will emit CompletableFutures&lt;E&gt; elements
+ */
 public interface AsyncGenerator<E> extends Iterable<E> {
     class Data<E> {
         final CompletableFuture<E> data;
@@ -31,6 +36,11 @@ public interface AsyncGenerator<E> extends Iterable<E> {
 
     }
 
+    /**
+     * Retrieves the next asynchronous element.
+     *
+     * @return the next element from the generator
+     */
     Data<E> next();
 
     static <E> AsyncGenerator<E> empty() {
@@ -61,6 +71,16 @@ public interface AsyncGenerator<E> extends Iterable<E> {
             return Data.of(it.next());
         };
     }
+
+    /**
+     * Maps elements from a collection to CompletableFuture asynchronously.
+     *
+     * @param <E> the type of elements in the collection
+     * @param <U> the type of elements in the CompletableFuture
+     * @param collection the collection of elements to map
+     * @param mapFunction the function to map elements to CompletableFuture
+     * @return an AsyncGenerator instance with mapped elements
+     */
     static <E,U> AsyncGenerator<U> map( Collection<E> collection, Function<E,CompletableFuture<U>> mapFunction ) {
         if( collection == null || collection.isEmpty()) {
             return empty();

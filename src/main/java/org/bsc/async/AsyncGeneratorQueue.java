@@ -9,17 +9,34 @@ import java.util.function.Consumer;
 import static java.util.concurrent.ForkJoinPool.commonPool;
 import static org.bsc.async.AsyncGenerator.*;
 
+/**
+ * Represents a queue-based asynchronous generator.
+ */
 public class AsyncGeneratorQueue    {
 
+    /**
+     * Inner class to generate asynchronous elements from the queue.
+     *
+     * @param <E> the type of elements in the queue
+     */
     static class Generator<E> implements AsyncGenerator<E> {
 
         boolean isEnd = false;
         final java.util.concurrent.BlockingQueue<Data<E>> queue;
-
+        /**
+         * Constructs a Generator with the specified queue.
+         *
+         * @param queue the blocking queue to generate elements from
+         */
         Generator(java.util.concurrent.BlockingQueue<Data<E>> queue) {
             this.queue = queue;
         }
 
+        /**
+         * Retrieves the next element from the queue asynchronously.
+         *
+         * @return the next element from the queue
+         */
         @Override
         public Data<E> next() {
             while (!isEnd) {
@@ -35,10 +52,31 @@ public class AsyncGeneratorQueue    {
             return Data.done();
         }
     }
+
+
+    /**
+     * Creates an AsyncGenerator from the provided queue and consumer.
+     *
+     * @param <E> the type of elements in the queue
+     * @param <Q> the type of blocking queue
+     * @param queue the blocking queue to generate elements from
+     * @param consumer the consumer for processing elements from the queue
+     * @return an AsyncGenerator instance
+     */
     static <E, Q extends BlockingQueue<AsyncGenerator.Data<E>>> AsyncGenerator<E> of(Q queue, Consumer<Q> consumer) {
         return of( queue, commonPool(), consumer);
     }
 
+    /**
+     * Creates an AsyncGenerator from the provided queue, executor, and consumer.
+     *
+     * @param <E> the type of elements in the queue
+     * @param <Q> the type of blocking queue
+     * @param queue the blocking queue to generate elements from
+     * @param executor the executor for asynchronous processing
+     * @param consumer the consumer for processing elements from the queue
+     * @return an AsyncGenerator instance
+     */
     static <E, Q extends BlockingQueue<AsyncGenerator.Data<E>>> AsyncGenerator<E> of(Q queue, Executor executor, Consumer<Q> consumer) {
         Objects.requireNonNull(queue);
         Objects.requireNonNull(executor);
