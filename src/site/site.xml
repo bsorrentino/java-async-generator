@@ -1,0 +1,17 @@
+<project name="Java Async Processor">
+    <skin>
+        <groupId>org.apache.maven.skins</groupId>
+        <artifactId>maven-fluido-skin</artifactId>
+        <version>2.0.0-M8</version>
+    </skin>
+
+    <publishDate position="right"/>
+
+    <body>
+        <menu name="Overview">
+            <item name="JavaDocs" href="apidocs/index.html" />
+        </menu>
+        <menu ref="modules" />
+        <menu ref="reports" />
+    </body>
+</project>
