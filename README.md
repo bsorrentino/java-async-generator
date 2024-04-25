@@ -2,7 +2,8 @@
 </a>
 # java-async-generator
 
-a Java version of Javascript async generator
+A Java version of Javascript async generator. 
+Idea is to create an iterator-like interface that emit elements as [CompletableFuture] ( the Java counterpart of Javascript Promise ) enabling asynchronous iteration over data 
 
 # Samples
 
@@ -35,3 +36,6 @@ for( Response response : generator ) {
 }        
 
 ```
+
+
+[CompletableFuture]: https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/CompletableFuture.html
