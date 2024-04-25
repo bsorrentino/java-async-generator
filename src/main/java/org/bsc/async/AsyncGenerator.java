@@ -17,6 +17,12 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
  * @param <E> the type of elements. The generator will emit CompletableFutures&lt;E&gt; elements
  */
 public interface AsyncGenerator<E> extends Iterable<E> {
+
+    /**
+     * Represents a data element in the AsyncGenerator.
+     *
+     * @param <E> the type of the data element
+     */
     class Data<E> {
         final CompletableFuture<E> data;
         final boolean done;
@@ -43,10 +49,26 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      */
     Data<E> next();
 
+
+    /**
+     * Returns an empty AsyncGenerator.
+     *
+     * @param <E> the type of elements
+     * @return an empty AsyncGenerator
+     */
     static <E> AsyncGenerator<E> empty() {
         return Data::done;
     }
 
+    /**
+     * create a generator, mapping each element  to an asynchronous counterpart.
+     *
+     * @param <E> the type of elements in the collection
+     * @param <U> the type of elements in the CompletableFuture
+     * @param iterator the elements iterator
+     * @param mapFunction the function to map elements to CompletableFuture
+     * @return an AsyncGenerator instance with mapped elements
+     */
     static <E,U> AsyncGenerator<U> map(Iterator<E> iterator, Function<E, CompletableFuture<U>> mapFunction ) {
         return () -> {
             if( !iterator.hasNext() ) {
@@ -55,6 +77,16 @@ public interface AsyncGenerator<E> extends Iterable<E> {
             return Data.of(mapFunction.apply( iterator.next() ));
         };
     }
+
+    /**
+     * Collects asynchronous elements from an iterator.
+     *
+     * @param <E> the type of elements in the iterator
+     * @param <U> the type of elements in the CompletableFuture
+     * @param iterator the iterator containing elements to collect
+     * @param consumer the function to consume elements and add them to the accumulator
+     * @return an AsyncGenerator instance with collected elements
+     */
     static <E,U> AsyncGenerator<U> collect(Iterator<E> iterator, BiConsumer<E, Consumer<CompletableFuture<U>>> consumer ) {
         final List<CompletableFuture<U>> accumulator = new ArrayList<>();
 
@@ -73,7 +105,7 @@ public interface AsyncGenerator<E> extends Iterable<E> {
     }
 
     /**
-     * Maps elements from a collection to CompletableFuture asynchronously.
+     * create a generator, mapping each element  to an asynchronous counterpart.
      *
      * @param <E> the type of elements in the collection
      * @param <U> the type of elements in the CompletableFuture
@@ -87,6 +119,15 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         }
         return map( collection.iterator(), mapFunction);
     }
+    /**
+     * Collects asynchronous elements from a collection.
+     *
+     * @param <E> the type of elements in the iterator
+     * @param <U> the type of elements in the CompletableFuture
+     * @param collection the iterator containing elements to collect
+     * @param consumer the function to consume elements and add them to the accumulator
+     * @return an AsyncGenerator instance with collected elements
+     */
     static <E,U> AsyncGenerator<U> collect( Collection<E> collection, BiConsumer<E, Consumer<CompletableFuture<U>>> consumer ) {
         if( collection == null || collection.isEmpty()) {
             return empty();
@@ -94,6 +135,11 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         return collect( collection.iterator(), consumer);
     }
 
+    /**
+     * Converts the AsyncGenerator to a CompletableFuture.
+     *
+     * @return a CompletableFuture representing the completion of the AsyncGenerator
+     */
     default CompletableFuture<Void>  toCompletableFuture() {
         final Data<E> next = next();
         if( next.done ) {
@@ -101,7 +147,12 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         }
         return next.data.thenCompose(v -> toCompletableFuture());
     }
-
+    /**
+     * Asynchronously iterates over the elements of the AsyncGenerator and applies the given consumer to each element.
+     *
+     * @param consumer the consumer function to be applied to each element
+     * @return a CompletableFuture representing the completion of the iteration process
+     */
     default CompletableFuture<Void> forEachAsync( Consumer<E> consumer) {
 
         final Data<E> next = next();
@@ -114,6 +165,15 @@ public interface AsyncGenerator<E> extends Iterable<E> {
                         })
                         .thenCompose(v -> forEachAsync(consumer));
     }
+
+    /**
+     * Collects elements from the AsyncGenerator asynchronously into a list.
+     *
+     * @param <R> the type of the result list
+     * @param result the result list to collect elements into
+     * @param consumer the consumer function for processing elements
+     * @return a CompletableFuture representing the completion of the collection process
+     */
     default <R extends List<E>> CompletableFuture<R> collectAsync(R result, Consumer<E> consumer) {
 
         final Data<E> next = next();
@@ -127,12 +187,24 @@ public interface AsyncGenerator<E> extends Iterable<E> {
                     })
                     .thenCompose(v -> collectAsync( result, consumer));
     }
+
+    /**
+     * Returns a sequential Stream with the elements of this AsyncGenerator.
+     * Each CompletableFuture is resolved and then make available to the stream.
+     *
+     * @return a Stream of elements from the AsyncGenerator
+     */
     default Stream<E> stream() {
         return StreamSupport.stream(
                 Spliterators.spliteratorUnknownSize(iterator(), Spliterator.ORDERED),
                 false);
     }
-
+    /**
+     * Returns an iterator over the elements of this AsyncGenerator.
+     * Each call to `next` retrieves the next "resolved" asynchronous element from the generator.
+     *
+     * @return an iterator over the elements of this AsyncGenerator
+     */
     default Iterator<E> iterator() {
         return new Iterator<E>() {
             private final AtomicReference<Data<E>> currentFetchedData = new AtomicReference<>();

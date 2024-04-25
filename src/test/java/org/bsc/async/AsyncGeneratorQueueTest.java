@@ -9,7 +9,6 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.concurrent.ForkJoinPool.commonPool;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 
@@ -34,14 +33,14 @@ public class AsyncGeneratorQueueTest {
         }).join();
 
         List<String> iterationResult = new ArrayList<>();
-        for (var i : it) {
+        for (String i : it) {
             iterationResult.add(i);
             System.out.println(i);
         }
         System.out.println( "Finished iteration");
 
         assertEquals( data.length, forEachResult.size() );
-        assertIterableEquals( List.of(data), forEachResult );
+        assertIterableEquals( Arrays.asList(data), forEachResult );
         assertEquals( 0, iterationResult.size() );
     }
     @Test
@@ -70,7 +69,7 @@ public class AsyncGeneratorQueueTest {
         }).join();
 
         assertEquals(  data.length, iterationResult.size() );
-        assertIterableEquals( List.of(data), iterationResult );
+        assertIterableEquals( Arrays.asList(data), iterationResult );
         assertEquals( 0, forEachResult.size() );
     }
     @Test
@@ -94,7 +93,7 @@ public class AsyncGeneratorQueueTest {
         }).join();
 
         assertEquals(  data.length, iterationResult.size() );
-        assertIterableEquals( List.of(data), iterationResult );
+        assertIterableEquals( Arrays.asList(data), iterationResult );
         assertEquals( 0, forEachResult.size() );
     }
 }

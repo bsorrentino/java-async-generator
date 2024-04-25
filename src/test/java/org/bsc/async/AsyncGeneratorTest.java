@@ -27,19 +27,19 @@ public class AsyncGeneratorTest {
         }).join();
 
         List<String> iterationResult = new ArrayList<>();
-        for (var i : it) {
+        for (String i : it) {
             iterationResult.add(i);
             System.out.println(i);
         }
         System.out.println( "Finished iteration");
 
         assertEquals( data.length, forEachResult.size() );
-        assertIterableEquals( List.of(data), forEachResult );
+        assertIterableEquals( Arrays.asList(data), forEachResult );
         assertEquals( 0, iterationResult.size() );
     }
     @Test
     public void asyncGeneratorCollectTest() throws Exception {
-        final List<Integer> data = List.of( 1, 2, 3, 4, 5 );
+        final List<Integer> data = Arrays.asList( 1, 2, 3, 4, 5 );
         final AsyncGenerator<String> it = AsyncGenerator.collect(data.iterator(), ( index, add ) ->
                 add.accept( Task.of( index, 500 ) )
         );
@@ -50,7 +50,7 @@ public class AsyncGeneratorTest {
         }).join();
 
         List<String> iterationResult = new ArrayList<>();
-        for (var i : it) {
+        for (String i : it) {
             iterationResult.add(i);
             System.out.println(i);
         }
@@ -82,7 +82,7 @@ public class AsyncGeneratorTest {
         }).join();
 
         assertEquals(  data.length, iterationResult.size() );
-        assertIterableEquals( List.of(data), iterationResult );
+        assertIterableEquals( Arrays.asList(data), iterationResult );
         assertEquals( 0, forEachResult.size() );
     }
     @Test
@@ -101,7 +101,7 @@ public class AsyncGeneratorTest {
         }).join();
 
         assertEquals(  data.length, iterationResult.size() );
-        assertIterableEquals( List.of(data), iterationResult );
+        assertIterableEquals( Arrays.asList(data), iterationResult );
         assertEquals( 0, forEachResult.size() );
     }
 }

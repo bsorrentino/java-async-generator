@@ -53,9 +53,8 @@ public class AsyncGeneratorQueue    {
         }
     }
 
-
     /**
-     * Creates an AsyncGenerator from the provided queue and consumer.
+     * Creates an AsyncGenerator from the provided blocking queue and consumer.
      *
      * @param <E> the type of elements in the queue
      * @param <Q> the type of blocking queue
@@ -63,7 +62,7 @@ public class AsyncGeneratorQueue    {
      * @param consumer the consumer for processing elements from the queue
      * @return an AsyncGenerator instance
      */
-    static <E, Q extends BlockingQueue<AsyncGenerator.Data<E>>> AsyncGenerator<E> of(Q queue, Consumer<Q> consumer) {
+    public static <E, Q extends BlockingQueue<AsyncGenerator.Data<E>>> AsyncGenerator<E> of(Q queue, Consumer<Q> consumer) {
         return of( queue, commonPool(), consumer);
     }
 
@@ -77,7 +76,7 @@ public class AsyncGeneratorQueue    {
      * @param consumer the consumer for processing elements from the queue
      * @return an AsyncGenerator instance
      */
-    static <E, Q extends BlockingQueue<AsyncGenerator.Data<E>>> AsyncGenerator<E> of(Q queue, Executor executor, Consumer<Q> consumer) {
+    public static <E, Q extends BlockingQueue<AsyncGenerator.Data<E>>> AsyncGenerator<E> of(Q queue, Executor executor, Consumer<Q> consumer) {
         Objects.requireNonNull(queue);
         Objects.requireNonNull(executor);
         Objects.requireNonNull(consumer);
