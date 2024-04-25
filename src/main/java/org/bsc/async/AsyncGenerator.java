@@ -14,7 +14,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 /**
  * An asynchronous generator interface that allows generating asynchronous elements.
  *
- * @param <E> the type of elements. The generator will emit CompletableFutures&lt;E&gt; elements
+ * @param <E> the type of elements. The generator will emit {@link  java.util.concurrent.CompletableFuture CompletableFutures&lt;E&gt;} elements
  */
 public interface AsyncGenerator<E> extends Iterable<E> {
 
@@ -66,7 +66,7 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      * @param <E> the type of elements in the collection
      * @param <U> the type of elements in the CompletableFuture
      * @param iterator the elements iterator
-     * @param mapFunction the function to map elements to CompletableFuture
+     * @param mapFunction the function to map elements to {@link  java.util.concurrent.CompletableFuture}
      * @return an AsyncGenerator instance with mapped elements
      */
     static <E,U> AsyncGenerator<U> map(Iterator<E> iterator, Function<E, CompletableFuture<U>> mapFunction ) {
