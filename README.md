@@ -1,4 +1,4 @@
-<a href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22async-generator%22"><img src="https://img.shields.io/maven-central/v/rg.bsc.async/async-generator.svg">
+<a href="https://central.sonatype.com/artifact/org.bsc.async/async-generator"><img src="https://img.shields.io/maven-central/v/org.bsc.async/async-generator.svg">
 </a>
 # java-async-generator
 
