@@ -2,6 +2,8 @@ package org.bsc.async;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -147,6 +149,27 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         }
         return next.data.thenCompose(v -> toCompletableFuture());
     }
+
+    /**
+     * Asynchronously iterates over the elements of the AsyncGenerator and applies the given consumer to each element.
+     *
+     * @param consumer the consumer function to be applied to each element
+     * @param executor the executor to use for the asynchronous iteration
+     * @return a CompletableFuture representing the completion of the iteration process
+     */
+    default CompletableFuture<Void> forEachAsync( Consumer<E> consumer, Executor executor) {
+
+        final Data<E> next = next();
+        if( next.done ) {
+            return completedFuture(null);
+        }
+        return next.data.thenApplyAsync( v -> {
+                            consumer.accept(v);
+                            return null;
+                        }, executor)
+                        .thenCompose(v -> forEachAsync(consumer, executor));
+    }
+
     /**
      * Asynchronously iterates over the elements of the AsyncGenerator and applies the given consumer to each element.
      *
@@ -154,16 +177,30 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      * @return a CompletableFuture representing the completion of the iteration process
      */
     default CompletableFuture<Void> forEachAsync( Consumer<E> consumer) {
+        return forEachAsync( consumer, ForkJoinPool.commonPool());
+    }
+
+    /**
+     * Collects elements from the AsyncGenerator asynchronously into a list.
+     *
+     * @param <R> the type of the result list
+     * @param result the result list to collect elements into
+     * @param consumer the consumer function for processing elements
+     * @param executor the executor to use for the asynchronous collection
+     * @return a CompletableFuture representing the completion of the collection process
+     */
+    default <R extends List<E>> CompletableFuture<R> collectAsync(R result, Consumer<E> consumer, Executor executor) {
 
         final Data<E> next = next();
         if( next.done ) {
             return completedFuture(null);
         }
-        return next.data.thenApply( v -> {
-                            consumer.accept(v);
-                            return null;
-                        })
-                        .thenCompose(v -> forEachAsync(consumer));
+        return next.data.thenApplyAsync( v -> {
+                    consumer.accept(v);
+                    result.add(v);
+                    return null;
+                }, executor )
+                .thenCompose(v -> collectAsync( result, consumer, executor ));
     }
 
     /**
@@ -175,19 +212,8 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      * @return a CompletableFuture representing the completion of the collection process
      */
     default <R extends List<E>> CompletableFuture<R> collectAsync(R result, Consumer<E> consumer) {
-
-        final Data<E> next = next();
-        if( next.done ) {
-            return completedFuture(null);
-        }
-        return next.data.thenApply( v -> {
-                        consumer.accept(v);
-                        result.add(v);
-                        return null;
-                    })
-                    .thenCompose(v -> collectAsync( result, consumer));
+        return collectAsync( result, consumer, ForkJoinPool.commonPool());
     }
-
     /**
      * Returns a sequential Stream with the elements of this AsyncGenerator.
      * Each CompletableFuture is resolved and then make available to the stream.
