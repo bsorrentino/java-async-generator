@@ -2,6 +2,108 @@
 
 <!-- Changelog for bsorrentino java-async-generator. -->
 
+## v2.0.0
+### Generic changes
+
+**Merge branch 'release/2.0.0'**
+
+
+[7f1cc95642c49cb](https://github.com/bsorrentino/java-async-generator/commit/7f1cc95642c49cb) bsorrentino *2024-07-15 16:56:50*
+
+**update version**
+
+
+[fef41e7324d0865](https://github.com/bsorrentino/java-async-generator/commit/fef41e7324d0865) bsorrentino *2024-07-15 16:56:46*
+
+**feat: allow using executor on async implementation. by default ForkJoinPool.commonPool()**
+
+ * - forEachAsync
+ * - collectAsync
+
+[ec470928c243ae9](https://github.com/bsorrentino/java-async-generator/commit/ec470928c243ae9) bsorrentino *2024-07-13 17:58:30*
+
+**docs: update javadocs**
+
+
+[07798a4bd1d4692](https://github.com/bsorrentino/java-async-generator/commit/07798a4bd1d4692) bsorrentino *2024-04-25 11:27:42*
+
+**docs: update javadocs**
+
+
+[ec893b8bb4d702b](https://github.com/bsorrentino/java-async-generator/commit/ec893b8bb4d702b) bsorrentino *2024-04-25 11:27:38*
+
+**build: refine jdk8 support**
+
+
+[f8d6870c18ba8d2](https://github.com/bsorrentino/java-async-generator/commit/f8d6870c18ba8d2) bsorrentino *2024-04-25 11:06:48*
+
+**build: add jdk8 classifier**
+
+
+[1a5e66caf4877c3](https://github.com/bsorrentino/java-async-generator/commit/1a5e66caf4877c3) bsorrentino *2024-04-25 10:31:20*
+
+**docs: add javadoc**
+
+
+[ae7b39f259ce716](https://github.com/bsorrentino/java-async-generator/commit/ae7b39f259ce716) bsorrentino *2024-04-25 10:30:48*
+
+**ci: update deploy-github-pages.yml**
+
+
+[540441b71c9c8ce](https://github.com/bsorrentino/java-async-generator/commit/540441b71c9c8ce) bsorrentino *2024-04-25 08:08:02*
+
+**docs: add site support**
+
+
+[0801ee206b2031f](https://github.com/bsorrentino/java-async-generator/commit/0801ee206b2031f) bsorrentino *2024-04-25 08:07:39*
+
+**Update README.md**
+
+
+[789e4c8fa2001b8](https://github.com/bsorrentino/java-async-generator/commit/789e4c8fa2001b8) bsorrentino *2024-04-25 07:30:25*
+
+**Create deploy-github-pages.yml**
+
+
+[fce1122a40d1c4e](https://github.com/bsorrentino/java-async-generator/commit/fce1122a40d1c4e) bsorrentino *2024-04-24 22:08:18*
+
+**docs: update readme**
+
+
+[ae2972adf37f99a](https://github.com/bsorrentino/java-async-generator/commit/ae2972adf37f99a) bsorrentino *2024-04-24 21:47:26*
+
+**build: fix deployment process to maven central**
+
+
+[4ec64ec51d1d7f0](https://github.com/bsorrentino/java-async-generator/commit/4ec64ec51d1d7f0) bsorrentino *2024-04-24 21:43:48*
+
+**build: add description in pom**
+
+
+[2d1c0af0dce602a](https://github.com/bsorrentino/java-async-generator/commit/2d1c0af0dce602a) bsorrentino *2024-04-24 18:19:57*
+
+**Update deploy.yaml**
+
+
+[1013b44c620fec0](https://github.com/bsorrentino/java-async-generator/commit/1013b44c620fec0) bsorrentino *2024-04-24 18:14:57*
+
+**docs: add changelog**
+
+
+[683b8b74be21c86](https://github.com/bsorrentino/java-async-generator/commit/683b8b74be21c86) bsorrentino *2024-04-24 18:06:36*
+
+**Merge tag 'v1.0.0-jdk11' into develop**
+
+ * new release
+
+[09016c83cfa3ae6](https://github.com/bsorrentino/java-async-generator/commit/09016c83cfa3ae6) bsorrentino *2024-04-24 18:04:12*
+
+**build: add support for classifier**
+
+
+[44add67e66f96ec](https://github.com/bsorrentino/java-async-generator/commit/44add67e66f96ec) bsorrentino *2024-04-24 17:48:28*
+
+
 ## v1.0.0-jdk11
 ### Generic changes
 
@@ -24,11 +126,6 @@
 
 
 [d3faef43359935c](https://github.com/bsorrentino/java-async-generator/commit/d3faef43359935c) bsorrentino *2024-04-24 17:49:59*
-
-**build: add support for classifier**
-
-
-[44add67e66f96ec](https://github.com/bsorrentino/java-async-generator/commit/44add67e66f96ec) bsorrentino *2024-04-24 17:48:28*
 
 **Update deploy-pages.yaml**
 
