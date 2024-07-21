@@ -108,7 +108,7 @@ public class AsyncGeneratorQueue    {
      * @param executor the executor for asynchronous processing
      * @param consumer the consumer for processing elements from the queue
      * @return an AsyncGenerator instance
-     * @deprecated use {@link #of(Q, Consumer, Executor)}
+     * @deprecated use of(Q, Consumer, Executor)
      */
     @Deprecated
     public static <E, Q extends BlockingQueue<AsyncGenerator.Data<E>>> AsyncGenerator<E> of(Q queue, Executor executor, Consumer<Q> consumer) {
