@@ -38,6 +38,10 @@ public interface AsyncGenerator<E> extends Iterable<E> {
             return new Data<>(data, false);
         }
 
+        public static <E> Data<E> of(E data) {
+            return new Data<>( completedFuture(data), false);
+        }
+
         public static <E> Data<E> done() {
             return new Data<>(null, true);
         }
