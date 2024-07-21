@@ -2,8 +2,55 @@
 
 <!-- Changelog for bsorrentino java-async-generator. -->
 
+## v2.0.1
+### No issue
+
+**Merge branch 'release/2.0.1'**
+
+
+[d3388594de31909](https://github.com/bsorrentino/java-async-generator/commit/d3388594de31909) bsorrentino *2024-07-21 10:21:02*
+
+**docs: update javadoc**
+
+
+[dcbd81f1fffae8e](https://github.com/bsorrentino/java-async-generator/commit/dcbd81f1fffae8e) bsorrentino *2024-07-21 10:12:25*
+
+**build: move to the next release**
+
+
+[61fc7accf77b410](https://github.com/bsorrentino/java-async-generator/commit/61fc7accf77b410) bsorrentino *2024-07-21 10:12:04*
+
+**refactor(AsyncGeneratorQuest): deprecate method of( queue, executor, consumer)**
+
+ * now the standard is of( queue, consumer, executor )
+
+[73d3ed4b65b79f6](https://github.com/bsorrentino/java-async-generator/commit/73d3ed4b65b79f6) bsorrentino *2024-07-21 09:55:05*
+
+**feat(AsyncGenerator): add new Data.of() static method**
+
+ * make easier to create Data instance don&#x27;t providing CompletableFuture
+
+[09de8d4ff324a8e](https://github.com/bsorrentino/java-async-generator/commit/09de8d4ff324a8e) bsorrentino *2024-07-21 09:53:25*
+
+**fix: deployment signing**
+
+
+[80ae69ced67514c](https://github.com/bsorrentino/java-async-generator/commit/80ae69ced67514c) bsorrentino *2024-07-15 18:00:50*
+
+**docs: update changelog**
+
+
+[05cfc8f2b448cd9](https://github.com/bsorrentino/java-async-generator/commit/05cfc8f2b448cd9) bsorrentino *2024-07-15 17:00:01*
+
+**Merge tag 'v2.0.0' into develop**
+
+ * new release
+
+[c32e9261d2f4cee](https://github.com/bsorrentino/java-async-generator/commit/c32e9261d2f4cee) bsorrentino *2024-07-15 16:57:01*
+
+
 ## v2.0.0
-### Generic changes
+### No issue
 
 **Merge branch 'release/2.0.0'**
 
@@ -98,14 +145,9 @@
 
 [09016c83cfa3ae6](https://github.com/bsorrentino/java-async-generator/commit/09016c83cfa3ae6) bsorrentino *2024-04-24 18:04:12*
 
-**build: add support for classifier**
-
-
-[44add67e66f96ec](https://github.com/bsorrentino/java-async-generator/commit/44add67e66f96ec) bsorrentino *2024-04-24 17:48:28*
-
 
 ## v1.0.0-jdk11
-### Generic changes
+### No issue
 
 **Merge branch 'release/1.0.0-jdk11'**
 
@@ -126,6 +168,11 @@
 
 
 [d3faef43359935c](https://github.com/bsorrentino/java-async-generator/commit/d3faef43359935c) bsorrentino *2024-04-24 17:49:59*
+
+**build: add support for classifier**
+
+
+[44add67e66f96ec](https://github.com/bsorrentino/java-async-generator/commit/44add67e66f96ec) bsorrentino *2024-04-24 17:48:28*
 
 **Update deploy-pages.yaml**
 
