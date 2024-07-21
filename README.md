@@ -37,5 +37,8 @@ for( Response response : generator ) {
 
 ```
 
+Articles:
+
+* [How to stream data over HTTP using Java Servlet and Fetch API](https://bsorrentino.github.io/bsorrentino/web/2024/07/21/how-to-stream-data-in-java.html)
 
 [CompletableFuture]: https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/CompletableFuture.html
