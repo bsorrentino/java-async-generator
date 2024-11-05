@@ -19,17 +19,22 @@ public class AsyncGeneratorQueue    {
      *
      * @param <E> the type of elements in the queue
      */
-    static class Generator<E> implements AsyncGenerator<E> {
+    public static class Generator<E> implements AsyncGenerator<E> {
 
         boolean isEnd = false;
         final java.util.concurrent.BlockingQueue<Data<E>> queue;
+
         /**
          * Constructs a Generator with the specified queue.
          *
          * @param queue the blocking queue to generate elements from
          */
-        Generator(java.util.concurrent.BlockingQueue<Data<E>> queue) {
+        public Generator(java.util.concurrent.BlockingQueue<Data<E>> queue) {
             this.queue = queue;
+        }
+
+        public java.util.concurrent.BlockingQueue<Data<E>> queue() {
+            return queue;
         }
 
         /**
