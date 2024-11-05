@@ -34,6 +34,10 @@ public interface AsyncGenerator<E> extends Iterable<E> {
             this.done = done;
         }
 
+        public boolean isDone() {
+            return done;
+        }
+
         public static <E> Data<E> of(CompletableFuture<E> data) {
             return new Data<>(data, false);
         }
