@@ -2,6 +2,63 @@
 
 <!-- Changelog for bsorrentino java-async-generator. -->
 
+## v2.1.0
+### No issue
+
+**Merge branch 'release/2.1.0'**
+
+
+[25e4aa3c2790326](https://github.com/bsorrentino/java-async-generator/commit/25e4aa3c2790326) bsorrentino *2024-11-05 18:12:19*
+
+**ci: add script for generating changelog**
+
+
+[ed6859b21d2cb2d](https://github.com/bsorrentino/java-async-generator/commit/ed6859b21d2cb2d) bsorrentino *2024-11-05 18:11:58*
+
+**build: bump to next version**
+
+
+[c91e5c5d656c693](https://github.com/bsorrentino/java-async-generator/commit/c91e5c5d656c693) bsorrentino *2024-11-05 18:11:32*
+
+**feat: change visibility**
+
+ * publish AsyncGenerator.Data.isDone()
+ * publish AsyncGeneratorQueue.Generator
+
+[5d7b5b5a4b096e5](https://github.com/bsorrentino/java-async-generator/commit/5d7b5b5a4b096e5) bsorrentino *2024-11-05 18:10:52*
+
+**build: move to next development version**
+
+
+[452b2439f7c5a3f](https://github.com/bsorrentino/java-async-generator/commit/452b2439f7c5a3f) bsorrentino *2024-08-26 20:42:42*
+
+**docs: update readme**
+
+
+[980d2305fbe011e](https://github.com/bsorrentino/java-async-generator/commit/980d2305fbe011e) bsorrentino *2024-07-21 14:16:02*
+
+**Merge branch 'main' into develop**
+
+
+[51b9b68c8340e31](https://github.com/bsorrentino/java-async-generator/commit/51b9b68c8340e31) bsorrentino *2024-07-21 10:24:42*
+
+**Merge branch 'hotfix/docs'**
+
+
+[7484a68a03f3d72](https://github.com/bsorrentino/java-async-generator/commit/7484a68a03f3d72) bsorrentino *2024-07-21 10:24:40*
+
+**docs: update changelog**
+
+
+[3c0a8344c30b476](https://github.com/bsorrentino/java-async-generator/commit/3c0a8344c30b476) bsorrentino *2024-07-21 10:24:28*
+
+**Merge tag 'v2.0.1' into develop**
+
+ * new minor
+
+[fa81c226c8479bd](https://github.com/bsorrentino/java-async-generator/commit/fa81c226c8479bd) bsorrentino *2024-07-21 10:21:12*
+
+
 ## v2.0.1
 ### No issue
 
