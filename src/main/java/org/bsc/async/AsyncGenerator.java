@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -27,28 +27,28 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      */
     class Data<E> {
         final CompletableFuture<E> data;
-        final boolean done;
+        final AsyncGenerator<E> generator;
+        private final Object resultValue;
 
-        public Data( CompletableFuture<E> data, boolean done) {
+        public Data( CompletableFuture<E> data, AsyncGenerator<E> generator, Object resultValue) {
             this.data = data;
-            this.done = done;
+            this.generator = generator;
+            this.resultValue = resultValue;
         }
 
         public boolean isDone() {
-            return done;
+            return data == null && generator == null;
         }
 
-        public static <E> Data<E> of(CompletableFuture<E> data) {
-            return new Data<>(data, false);
-        }
+        public static <E> Data<E> of(CompletableFuture<E> data) { return new Data<>(data, null, null);}
 
-        public static <E> Data<E> of(E data) {
-            return new Data<>( completedFuture(data), false);
-        }
+        public static <E> Data<E> of(E data) { return new Data<>( completedFuture(data), null, null); }
 
-        public static <E> Data<E> done() {
-            return new Data<>(null, true);
-        }
+        public static <E> Data<E> of(AsyncGenerator<E> generator) { return new Data<>( null, generator, null );}
+
+        public static <E> Data<E> done() { return new Data<>(null, null, null); }
+
+        public static <E> Data<E> done( Object resultValue) { return new Data<>(null, null, resultValue); }
 
     }
 
@@ -150,10 +150,10 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      *
      * @return a CompletableFuture representing the completion of the AsyncGenerator
      */
-    default CompletableFuture<Void>  toCompletableFuture() {
+    default CompletableFuture<Object>  toCompletableFuture() {
         final Data<E> next = next();
-        if( next.done ) {
-            return completedFuture(null);
+        if( next.isDone() ) {
+            return completedFuture(next.resultValue);
         }
         return next.data.thenCompose(v -> toCompletableFuture());
     }
@@ -163,28 +163,34 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      *
      * @param consumer the consumer function to be applied to each element
      * @param executor the executor to use for the asynchronous iteration
-     * @return a CompletableFuture representing the completion of the iteration process
+     * @return a CompletableFuture representing the completion of the iteration process. Return the result value
      */
-    default CompletableFuture<Void> forEachAsync( Consumer<E> consumer, Executor executor) {
+    default CompletableFuture<Object> forEachAsync( Consumer<E> consumer, Executor executor) {
 
         final Data<E> next = next();
-        if( next.done ) {
-            return completedFuture(null);
+        if( next.isDone() ) {
+            return completedFuture(next.resultValue);
         }
-        return next.data.thenApplyAsync( v -> {
+        if(next.generator != null ) {
+            return next.generator.forEachAsync(consumer, executor)
+                    .thenCompose(v -> forEachAsync(consumer, executor));
+        }
+        else {
+            return next.data.thenApplyAsync( v -> {
                             consumer.accept(v);
                             return null;
                         }, executor)
                         .thenCompose(v -> forEachAsync(consumer, executor));
+        }
     }
 
     /**
      * Asynchronously iterates over the elements of the AsyncGenerator and applies the given consumer to each element.
      *
      * @param consumer the consumer function to be applied to each element
-     * @return a CompletableFuture representing the completion of the iteration process
+     * @return a CompletableFuture representing the completion of the iteration process.
      */
-    default CompletableFuture<Void> forEachAsync( Consumer<E> consumer) {
+    default CompletableFuture<Object> forEachAsync( Consumer<E> consumer) {
         return forEachAsync( consumer, ForkJoinPool.commonPool());
     }
 
@@ -197,11 +203,11 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      * @param executor the executor to use for the asynchronous collection
      * @return a CompletableFuture representing the completion of the collection process
      */
-    default <R extends List<E>> CompletableFuture<R> collectAsync(R result, Consumer<E> consumer, Executor executor) {
+    default <R extends List<E>> CompletableFuture<Object> collectAsync(R result, Consumer<E> consumer, Executor executor) {
 
         final Data<E> next = next();
-        if( next.done ) {
-            return completedFuture(null);
+        if( next.isDone() ) {
+            return completedFuture(next.resultValue);
         }
         return next.data.thenApplyAsync( v -> {
                     consumer.accept(v);
@@ -219,7 +225,7 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      * @param consumer the consumer function for processing elements
      * @return a CompletableFuture representing the completion of the collection process
      */
-    default <R extends List<E>> CompletableFuture<R> collectAsync(R result, Consumer<E> consumer) {
+    default <R extends List<E>> CompletableFuture<Object> collectAsync(R result, Consumer<E> consumer) {
         return collectAsync( result, consumer, ForkJoinPool.commonPool());
     }
     /**
@@ -240,31 +246,87 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      * @return an iterator over the elements of this AsyncGenerator
      */
     default Iterator<E> iterator() {
-        return new Iterator<E>() {
-            private final AtomicReference<Data<E>> currentFetchedData = new AtomicReference<>();
-
-            {
-                currentFetchedData.set(  AsyncGenerator.this.next() );
-            }
-            @Override
-            public boolean hasNext() {
-                final Data<E> value = currentFetchedData.get();
-                return value != null && !value.done;
-            }
-
-            @Override
-            public E next() {
-                Data<E> next = currentFetchedData.get();
-                if( next==null || next.done) {
-                    throw new IllegalStateException("no more elements into iterator");
-                }
-
-                next = currentFetchedData.getAndUpdate(  v -> AsyncGenerator.this.next() );
-
-                return next.data.join();
-
-            }
-        };
+        return new InternalIterator<E>( this );
     }
+
+}
+
+class InternalIterator<E> implements Iterator<E> {
+    private final Stack<AsyncGenerator<E>> generatorsStack = new Stack<>();
+    private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.ReadLock r = rwl.readLock();
+    private final ReentrantReadWriteLock.WriteLock w = rwl.writeLock();
+    private AsyncGenerator.Data<E> currentFetchedData;
+
+    InternalIterator(AsyncGenerator<E> generator ) {
+        generatorsStack.push( generator );
+        currentFetchedData = generator.next();
+    }
+
+    @Override
+    public boolean hasNext() {
+        try {
+            r.lock();
+
+            final AsyncGenerator.Data<E> value = currentFetchedData;
+
+            if( value != null && !value.isDone() ) {
+                return true;
+            }
+
+            // Check if there is another generator in the stack
+            generatorsStack.pop();
+
+            if( generatorsStack.isEmpty() ) {
+                return false;
+            }
+
+        } finally {
+            r.unlock();
+        }
+
+        return updateCurrentFetchedData();
+    }
+
+    private boolean updateCurrentFetchedData( ) {
+
+        try {
+            w.lock();
+
+            AsyncGenerator<E> generator = generatorsStack.peek();
+
+            currentFetchedData = generator.next();
+
+            if( currentFetchedData.generator != null  ) {
+                generator = currentFetchedData.generator;
+                generatorsStack.push( generator );
+                currentFetchedData = generator.next();
+            }
+
+            return currentFetchedData != null && !currentFetchedData.isDone();
+        }
+        finally {
+            w.unlock();
+        }
+    }
+
+    @Override
+    public E next() {
+        if (generatorsStack.isEmpty()) { // GUARD
+            throw new IllegalStateException("no generator found!");
+        }
+
+        if (currentFetchedData == null || currentFetchedData.isDone()) { // GUARD
+            throw new IllegalStateException("no more elements into iterator");
+        }
+
+        AsyncGenerator.Data<E> next = currentFetchedData;
+
+        updateCurrentFetchedData();
+
+        return next.data.join();
+
+    }
+
 
 }
