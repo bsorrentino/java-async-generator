@@ -47,7 +47,7 @@ public class AsyncGeneratorQueue    {
             while (!isEnd) {
                 Data<E> value = queue.poll();
                 if (value != null) {
-                    if (value.done) {
+                    if (value.isDone()) {
                         isEnd = true;
                         break;
                     }
