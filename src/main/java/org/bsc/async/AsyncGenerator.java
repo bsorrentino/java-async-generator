@@ -21,34 +21,166 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 public interface AsyncGenerator<E> extends Iterable<E> {
 
     /**
+     * An asynchronous generator decorator that allows retrieving the result value of the asynchronous operation, if any.
+     *
+     * @param <E> the type of elements in the generator
+     */
+    class WithResult<E> implements AsyncGenerator<E> {
+
+        protected final AsyncGenerator<E> delegate;
+        private Object resultValue;
+
+        public WithResult(AsyncGenerator<E> delegate) {
+            this.delegate = delegate;
+        }
+
+        public AsyncGenerator<E> delegate() { return delegate; }
+
+        /**
+         * Retrieves the result value of the generator, if any.
+         *
+         * @return an {@link Optional} containing the result value if present, or an empty Optional if not
+         */
+        public Optional<Object> resultValue() { return Optional.ofNullable(resultValue); };
+
+        @Override
+        public final Data<E> next() {
+            final Data<E> result = delegate.next();
+            if( result.isDone() ) {
+                resultValue = result.resultValue;
+            }
+            return result;
+        }
+    }
+
+    /**
+     * An asynchronous generator decorator that allows to generators composition embedding other generators.
+     *
+     * @param <E> the type of elements in the generator
+     */
+    class WithEmbed<E> implements AsyncGenerator<E> {
+        protected final Deque<Embed<E>> generatorsStack = new ArrayDeque<>(2);
+        private final Deque<Data<E>> returnValueStack = new ArrayDeque<>(2);
+
+        public WithEmbed(AsyncGenerator<E> delegate, EmbedCompletionHandler onGeneratorDoneWithResult) {
+            generatorsStack.push( new Embed<>(delegate, onGeneratorDoneWithResult) );
+        }
+        public WithEmbed(AsyncGenerator<E> delegate ) {
+            this(delegate, null);
+        }
+
+        public Deque<Data<E>> resultValues() {
+            return new UnmodifiableDeque<>( returnValueStack );
+        }
+
+        private void clearPreviousReturnsValuesIfAny() {
+            // Check if the return values are which ones from previous run
+            if( returnValueStack.size() > 1 && returnValueStack.size() == generatorsStack.size() ) {
+                returnValueStack.clear();
+            }
+        }
+
+//        private AsyncGenerator.WithResult<E> toGeneratorWithResult( AsyncGenerator<E> generator ) {
+//            return ( generator instanceof WithResult ) ?
+//                    (AsyncGenerator.WithResult<E>) generator :
+//                    new WithResult<>(generator);
+//        }
+
+        protected boolean isLastGenerator() {
+            return generatorsStack.size() == 1;
+        }
+
+        @Override
+        public Data<E> next() {
+            if( generatorsStack.isEmpty() ) { // GUARD
+                throw new IllegalStateException("no generator found!");
+            }
+
+            final Embed<E> embed = generatorsStack.peek();
+            final Data<E> result = embed.generator.next();
+
+            if( result.isDone() ) {
+                clearPreviousReturnsValuesIfAny();
+                returnValueStack.push( result );
+                if( embed.onCompletion != null /* && result.resultValue != null */ ) {
+                    try {
+                        embed.onCompletion.accept( result.resultValue );
+                    } catch (Exception e) {
+                        return Data.error(e);
+                    }
+                }
+                if( isLastGenerator() ) {
+                    return result;
+                }
+                generatorsStack.pop();
+                return next();
+            }
+            if( result.embed != null ) {
+                if( generatorsStack.size() >= 2 ) {
+                    return Data.error(new UnsupportedOperationException("Currently recursive nested generators are not supported!"));
+                }
+                generatorsStack.push( result.embed );
+                return next();
+            }
+
+            return result;
+        }
+
+    }
+
+    @FunctionalInterface
+    interface EmbedCompletionHandler  {
+        void accept(Object t) throws Exception;
+    }
+
+    class Embed<E> {
+        final AsyncGenerator<E> generator;
+        final EmbedCompletionHandler onCompletion;
+
+        public Embed(AsyncGenerator<E> generator, EmbedCompletionHandler onCompletion) {
+            Objects.requireNonNull(generator, "generator cannot be null");
+            this.generator = generator;
+            this.onCompletion = onCompletion;
+        }
+    }
+
+    /**
      * Represents a data element in the AsyncGenerator.
      *
      * @param <E> the type of the data element
      */
     class Data<E> {
         final CompletableFuture<E> data;
-        final AsyncGenerator<E> generator;
-        private final Object resultValue;
+        final Embed<E> embed;
+        final Object resultValue;
 
-        public Data( CompletableFuture<E> data, AsyncGenerator<E> generator, Object resultValue) {
+        public Data( CompletableFuture<E> data, Embed<E> embed, Object resultValue) {
             this.data = data;
-            this.generator = generator;
+            this.embed = embed;
             this.resultValue = resultValue;
         }
 
         public boolean isDone() {
-            return data == null && generator == null;
+            return data == null && embed == null;
         }
 
         public static <E> Data<E> of(CompletableFuture<E> data) { return new Data<>(data, null, null);}
 
         public static <E> Data<E> of(E data) { return new Data<>( completedFuture(data), null, null); }
 
-        public static <E> Data<E> of(AsyncGenerator<E> generator) { return new Data<>( null, generator, null );}
+        public static <E> Data<E> composeWith( AsyncGenerator<E> generator, EmbedCompletionHandler onCompletion) {
+            return new Data<>( null, new Embed<>(generator, onCompletion), null );
+        }
 
         public static <E> Data<E> done() { return new Data<>(null, null, null); }
 
         public static <E> Data<E> done( Object resultValue) { return new Data<>(null, null, resultValue); }
+
+        public static <E> Data<E> error( Throwable exception ) {
+            CompletableFuture<E> future = new CompletableFuture<>();
+            future.completeExceptionally(exception);
+            return Data.of(future);
+        }
 
     }
 
@@ -58,7 +190,6 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      * @return the next element from the generator
      */
     Data<E> next();
-
 
     /**
      * Returns an empty AsyncGenerator.
@@ -171,8 +302,8 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         if( next.isDone() ) {
             return completedFuture(next.resultValue);
         }
-        if(next.generator != null ) {
-            return next.generator.forEachAsync(consumer, executor)
+        if(next.embed != null ) {
+            return next.embed.generator.forEachAsync(consumer, executor)
                     .thenCompose(v -> forEachAsync(consumer, executor));
         }
         else {
@@ -252,81 +383,43 @@ public interface AsyncGenerator<E> extends Iterable<E> {
 }
 
 class InternalIterator<E> implements Iterator<E> {
-    private final Stack<AsyncGenerator<E>> generatorsStack = new Stack<>();
+    private final AsyncGenerator<E> delegate;
+    private AsyncGenerator.Data<E> currentFetchedData;
     private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
     private final ReentrantReadWriteLock.ReadLock r = rwl.readLock();
     private final ReentrantReadWriteLock.WriteLock w = rwl.writeLock();
-    private AsyncGenerator.Data<E> currentFetchedData;
 
-    InternalIterator(AsyncGenerator<E> generator ) {
-        generatorsStack.push( generator );
-        currentFetchedData = generator.next();
+
+    public InternalIterator(AsyncGenerator<E> delegate) {
+        this.delegate = delegate;
+        currentFetchedData = delegate.next();
     }
-
     @Override
     public boolean hasNext() {
         try {
             r.lock();
-
             final AsyncGenerator.Data<E> value = currentFetchedData;
-
-            if( value != null && !value.isDone() ) {
-                return true;
-            }
-
-            // Check if there is another generator in the stack
-            generatorsStack.pop();
-
-            if( generatorsStack.isEmpty() ) {
-                return false;
-            }
-
-        } finally {
-            r.unlock();
-        }
-
-        return updateCurrentFetchedData();
-    }
-
-    private boolean updateCurrentFetchedData( ) {
-
-        try {
-            w.lock();
-
-            AsyncGenerator<E> generator = generatorsStack.peek();
-
-            currentFetchedData = generator.next();
-
-            if( currentFetchedData.generator != null  ) {
-                generator = currentFetchedData.generator;
-                generatorsStack.push( generator );
-                currentFetchedData = generator.next();
-            }
-
-            return currentFetchedData != null && !currentFetchedData.isDone();
+            return value != null && !value.isDone();
         }
         finally {
-            w.unlock();
+            r.unlock();
         }
     }
 
     @Override
     public E next() {
-        if (generatorsStack.isEmpty()) { // GUARD
-            throw new IllegalStateException("no generator found!");
+        try {
+            w.lock();
+            AsyncGenerator.Data<E> next = currentFetchedData;
+            if( next==null || next.isDone()) {
+                throw new IllegalStateException("no more elements into iterator");
+            }
+            currentFetchedData = delegate.next();
+
+            return next.data.join();
         }
-
-        if (currentFetchedData == null || currentFetchedData.isDone()) { // GUARD
-            throw new IllegalStateException("no more elements into iterator");
+        finally {
+            w.unlock();
         }
-
-        AsyncGenerator.Data<E> next = currentFetchedData;
-
-        updateCurrentFetchedData();
-
-        return next.data.join();
-
     }
-
-
-}
+};
