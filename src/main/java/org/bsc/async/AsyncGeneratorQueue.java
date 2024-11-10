@@ -21,7 +21,7 @@ public class AsyncGeneratorQueue    {
      */
     public static class Generator<E> implements AsyncGenerator<E> {
 
-        boolean isEnd = false;
+        Data<E> isEnd = null;
         final java.util.concurrent.BlockingQueue<Data<E>> queue;
 
         /**
@@ -44,17 +44,16 @@ public class AsyncGeneratorQueue    {
          */
         @Override
         public Data<E> next() {
-            while (!isEnd) {
+            while ( isEnd == null ) {
                 Data<E> value = queue.poll();
                 if (value != null) {
-                    if (value.done) {
-                        isEnd = true;
-                        break;
+                    if (value.isDone()) {
+                        isEnd = value;
                     }
                     return value;
                 }
             }
-            return Data.done();
+            return isEnd;
         }
     }
 
@@ -93,7 +92,7 @@ public class AsyncGeneratorQueue    {
             catch( Throwable ex ) {
                 CompletableFuture<E> error = new CompletableFuture<>();
                 error.completeExceptionally(ex);
-                queue.add( AsyncGenerator.Data.of(error ));
+                queue.add( AsyncGenerator.Data.of(error));
             }
             finally {
                 queue.add(Data.done());
