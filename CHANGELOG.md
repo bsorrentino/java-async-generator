@@ -2,6 +2,73 @@
 
 <!-- Changelog for bsorrentino java-async-generator. -->
 
+## v2.2.0
+### No issue
+
+**Merge branch 'release/2.2.0'**
+
+
+[2e4550c6e0cfece](https://github.com/bsorrentino/java-async-generator/commit/2e4550c6e0cfece) bsorrentino *2024-11-10 16:09:57*
+
+**build: bump to new version**
+
+
+[323a1944f53d3be](https://github.com/bsorrentino/java-async-generator/commit/323a1944f53d3be) bsorrentino *2024-11-10 16:09:44*
+
+**feat: add support for embed generator**
+
+ * Currently not supported the recursive embed generators (ie embed of embed)
+
+[6efebe3b49b1bbd](https://github.com/bsorrentino/java-async-generator/commit/6efebe3b49b1bbd) bsorrentino *2024-11-10 16:06:13*
+
+**Merge branch 'feature/nested_generator' into develop**
+
+
+[c42551006f72a92](https://github.com/bsorrentino/java-async-generator/commit/c42551006f72a92) bsorrentino *2024-11-07 18:49:20*
+
+**refactor: replace data.done with data.isDone()**
+
+
+[5dffc8ef83e286f](https://github.com/bsorrentino/java-async-generator/commit/5dffc8ef83e286f) bsorrentino *2024-11-07 18:48:34*
+
+**feat: add support for nested generator**
+
+ * - provide a &#x27;resultValue&#x27; on done.
+
+[c924c8e70268f9d](https://github.com/bsorrentino/java-async-generator/commit/c924c8e70268f9d) bsorrentino *2024-11-07 18:47:59*
+
+**build: bump to next SNAPSHOT**
+
+
+[c080a578df9e515](https://github.com/bsorrentino/java-async-generator/commit/c080a578df9e515) bsorrentino *2024-11-07 18:46:08*
+
+**ci: add script for set project version**
+
+
+[654e3b5f8998ba8](https://github.com/bsorrentino/java-async-generator/commit/654e3b5f8998ba8) bsorrentino *2024-11-07 18:45:47*
+
+**Merge branch 'main' into develop**
+
+
+[05701d7b43f7922](https://github.com/bsorrentino/java-async-generator/commit/05701d7b43f7922) bsorrentino *2024-11-05 18:13:25*
+
+**Merge branch 'hotfix/changeme'**
+
+
+[7840e7eed01c027](https://github.com/bsorrentino/java-async-generator/commit/7840e7eed01c027) bsorrentino *2024-11-05 18:13:22*
+
+**docs: update changeme**
+
+
+[7df0bc31be1eb25](https://github.com/bsorrentino/java-async-generator/commit/7df0bc31be1eb25) bsorrentino *2024-11-05 18:13:21*
+
+**Merge tag 'v2.1.0' into develop**
+
+ * new release
+
+[0773e9d5e775c8b](https://github.com/bsorrentino/java-async-generator/commit/0773e9d5e775c8b) bsorrentino *2024-11-05 18:12:29*
+
+
 ## v2.1.0
 ### No issue
 
