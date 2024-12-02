@@ -2,6 +2,83 @@
 
 <!-- Changelog for bsorrentino java-async-generator. -->
 
+## v2.3.0
+### No issue
+
+**Merge branch 'release/2.3.0'**
+
+
+[a4d356452185529](https://github.com/bsorrentino/java-async-generator/commit/a4d356452185529) bsorrentino *2024-12-02 15:44:10*
+
+**build: move to next version**
+
+
+[478001f5e078377](https://github.com/bsorrentino/java-async-generator/commit/478001f5e078377) bsorrentino *2024-12-02 15:43:52*
+
+**feat: add map and filter operators**
+
+ * Add new AsyncGeneratorOperators interface
+ * Add async(executor) method to easier manage a provided custom executor
+
+[39ebb0396323aaa](https://github.com/bsorrentino/java-async-generator/commit/39ebb0396323aaa) bsorrentino *2024-12-02 15:40:33*
+
+**chore: clean code**
+
+
+[4b638afcefd37f8](https://github.com/bsorrentino/java-async-generator/commit/4b638afcefd37f8) bsorrentino *2024-12-02 13:38:39*
+
+**fix(pom-jdk8.xml): update version to SNAPSHOT for async-generator-jdk8**
+
+
+[1c27cf97df06971](https://github.com/bsorrentino/java-async-generator/commit/1c27cf97df06971) bsorrentino *2024-12-02 13:37:56*
+
+**refactor: update async-generator version to SNAPSHOT**
+
+
+[5ffcf2b873f2963](https://github.com/bsorrentino/java-async-generator/commit/5ffcf2b873f2963) bsorrentino *2024-12-02 13:37:34*
+
+**docs: update comment**
+
+
+[99681d9380035b5](https://github.com/bsorrentino/java-async-generator/commit/99681d9380035b5) bsorrentino *2024-11-10 16:28:47*
+
+**Merge branch 'main' into develop**
+
+
+[eb04b2dcfc79c80](https://github.com/bsorrentino/java-async-generator/commit/eb04b2dcfc79c80) bsorrentino *2024-11-10 16:19:43*
+
+**Merge branch 'hotfix/action'**
+
+
+[d95404c16359926](https://github.com/bsorrentino/java-async-generator/commit/d95404c16359926) bsorrentino *2024-11-10 16:19:41*
+
+**build: update actions**
+
+
+[f3d30d3112e0f1a](https://github.com/bsorrentino/java-async-generator/commit/f3d30d3112e0f1a) bsorrentino *2024-11-10 16:19:29*
+
+**Merge branch 'main' into develop**
+
+
+[bfc96277084aa4a](https://github.com/bsorrentino/java-async-generator/commit/bfc96277084aa4a) bsorrentino *2024-11-10 16:10:29*
+
+**Merge branch 'hotfix/changeme'**
+
+
+[02857718a545cd2](https://github.com/bsorrentino/java-async-generator/commit/02857718a545cd2) bsorrentino *2024-11-10 16:10:27*
+
+**docs: update changeme**
+
+
+[5ffc6b7bb18bf4d](https://github.com/bsorrentino/java-async-generator/commit/5ffc6b7bb18bf4d) bsorrentino *2024-11-10 16:10:26*
+
+**Merge tag 'v2.2.0' into develop**
+
+ * bump to new version
+
+[f1f7a4b1a895dd8](https://github.com/bsorrentino/java-async-generator/commit/f1f7a4b1a895dd8) bsorrentino *2024-11-10 16:10:10*
+
+
 ## v2.2.0
 ### No issue
 
