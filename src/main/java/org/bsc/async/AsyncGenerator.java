@@ -225,7 +225,8 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
      * @param consumer the consumer function for processing elements
      * @param executor the executor to use for the asynchronous collection
      * @return a CompletableFuture representing the completion of the collection process
-     * @deprecated use {@link #async(Executor).collectAsync(R, BiConsumer)}
+     * @deprecated Use {@link #async(Executor) async} and then call
+     * {@link AsyncGeneratorOperators#collectAsync(List, BiConsumer)} collectAsync} for the desired functionality.
      */
     @Deprecated
     default <R extends List<E>> CompletableFuture<R> collectAsync(R result, Consumer<E> consumer, Executor executor) {
@@ -242,7 +243,8 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
      * @param result the result list to collect elements into
      * @param consumer the consumer function for processing elements
      * @return a CompletableFuture representing the completion of the collection process
-     * @deprecated use {@link #async(Executor).collectAsync(R, BiConsumer)}
+     * @deprecated Use {@link #async(Executor) async} and then call
+     * {@link AsyncGeneratorOperators#collectAsync(List, BiConsumer)} collectAsync} for the desired functionality.
      */
     @Deprecated
     default <R extends List<E>> CompletableFuture<R> collectAsync(R result, Consumer<E> consumer) {
