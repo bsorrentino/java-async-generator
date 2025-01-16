@@ -4,7 +4,7 @@
 
     <groupId>org.bsc.async</groupId>
     <artifactId>async-generator</artifactId>
-    <version>2.3.0</version>
+    <version>3.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <description>a Java version of Javascript async generator</description>
 
@@ -50,8 +50,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
     </properties>
 
     <dependencyManagement>

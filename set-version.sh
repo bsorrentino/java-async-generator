@@ -12,7 +12,6 @@ else
 fi
 
 mvn versions:set -DnewVersion=$ver
-mvn versions:set -DnewVersion=$ver -f pom-jdk8.xml
 
 # after this, you need to commit the changes
-# mvn versions:commit ; mvn versions:commit -f pom-jdk8.xml
+# mvn versions:commit
