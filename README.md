@@ -1,9 +1,17 @@
 <a href="https://central.sonatype.com/artifact/org.bsc.async/async-generator"><img src="https://img.shields.io/maven-central/v/org.bsc.async/async-generator.svg">
 </a>
+
 # java-async-generator
 
 A Java version of Javascript async generator. 
 Idea is to create an iterator-like interface that emit elements as [CompletableFuture] ( the Java counterpart of Javascript Promise ) enabling asynchronous iteration over data 
+
+# Releases 
+
+**Note: ‼️**
+> From release 3.0.0 the miminum supported Java version is the `Java 17` and
+> will not be longer available the artifact `async-generator-jdk8`
+
 
 # Samples
 
