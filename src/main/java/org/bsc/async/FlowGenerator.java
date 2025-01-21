@@ -9,7 +9,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 /**
  * Provides methods for converting between {@link FlowGenerator} and various {@link java.util.concurrent.Flow.Publisher} types.
  *
- * @since 3.0
+ * @since 3.0.0
  */
 public interface FlowGenerator {
 
