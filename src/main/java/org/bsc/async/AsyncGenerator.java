@@ -1,5 +1,7 @@
 package org.bsc.async;
 
+import org.bsc.async.internal.UnmodifiableDeque;
+
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
