@@ -1,10 +1,10 @@
-package org.bsc.async;
+package org.bsc.async.internal;
 
 import java.util.Collection;
 import java.util.Deque;
 import java.util.Iterator;
 
-class UnmodifiableDeque<T> implements Deque<T> {
+public class UnmodifiableDeque<T> implements Deque<T> {
     private final Deque<T> deque;
 
     public UnmodifiableDeque(Deque<T> deque) {
