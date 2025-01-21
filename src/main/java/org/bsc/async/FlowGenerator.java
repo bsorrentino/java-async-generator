@@ -1,16 +1,17 @@
-package org.bsc.async.reactive;
+package org.bsc.async;
 
-import org.bsc.async.AsyncGenerator;
+import org.bsc.async.internal.reactive.GeneratorPublisher;
+import org.bsc.async.internal.reactive.GeneratorSubscriber;
 
 import java.util.concurrent.Flow;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * Provides methods for converting between {@link FluxGenerator} and various {@link java.util.concurrent.Flow.Publisher} types.
+ * Provides methods for converting between {@link FlowGenerator} and various {@link java.util.concurrent.Flow.Publisher} types.
  *
  * @since 3.0
  */
-public interface FluxGenerator {
+public interface FlowGenerator {
 
     /**
      * Creates an {@code AsyncGenerator} from a {@code Flow.Publisher}.
