@@ -1,4 +1,4 @@
-package org.bsc.async.reactive;
+package org.bsc.async.internal.reactive;
 
 import org.bsc.async.AsyncGenerator;
 
@@ -10,7 +10,7 @@ import java.util.concurrent.Flow;
  *
  * @param <T> the type of items to be published
  */
-class GeneratorPublisher<T> implements Flow.Publisher<T> {
+public class GeneratorPublisher<T> implements Flow.Publisher<T> {
 
     private final AsyncGenerator<? extends T> delegate;
 

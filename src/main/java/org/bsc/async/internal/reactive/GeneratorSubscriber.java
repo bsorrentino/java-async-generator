@@ -1,4 +1,4 @@
-package org.bsc.async.reactive;
+package org.bsc.async.internal.reactive;
 
 import org.bsc.async.AsyncGenerator;
 import org.bsc.async.AsyncGeneratorQueue;
@@ -15,7 +15,7 @@ import java.util.concurrent.Flow;
  *
  * @param <T> The type of elements produced by this generator.
  */
-class GeneratorSubscriber<T> implements Flow.Subscriber<T>, AsyncGenerator<T> {
+public class GeneratorSubscriber<T> implements Flow.Subscriber<T>, AsyncGenerator<T> {
 
     private final AsyncGeneratorQueue.Generator<T> delegate;
 
@@ -34,14 +34,14 @@ class GeneratorSubscriber<T> implements Flow.Subscriber<T>, AsyncGenerator<T> {
     /**
      * Handles the subscription event from a Flux.
      * <p>
-     * This method is called when a subscription to the source {@link Flux} has been established. 
+     * This method is called when a subscription to the source {@link Flow} has been established.
      * The provided {@code Flow.Subscription} can be used to manage and control the flow of data emissions.
      *
      * @param subscription The subscription object representing this resource owner lifecycle. Used to signal that resources being subscribed to should not be released until this subscription is disposed.
      */
     @Override
     public void onSubscribe(Flow.Subscription subscription) {
-
+        subscription.request(Long.MAX_VALUE);
     }
 
     /**
