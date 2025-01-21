@@ -2,6 +2,125 @@
 
 <!-- Changelog for bsorrentino java-async-generator. -->
 
+## v3.0.0
+### No issue
+
+**Merge branch 'release/3.0.0'**
+
+
+[1af983d0f6c4c1d](https://github.com/bsorrentino/java-async-generator/commit/1af983d0f6c4c1d) bsorrentino *2025-01-21 19:01:14*
+
+**docs: update readme**
+
+
+[eaa1967766673c3](https://github.com/bsorrentino/java-async-generator/commit/eaa1967766673c3) bsorrentino *2025-01-21 19:00:48*
+
+**build: bump to version 3.0.0**
+
+
+[effd36c53f23915](https://github.com/bsorrentino/java-async-generator/commit/effd36c53f23915) bsorrentino *2025-01-21 18:57:18*
+
+**refactor(AsyncGeneratorOperators.java): improve asynchronous iteration and collection**
+
+ * This commit refactors the &#x60;AsyncGeneratorOperators&#x60; interface to improve the performance of asynchronous iteration and collection operations. The changes include:
+ * 1. Introducing a private method &#x60;forEachAsyncNested&#x60; to handle nested asynchronous iterations without spawning new threads.
+ * 2. Using &#x60;supplyAsync&#x60; within the &#x60;forEachAsync&#x60; method to ensure that each iteration can be performed concurrently, enhancing parallel processing capabilities.
+ * 3. Similarly, refactoring the &#x60;collectAsync&#x60; and &#x60;collectAsyncNested&#x60; methods to collect elements asynchronously efficiently.
+
+[9dd666d47a19627](https://github.com/bsorrentino/java-async-generator/commit/9dd666d47a19627) bsorrentino *2025-01-21 18:54:39*
+
+**fix(AsyncGenerator): add UnmodifiableDeque import**
+
+
+[47d4b323f0f0306](https://github.com/bsorrentino/java-async-generator/commit/47d4b323f0f0306) bsorrentino *2025-01-21 18:53:37*
+
+**refactor(FlowGenerator): rename package and class**
+
+ * Renamed &#x27;FluxGenerator&#x27; to &#x27;FlowGenerator&#x27; and updated imports accordingly. This change improves readability and consistency within the project.
+
+[43958c928c2ae68](https://github.com/bsorrentino/java-async-generator/commit/43958c928c2ae68) bsorrentino *2025-01-21 18:51:58*
+
+**test: add test for reactive stream integration**
+
+
+[09adc3cd805d03d](https://github.com/bsorrentino/java-async-generator/commit/09adc3cd805d03d) bsorrentino *2025-01-21 18:50:58*
+
+**build: move private classes in internal package**
+
+
+[bace2d332d2ea34](https://github.com/bsorrentino/java-async-generator/commit/bace2d332d2ea34) bsorrentino *2025-01-21 18:49:57*
+
+**build: add module-info.java**
+
+
+[0bdfa9f7b8ffba6](https://github.com/bsorrentino/java-async-generator/commit/0bdfa9f7b8ffba6) bsorrentino *2025-01-21 18:49:16*
+
+**Merge branch 'feature/#1' into develop**
+
+
+[c0a0c2faeb403ad](https://github.com/bsorrentino/java-async-generator/commit/c0a0c2faeb403ad) bsorrentino *2025-01-16 22:41:54*
+
+**docs: add javadoc**
+
+ * work on #1
+
+[86841005e8dadf8](https://github.com/bsorrentino/java-async-generator/commit/86841005e8dadf8) bsorrentino *2025-01-16 22:41:36*
+
+**feat(reactive): add reactive stream integration**
+
+ * - AsyncGenerator fromPublisher( Flow.Publisher )
+ * - Flow.Publisher toPublisher( AsyncGenerator )
+ * resolve #1
+
+[9bf82ed82a55f4e](https://github.com/bsorrentino/java-async-generator/commit/9bf82ed82a55f4e) bsorrentino *2025-01-16 22:38:39*
+
+**build: break jdk8 compatibility move to Jdk17**
+
+
+[6fa124b34410624](https://github.com/bsorrentino/java-async-generator/commit/6fa124b34410624) bsorrentino *2025-01-16 19:20:03*
+
+**Merge branch 'main' into develop**
+
+
+[e3b783913bf50e1](https://github.com/bsorrentino/java-async-generator/commit/e3b783913bf50e1) bsorrentino *2024-12-02 16:57:44*
+
+**Merge branch 'hotfix/javadoc'**
+
+
+[b329d45d513916b](https://github.com/bsorrentino/java-async-generator/commit/b329d45d513916b) bsorrentino *2024-12-02 16:57:41*
+
+**refactor(maven-javadoc-plugin): update version to 3.11.1**
+
+
+[ef818c6b26b81fe](https://github.com/bsorrentino/java-async-generator/commit/ef818c6b26b81fe) bsorrentino *2024-12-02 16:52:37*
+
+**docs: update javadocs**
+
+
+[686473afb186e53](https://github.com/bsorrentino/java-async-generator/commit/686473afb186e53) bsorrentino *2024-12-02 16:52:16*
+
+**Merge branch 'main' into develop**
+
+
+[7d6bbebea778b01](https://github.com/bsorrentino/java-async-generator/commit/7d6bbebea778b01) bsorrentino *2024-12-02 15:44:36*
+
+**Merge branch 'hotfix/changeme'**
+
+
+[2faa97c6cac7ba5](https://github.com/bsorrentino/java-async-generator/commit/2faa97c6cac7ba5) bsorrentino *2024-12-02 15:44:34*
+
+**docs: update changeme**
+
+
+[2de8da8952074d6](https://github.com/bsorrentino/java-async-generator/commit/2de8da8952074d6) bsorrentino *2024-12-02 15:44:33*
+
+**Merge tag 'v2.3.0' into develop**
+
+ * new release
+
+[aeb90c8ce65f085](https://github.com/bsorrentino/java-async-generator/commit/aeb90c8ce65f085) bsorrentino *2024-12-02 15:44:19*
+
+
 ## v2.3.0
 ### No issue
 
