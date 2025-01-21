@@ -95,6 +95,13 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>3.11.1</version>
+                    <configuration>
+                        <show>public</show>
+                        <failOnError>false</failOnError>
+                        <sourceFileExcludes>
+                            <sourceFileExclude>**/module-info.java</sourceFileExclude>
+                        </sourceFileExcludes>
+                    </configuration>
                 </plugin>
 
                 <plugin>
