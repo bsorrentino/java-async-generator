@@ -230,7 +230,7 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
      * @deprecated Use {@link #async(Executor) async} and then call
      * {@link AsyncGeneratorOperators#collectAsync(List, BiConsumer)} collectAsync} for the desired functionality.
      */
-    @Deprecated
+    @Deprecated( forRemoval = true )
     default <R extends List<E>> CompletableFuture<R> collectAsync(R result, Consumer<E> consumer, Executor executor) {
         return async(executor).collectAsync( result, ( r, e ) -> {
             consumer.accept(e);
@@ -248,7 +248,7 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
      * @deprecated Use {@link #async(Executor) async} and then call
      * {@link AsyncGeneratorOperators#collectAsync(List, BiConsumer)} collectAsync} for the desired functionality.
      */
-    @Deprecated
+    @Deprecated( forRemoval = true)
     default <R extends List<E>> CompletableFuture<R> collectAsync(R result, Consumer<E> consumer) {
         return collectAsync( result, consumer, executor() );
     }
