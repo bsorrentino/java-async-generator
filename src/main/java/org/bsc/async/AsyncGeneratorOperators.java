@@ -9,7 +9,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.concurrent.CompletableFuture.supplyAsync;
 
 public interface AsyncGeneratorOperators<E> {
 
@@ -78,77 +77,27 @@ public interface AsyncGeneratorOperators<E> {
 
     /**
      * Asynchronously iterates over the elements of the AsyncGenerator and applies the given consumer to each element.
-     * This method doesn't spawn new threads.
-     *
-     * @param consumer the consumer function to be applied to each element
-     * @return a CompletableFuture representing the completion of the iteration process.
-     */
-    private CompletableFuture<Object> forEachAsyncNested(Consumer<E> consumer) {
-        final var next = next();
-        if (next.isDone()) {
-            return completedFuture(next.resultValue);
-        }
-        if (next.embed != null) {
-            return next.embed.generator.forEachAsync(consumer)
-                    .thenCompose(v -> forEachAsyncNested(consumer));
-        } else {
-            return next.data.thenApply(v -> {
-                        consumer.accept(v);
-                        return null;
-                    })
-                    .thenCompose(v -> forEachAsyncNested(consumer))
-                    ;
-        }
-    }
-
-    /**
-     * Asynchronously iterates over the elements of the AsyncGenerator and applies the given consumer to each element.
      *
      * @param consumer the consumer function to be applied to each element
      * @return a CompletableFuture representing the completion of the iteration process.
      */
     default CompletableFuture<Object> forEachAsync(Consumer<E> consumer) {
-        return supplyAsync( () -> {
+
             final var next = next();
             if (next.isDone()) {
-                return next.resultValue;
+                return completedFuture(next.resultValue);
             }
             if (next.embed != null) {
-                return next.embed.generator.forEachAsync(consumer)
-                        .thenCompose(v -> forEachAsyncNested(consumer));
+                return next.embed.generator.async(executor()).forEachAsync(consumer)
+                        .thenCompose(v -> forEachAsync(consumer) );
             } else {
-                return next.data.thenApply(v -> {
+                return next.data.thenApplyAsync(v -> {
                             consumer.accept(v);
                             return null;
-                        })
-                        .thenCompose(v -> forEachAsyncNested(consumer))
-                        .join();
+                        }, executor())
+                        .thenCompose(v -> forEachAsync(consumer))
+                        ;
             }
-        }, executor());
-    }
-
-
-    /**
-     *  Collects elements from the AsyncGenerator into a list.
-     *  This method doesn't spawn new threads.
-     *
-     * @param <R>      the type of the result list
-     * @param result   the result list to collect elements into
-     * @param consumer the consumer function for processing elements
-     * @return a CompletableFuture representing the completion of the collection process
-     */
-    private <R extends List<E>> CompletableFuture<R> collectAsyncNested(R result, BiConsumer<R,E> consumer) {
-
-        final var next = next();
-        if (next.isDone()) {
-            return completedFuture(result);
-        }
-        return next.data.thenApply(v -> {
-                    consumer.accept(result, v);
-                    return null;
-                })
-                .thenCompose(v -> collectAsyncNested(result, consumer))
-                ;
 
     }
 
@@ -161,21 +110,17 @@ public interface AsyncGeneratorOperators<E> {
      * @return a CompletableFuture representing the completion of the collection process
      */
     default <R extends List<E>> CompletableFuture<R> collectAsync(R result, BiConsumer<R,E> consumer) {
+        final var next = next();
+        if (next.isDone()) {
+            return completedFuture(result);
+        }
+        return next.data.thenApplyAsync(v -> {
+                    consumer.accept(result, v);
+                    return null;
+                }, executor() )
+                .thenCompose(v -> collectAsync(result, consumer))
+                ;
 
-        return supplyAsync( () -> {
-
-            final var next = next();
-            if (next.isDone()) {
-                return result;
-            }
-            return next.data.thenApply(v -> {
-                        consumer.accept(result, v);
-                        return null;
-                    })
-                    .thenCompose(v -> collectAsyncNested(result, consumer))
-                    .join();
-
-        }, executor());
     }
 
 }
