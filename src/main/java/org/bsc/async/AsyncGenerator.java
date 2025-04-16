@@ -12,6 +12,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 /**
@@ -21,12 +22,16 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
  */
 public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<E> {
 
+    interface HasResultValue {
+
+        Optional<Object> resultValue();
+    }
     /**
      * An asynchronous generator decorator that allows retrieving the result value of the asynchronous operation, if any.
      *
      * @param <E> the type of elements in the generator
      */
-    class WithResult<E> implements AsyncGenerator<E> {
+    class WithResult<E> implements AsyncGenerator<E>, HasResultValue {
 
         protected final AsyncGenerator<E> delegate;
         private Object resultValue;
@@ -42,7 +47,7 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
          *
          * @return an {@link Optional} containing the result value if present, or an empty Optional if not
          */
-        public Optional<Object> resultValue() { return Optional.ofNullable(resultValue); };
+        public Optional<Object> resultValue() { return ofNullable(resultValue); };
 
         @Override
         public final Data<E> next() {
@@ -59,7 +64,7 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
      *
      * @param <E> the type of elements in the generator
      */
-    class WithEmbed<E> implements AsyncGenerator<E> {
+    class WithEmbed<E> implements AsyncGenerator<E>, HasResultValue {
         protected final Deque<Embed<E>> generatorsStack = new ArrayDeque<>(2);
         private final Deque<Data<E>> returnValueStack = new ArrayDeque<>(2);
 
@@ -72,6 +77,11 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
 
         public Deque<Data<E>> resultValues() {
             return new UnmodifiableDeque<>( returnValueStack );
+        }
+
+        public Optional<Object> resultValue() {
+            return ofNullable( returnValueStack.peek() )
+                        .map( r -> r.resultValue );
         }
 
         private void clearPreviousReturnsValuesIfAny() {
@@ -230,7 +240,7 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
      * @deprecated Use {@link #async(Executor) async} and then call
      * {@link AsyncGeneratorOperators#collectAsync(List, BiConsumer)} collectAsync} for the desired functionality.
      */
-    @Deprecated
+    @Deprecated( forRemoval = true )
     default <R extends List<E>> CompletableFuture<R> collectAsync(R result, Consumer<E> consumer, Executor executor) {
         return async(executor).collectAsync( result, ( r, e ) -> {
             consumer.accept(e);
@@ -248,7 +258,7 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
      * @deprecated Use {@link #async(Executor) async} and then call
      * {@link AsyncGeneratorOperators#collectAsync(List, BiConsumer)} collectAsync} for the desired functionality.
      */
-    @Deprecated
+    @Deprecated( forRemoval = true)
     default <R extends List<E>> CompletableFuture<R> collectAsync(R result, Consumer<E> consumer) {
         return collectAsync( result, consumer, executor() );
     }
