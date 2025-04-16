@@ -2,6 +2,100 @@
 
 <!-- Changelog for bsorrentino java-async-generator. -->
 
+## v3.1.0
+### No issue
+
+**Merge branch 'release/3.1.0'**
+
+
+[1e79569960db41a](https://github.com/bsorrentino/java-async-generator/commit/1e79569960db41a) bsorrentino *2025-04-16 14:06:02*
+
+**build: bump to 3.1.0 version**
+
+
+[edc31a64edbc051](https://github.com/bsorrentino/java-async-generator/commit/edc31a64edbc051) bsorrentino *2025-04-16 14:04:45*
+
+**feat(AsyncGenerator.java): add interface HasResultValue  to support result value retrieval**
+
+
+[fee0822f6cbacd3](https://github.com/bsorrentino/java-async-generator/commit/fee0822f6cbacd3) bsorrentino *2025-04-16 14:02:57*
+
+**refactor(AsyncGeneratorOperators.java): update async usage**
+
+ * - use async operator thenApplyAsync
+ * - Removed redundant and unnecessary nested &#x60;forEachAsyncNested&#x60; and &#x60;collectAsyncNested&#x60; methods.
+
+[71aab83bb26c04a](https://github.com/bsorrentino/java-async-generator/commit/71aab83bb26c04a) bsorrentino *2025-04-16 10:33:51*
+
+**feat(tests): Added unit test AsyncGeneratorAsyncTest for asynchronous generator processing**
+
+ * - Removed unused import and disabled the &#x60;asyncGenTest&#x60; method
+
+[8f15f0bbd5ae681](https://github.com/bsorrentino/java-async-generator/commit/8f15f0bbd5ae681) bsorrentino *2025-04-16 10:30:02*
+
+**refactor(AsyncGenerator.java): update deprecation annotations to specify removal**
+
+ * - Updated &#x60;@Deprecated&#x60; annotations to include &#x60;forRemoval &#x3D; true&#x60; in &#x60;collectAsync&#x60; methods.
+
+[2f143364b93650e](https://github.com/bsorrentino/java-async-generator/commit/2f143364b93650e) bsorrentino *2025-04-01 20:08:02*
+
+**build: bump to new SNAPSHOT**
+
+
+[4ccd38e1441a85d](https://github.com/bsorrentino/java-async-generator/commit/4ccd38e1441a85d) bsorrentino *2025-04-01 20:02:51*
+
+**Merge branch 'main' into develop**
+
+
+[0727d18efe71323](https://github.com/bsorrentino/java-async-generator/commit/0727d18efe71323) bsorrentino *2025-01-21 22:29:43*
+
+**Merge branch 'hotfix/javadoc'**
+
+
+[0bec362c75303e3](https://github.com/bsorrentino/java-async-generator/commit/0bec362c75303e3) bsorrentino *2025-01-21 22:29:41*
+
+**docs: update javadoc**
+
+
+[78f72b0555519ac](https://github.com/bsorrentino/java-async-generator/commit/78f72b0555519ac) bsorrentino *2025-01-21 22:29:33*
+
+**Merge branch 'main' into develop**
+
+
+[e09ee827a9b59dc](https://github.com/bsorrentino/java-async-generator/commit/e09ee827a9b59dc) bsorrentino *2025-01-21 22:25:46*
+
+**Merge branch 'hotfix/javadoc'**
+
+
+[77b490a62d609a6](https://github.com/bsorrentino/java-async-generator/commit/77b490a62d609a6) bsorrentino *2025-01-21 22:25:44*
+
+**fix: configure Maven Javadoc Plugin to exclude module-info.java**
+
+
+[d9adb3d9fcc273e](https://github.com/bsorrentino/java-async-generator/commit/d9adb3d9fcc273e) bsorrentino *2025-01-21 22:25:27*
+
+**Merge branch 'main' into develop**
+
+
+[de7021ee1ef50b6](https://github.com/bsorrentino/java-async-generator/commit/de7021ee1ef50b6) bsorrentino *2025-01-21 19:01:31*
+
+**Merge branch 'hotfix/changeme'**
+
+
+[808a42ccbb0f271](https://github.com/bsorrentino/java-async-generator/commit/808a42ccbb0f271) bsorrentino *2025-01-21 19:01:29*
+
+**docs: update changeme**
+
+
+[3b0314aa86dfce3](https://github.com/bsorrentino/java-async-generator/commit/3b0314aa86dfce3) bsorrentino *2025-01-21 19:01:28*
+
+**Merge tag 'v3.0.0' into develop**
+
+ * new release
+
+[641fd108441838e](https://github.com/bsorrentino/java-async-generator/commit/641fd108441838e) bsorrentino *2025-01-21 19:01:21*
+
+
 ## v3.0.0
 ### No issue
 
