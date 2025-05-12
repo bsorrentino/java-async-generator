@@ -2,13 +2,25 @@
 
 
 
-<!-- "name: Unreleased" is a release tag -->
+<!-- "name: v3.2.0" is a release tag -->
 
-## [Unreleased](https://github.com/bsorrentino/java-async-generator/releases/tag/Unreleased) ()
+## [v3.2.0](https://github.com/bsorrentino/java-async-generator/releases/tag/v3.2.0) (2025-05-12)
 
+### Features
+
+ *  **GeneratorSubscriber**  add optional mapping for generator's result ([c123e0e307052bf](https://github.com/bsorrentino/java-async-generator/commit/c123e0e307052bf19fb4b4f274e3102b39ac3a13))
+     > - Updated the &#x60;onComplete&#x60; method to use the &#x60;mapResult&#x60; function when generating the completion data.
+   
+ *  **FlowGenerator**  add parameter to map result from publisher ([e5d7f78165d8089](https://github.com/bsorrentino/java-async-generator/commit/e5d7f78165d8089059515b7cba2a556b29746c54))
+   
+ *  **AsyncGenerator**  add isError() method to handle exceptions in asynchronous data ([1cf6811547d0296](https://github.com/bsorrentino/java-async-generator/commit/1cf6811547d02966ff8d35f121c21c1fa2965151))
+     > - remove deprecated methods
+   
 
 
 ### Documentation
+
+ -  update changeme ([f8d0b99fdac84d9](https://github.com/bsorrentino/java-async-generator/commit/f8d0b99fdac84d963a741f6039dc6c693035e265))
 
  -  update changeme ([9de329999bbcd8c](https://github.com/bsorrentino/java-async-generator/commit/9de329999bbcd8cdfcf265aaf6b85b93e2f37719))
 
@@ -18,6 +30,12 @@
  -  update changelog template ([0acddcf388ee5bb](https://github.com/bsorrentino/java-async-generator/commit/0acddcf388ee5bb858105c8bfccf94c350d328d9))
    
 
+### ALM 
+
+ -  bump to 3.2.0 version ([c2cb40e451208a0](https://github.com/bsorrentino/java-async-generator/commit/c2cb40e451208a0eb3dd8e0eaba5af1030e2e709))
+   
+ -  bump to SNAPSHOT ([659e9eecad7d23c](https://github.com/bsorrentino/java-async-generator/commit/659e9eecad7d23c7a8925e52a3e72318a47f2986))
+   
 
 
 
