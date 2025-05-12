@@ -3,8 +3,10 @@ package org.bsc.async.internal.reactive;
 import org.bsc.async.AsyncGenerator;
 import org.bsc.async.AsyncGeneratorQueue;
 
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Flow;
+import java.util.function.Supplier;
 
 /**
  * Represents a subscriber for generating asynchronous data streams.
@@ -18,7 +20,27 @@ import java.util.concurrent.Flow;
 public class GeneratorSubscriber<T> implements Flow.Subscriber<T>, AsyncGenerator<T> {
 
     private final AsyncGeneratorQueue.Generator<T> delegate;
+    private final Supplier<Object> mapResult;
 
+    public Optional<Supplier<Object>> mapResult() {
+        return Optional.ofNullable(mapResult);
+    }
+
+    /**
+     * Constructs a new instance of {@code GeneratorSubscriber}.
+     *
+     * @param <P> the type of the publisher, which must extend {@link Flow.Publisher}
+         * @param mapResult function that will set generator's result
+     * @param publisher the source publisher that will push data to this subscriber
+     * @param queue the blocking queue used for storing asynchronous generator data
+     */
+    public <P extends Flow.Publisher<T>> GeneratorSubscriber(P publisher,
+                                                             Supplier<Object> mapResult,
+                                                             BlockingQueue<AsyncGenerator.Data<T>> queue) {
+        this.delegate = new AsyncGeneratorQueue.Generator<>( queue );
+        this.mapResult = mapResult;
+        publisher.subscribe(this);
+    }
     /**
      * Constructs a new instance of {@code GeneratorSubscriber}.
      *
@@ -27,8 +49,7 @@ public class GeneratorSubscriber<T> implements Flow.Subscriber<T>, AsyncGenerato
      * @param queue the blocking queue used for storing asynchronous generator data
      */
     public <P extends Flow.Publisher<T>> GeneratorSubscriber(P publisher, BlockingQueue<AsyncGenerator.Data<T>> queue) {
-        this.delegate = new AsyncGeneratorQueue.Generator<>( queue );
-        publisher.subscribe(this);
+        this( publisher, null, queue );
     }
 
     /**
@@ -70,7 +91,7 @@ public class GeneratorSubscriber<T> implements Flow.Subscriber<T>, AsyncGenerato
      */
     @Override
     public void onComplete() {
-        delegate.queue().add(AsyncGenerator.Data.done());
+        delegate.queue().add(AsyncGenerator.Data.done( mapResult().map(Supplier::get).orElse(null)));
     }
 
     /**

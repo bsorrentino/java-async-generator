@@ -175,6 +175,10 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
             return data == null && embed == null;
         }
 
+        public boolean isError() {
+            return data != null && data.isCompletedExceptionally();
+        }
+
         public static <E> Data<E> of(CompletableFuture<E> data) { return new Data<>(data, null, null);}
 
         public static <E> Data<E> of(E data) { return new Data<>( completedFuture(data), null, null); }
@@ -229,39 +233,6 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
         return next.data.thenCompose(v -> toCompletableFuture());
     }
 
-    /**
-     * Collects elements from the AsyncGenerator asynchronously into a list.
-     *
-     * @param <R> the type of the result list
-     * @param result the result list to collect elements into
-     * @param consumer the consumer function for processing elements
-     * @param executor the executor to use for the asynchronous collection
-     * @return a CompletableFuture representing the completion of the collection process
-     * @deprecated Use {@link #async(Executor) async} and then call
-     * {@link AsyncGeneratorOperators#collectAsync(List, BiConsumer)} collectAsync} for the desired functionality.
-     */
-    @Deprecated( forRemoval = true )
-    default <R extends List<E>> CompletableFuture<R> collectAsync(R result, Consumer<E> consumer, Executor executor) {
-        return async(executor).collectAsync( result, ( r, e ) -> {
-            consumer.accept(e);
-            r.add(e);
-        } );
-    }
-
-    /**
-     * Collects elements from the AsyncGenerator asynchronously into a list.
-     *
-     * @param <R> the type of the result list
-     * @param result the result list to collect elements into
-     * @param consumer the consumer function for processing elements
-     * @return a CompletableFuture representing the completion of the collection process
-     * @deprecated Use {@link #async(Executor) async} and then call
-     * {@link AsyncGeneratorOperators#collectAsync(List, BiConsumer)} collectAsync} for the desired functionality.
-     */
-    @Deprecated( forRemoval = true)
-    default <R extends List<E>> CompletableFuture<R> collectAsync(R result, Consumer<E> consumer) {
-        return collectAsync( result, consumer, executor() );
-    }
     /**
      * Returns a sequential Stream with the elements of this AsyncGenerator.
      * Each CompletableFuture is resolved and then make available to the stream.
@@ -401,11 +372,16 @@ class InternalIterator<E> implements Iterator<E> {
     public E next() {
         try {
             w.lock();
+
             AsyncGenerator.Data<E> next = currentFetchedData;
-            if( next==null || next.isDone()) {
+
+            if( next==null || next.isDone() ) {
                 throw new IllegalStateException("no more elements into iterator");
             }
-            currentFetchedData = delegate.next();
+
+            if( !next.isError() ) {
+                currentFetchedData = delegate.next();
+            }
 
             return next.data.join();
         }
