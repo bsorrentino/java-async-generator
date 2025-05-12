@@ -5,6 +5,7 @@ import org.bsc.async.internal.reactive.GeneratorSubscriber;
 
 import java.util.concurrent.Flow;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Supplier;
 
 /**
  * Provides methods for converting between {@link FlowGenerator} and various {@link java.util.concurrent.Flow.Publisher} types.
@@ -19,11 +20,25 @@ public interface FlowGenerator {
      * @param <T> the type of item emitted by the publisher
      * @param <P> the type of the publisher
      * @param publisher the publisher to subscribe to for retrieving items asynchronously
+     * @param mapResult function that will set generator's result
+     * @return an {@code AsyncGenerator} that emits items from the publisher
+     */
+    @SuppressWarnings("unchecked")
+    static <T, P extends Flow.Publisher<T>, R> AsyncGenerator<T> fromPublisher( P publisher, Supplier<R> mapResult ) {
+        var queue = new LinkedBlockingQueue<AsyncGenerator.Data<T>>();
+        return new GeneratorSubscriber<>( publisher, (Supplier<Object>) mapResult, queue );
+    }
+
+    /**
+     * Creates an {@code AsyncGenerator} from a {@code Flow.Publisher}.
+     *
+     * @param <T> the type of item emitted by the publisher
+     * @param <P> the type of the publisher
+     * @param publisher the publisher to subscribe to for retrieving items asynchronously
      * @return an {@code AsyncGenerator} that emits items from the publisher
      */
     static <T, P extends Flow.Publisher<T>> AsyncGenerator<T> fromPublisher( P publisher ) {
-        var queue = new LinkedBlockingQueue<AsyncGenerator.Data<T>>();
-        return new GeneratorSubscriber<T>( publisher, queue );
+        return fromPublisher( publisher, null );
     }
 
     /**
