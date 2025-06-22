@@ -5,7 +5,8 @@ import org.bsc.async.internal.UnmodifiableDeque;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -199,6 +200,11 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
 
     }
 
+    /**
+     * return an async generator that use the given executor
+     * @param executor the executor to use
+     * @return new async generator
+     */
     default AsyncGeneratorOperators<E> async( Executor executor ) {
         return new AsyncGeneratorOperators<E>() {
             @Override
@@ -212,6 +218,16 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
             }
         };
     }
+
+    /**
+     * return an async generator that use the ForkJoinPool.commonPool() as default executor
+     * @return new async generator
+     */
+    default AsyncGeneratorOperators<E> async() {
+        return async(ForkJoinPool.commonPool());
+    }
+
+
 
     /**
      * Retrieves the next asynchronous element.
@@ -346,47 +362,31 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
 
 class InternalIterator<E> implements Iterator<E> {
     private final AsyncGenerator<E> delegate;
-    private AsyncGenerator.Data<E> currentFetchedData;
-    private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
-    private final ReentrantReadWriteLock.ReadLock r = rwl.readLock();
-    private final ReentrantReadWriteLock.WriteLock w = rwl.writeLock();
 
+    final AtomicReference<AsyncGenerator.Data<E>> currentFetchedData;
 
     public InternalIterator(AsyncGenerator<E> delegate) {
         this.delegate = delegate;
-        currentFetchedData = delegate.next();
+        currentFetchedData = new AtomicReference<>(delegate.next());
     }
     @Override
     public boolean hasNext() {
-        try {
-            r.lock();
-            final AsyncGenerator.Data<E> value = currentFetchedData;
-            return value != null && !value.isDone();
-        }
-        finally {
-            r.unlock();
-        }
+        final var value = currentFetchedData.get();
+        return value != null && !value.isDone();
     }
 
     @Override
     public E next() {
-        try {
-            w.lock();
+        var next = currentFetchedData.get();
 
-            AsyncGenerator.Data<E> next = currentFetchedData;
-
-            if( next==null || next.isDone() ) {
-                throw new IllegalStateException("no more elements into iterator");
-            }
-
-            if( !next.isError() ) {
-                currentFetchedData = delegate.next();
-            }
-
-            return next.data.join();
+        if( next==null || next.isDone() ) {
+            throw new IllegalStateException("no more elements into iterator");
         }
-        finally {
-            w.unlock();
+
+        if( !next.isError() ) {
+            currentFetchedData.set( delegate.next() );
         }
+
+        return next.data.join();
     }
 };

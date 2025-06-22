@@ -6,16 +6,28 @@
 A Java version of Javascript async generator. 
 Idea is to create an iterator-like interface that emit elements as [CompletableFuture] ( the Java counterpart of Javascript Promise ) enabling asynchronous iteration over data 
 
-# Releases 
+
+## Releases 
 
 **Note: ‼️**
 > From release 3.0.0 the miminum supported Java version is the `Java 17` and
 > will not be longer available the artifact `async-generator-jdk8`
 
 
-# Samples
+## Installation
 
-## Create an Async Generator to make multiple API calls
+**Maven**
+```xml
+<dependency>
+    <groupId>org.bsc.async</groupId>
+    <artifactId>async-generator</artifactId>
+    <version>3.2.1</version> <!-- Or the current snapshot version -->
+</dependency>
+```
+
+## Samples
+
+### Create an Async Generator to make multiple API calls
  
 ```java
 
@@ -45,7 +57,7 @@ for( Response response : generator ) {
 
 ```
 
-Articles:
+## Articles:
 
 * [How to stream data over HTTP using Java Servlet and Fetch API](https://bsorrentino.github.io/bsorrentino/web/2024/07/21/how-to-stream-data-in-java.html)
 
