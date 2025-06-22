@@ -2,6 +2,46 @@
 
 
 
+<!-- "name: v3.2.1" is a release tag -->
+
+## [v3.2.1](https://github.com/bsorrentino/java-async-generator/releases/tag/v3.2.1) (2025-06-22)
+
+### Features
+
+ *  add method to create async generator with a default executor ([6a56c5a89d3c8d5](https://github.com/bsorrentino/java-async-generator/commit/6a56c5a89d3c8d52833244d39939f86c1bcfdec3))
+     > - Added &#x60;async()&#x60; method as a default implementation that uses the common &#x60;ForkJoinPool&#x60;.
+   
+
+
+### Documentation
+
+ -  update README.md ([c0edb346316dc82](https://github.com/bsorrentino/java-async-generator/commit/c0edb346316dc82e63e49d048a7545d56def9213))
+
+ -  update changeme ([623e0cda5d251ad](https://github.com/bsorrentino/java-async-generator/commit/623e0cda5d251adb51a55cdfb0346af523c526d9))
+
+
+### Refactor
+
+ -  replace ReentrantReadWriteLock with AtomicReference ([49ae7dd5cbed212](https://github.com/bsorrentino/java-async-generator/commit/49ae7dd5cbed212aec341592783e84803013abc7))
+    > - Introduced &#x60;AtomicReference&#x60; to manage the current fetched data, simplifying the locking mechanism and improving performance.
+ > - Removed unnecessary read and write locks, reducing lock contention and enhancing concurrency.
+ > resolve #3
+
+
+### ALM 
+
+ -  bump to version 3.2.1 ([007965d9fd82b5b](https://github.com/bsorrentino/java-async-generator/commit/007965d9fd82b5b32b7c0776067aaae2c1ce4c1b))
+   
+ -  update JDK version to Java 17 in deploy-snapshot.yaml action ([539dd9fa2e6799e](https://github.com/bsorrentino/java-async-generator/commit/539dd9fa2e6799e888f9e56176eecbf9b5425753))
+   
+ -  move to 3.2-SNAPSHOT ([3af1271300a9e96](https://github.com/bsorrentino/java-async-generator/commit/3af1271300a9e960eda3ba134c3daea28d6984ce))
+   
+
+
+
+
+
+
 <!-- "name: v3.2.0" is a release tag -->
 
 ## [v3.2.0](https://github.com/bsorrentino/java-async-generator/releases/tag/v3.2.0) (2025-05-12)
