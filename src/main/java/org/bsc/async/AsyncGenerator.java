@@ -5,6 +5,7 @@ import org.bsc.async.internal.UnmodifiableDeque;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -199,6 +200,11 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
 
     }
 
+    /**
+     * return an async generator that use the given executor
+     * @param executor the executor to use
+     * @return new async generator
+     */
     default AsyncGeneratorOperators<E> async( Executor executor ) {
         return new AsyncGeneratorOperators<E>() {
             @Override
@@ -212,6 +218,16 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
             }
         };
     }
+
+    /**
+     * return an async generator that use the ForkJoinPool.commonPool() as default executor
+     * @return new async generator
+     */
+    default AsyncGeneratorOperators<E> async() {
+        return async(ForkJoinPool.commonPool());
+    }
+
+
 
     /**
      * Retrieves the next asynchronous element.
