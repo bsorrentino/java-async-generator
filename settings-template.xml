@@ -4,8 +4,8 @@
     <servers>
 
         <server>
-            <id>sonatype-server</id>
-            <username>yEKudvqX</username>
+            <id>sonatype-central</id>
+            <username>R4ncrpkA</username>
             <password>${env.OSS_SONATYPE_TOKEN}</password>
         </server>
 
@@ -16,55 +16,5 @@
         </server>
 
     </servers>
-
-    <profiles>
-
-        <profile>
-            <id>sonatype</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <snapshot.repo.id>sonatype-server</snapshot.repo.id>
-                <snapshot.repo.url>https://oss.sonatype.org/content/repositories/snapshots</snapshot.repo.url>
-                <release.repo.id>sonatype-server</release.repo.id>
-                <release.repo.url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</release.repo.url>
-                <group.repo.url>https://oss.sonatype.org/content/groups/public/</group.repo.url>
-            </properties>
-
-            <repositories>
-
-                <repository>
-                    <id>sonatype-server</id>
-                    <name>sonatype snapshots</name>
-                    <url>${snapshot.repo.url}</url>
-                    <snapshots>
-                        <enabled>true</enabled>
-                    </snapshots>
-                    <releases>
-                        <enabled>false</enabled>
-                    </releases>
-                </repository>
-
-            </repositories>
-
-            <pluginRepositories>
-
-                <pluginRepository>
-                    <id>sonatype-server</id>
-                    <name>sonatype snapshots</name>
-                    <url>${snapshot.repo.url}</url>
-
-                    <snapshots>
-                        <updatePolicy>always</updatePolicy>
-                        <checksumPolicy>ignore</checksumPolicy>
-                    </snapshots>
-
-                </pluginRepository>
-
-            </pluginRepositories>
-        </profile>
-
-    </profiles>
 
 </settings>
