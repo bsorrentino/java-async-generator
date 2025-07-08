@@ -27,6 +27,21 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
 
         Optional<Object> resultValue();
     }
+
+    static Optional<Object> resultValue( AsyncGenerator<?> generator ) {
+        if( generator instanceof HasResultValue withResult ) {
+            return withResult.resultValue();
+        }
+        return Optional.empty();
+    }
+
+    static Optional<Object> resultValue( Iterator<?> iterator ) {
+        if( iterator instanceof HasResultValue withResult ) {
+            return withResult.resultValue();
+        }
+        return Optional.empty();
+    }
+
     /**
      * An asynchronous generator decorator that allows retrieving the result value of the asynchronous operation, if any.
      *
@@ -227,8 +242,6 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
         return async(ForkJoinPool.commonPool());
     }
 
-
-
     /**
      * Retrieves the next asynchronous element.
      *
@@ -360,7 +373,7 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
 
 }
 
-class InternalIterator<E> implements Iterator<E> {
+class InternalIterator<E> implements Iterator<E>, AsyncGenerator.HasResultValue {
     private final AsyncGenerator<E> delegate;
 
     final AtomicReference<AsyncGenerator.Data<E>> currentFetchedData;
@@ -388,5 +401,13 @@ class InternalIterator<E> implements Iterator<E> {
         }
 
         return next.data.join();
+    }
+
+    @Override
+    public Optional<Object> resultValue() {
+        if( delegate instanceof AsyncGenerator.HasResultValue withResult ) {
+            return withResult.resultValue();
+        }
+        return Optional.empty();
     }
 };
