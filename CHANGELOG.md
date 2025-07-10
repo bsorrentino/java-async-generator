@@ -2,6 +2,54 @@
 
 
 
+<!-- "name: Unreleased" is a release tag -->
+
+## [Unreleased](https://github.com/bsorrentino/java-async-generator/releases/tag/Unreleased) ()
+
+
+
+
+
+
+
+
+
+
+
+<!-- "name: v3.2.2" is a release tag -->
+
+## [v3.2.2](https://github.com/bsorrentino/java-async-generator/releases/tag/v3.2.2) (2025-07-10)
+
+### Features
+
+ *  improve support for retrieve generator return value ([df3f83cf75f3d61](https://github.com/bsorrentino/java-async-generator/commit/df3f83cf75f3d61b40494dc862c00c6e92437839))
+     > - add support of return value to iterator
+     > - add utility methods for query return value
+   
+
+
+### Documentation
+
+ -  update changeme ([e8846913e3d1b49](https://github.com/bsorrentino/java-async-generator/commit/e8846913e3d1b49527f6d2a33d51d35dae5c2b91))
+
+
+### Refactor
+
+ -  **deploy**  refactor: move to sonatype-central deployment repo ([f7365d58f4e75e2](https://github.com/bsorrentino/java-async-generator/commit/f7365d58f4e75e2bbbefe841c2ef3298247813b6))
+   
+ -  move to sonatype-central deployment repo ([c43cac491b9fa80](https://github.com/bsorrentino/java-async-generator/commit/c43cac491b9fa801933a209ecfb0200c5d6c34e6))
+   
+
+### ALM 
+
+ -  bump to version 3.2.2 ([25d0d2d4f9eb641](https://github.com/bsorrentino/java-async-generator/commit/25d0d2d4f9eb6419a86c40dce64a8009251fea38))
+   
+
+
+
+
+
+
 <!-- "name: v3.2.1" is a release tag -->
 
 ## [v3.2.1](https://github.com/bsorrentino/java-async-generator/releases/tag/v3.2.1) (2025-06-22)
