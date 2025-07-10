@@ -4,7 +4,7 @@
 
     <groupId>org.bsc.async</groupId>
     <artifactId>async-generator</artifactId>
-    <version>3.2-SNAPSHOT</version>
+    <version>3.2.2</version>
     <packaging>jar</packaging>
     <description>a Java version of Javascript async generator</description>
 
@@ -160,6 +160,8 @@
                 <extensions>true</extensions>
                 <configuration>
                     <publishingServerId>sonatype-central</publishingServerId>
+                    <autoPublish>true</autoPublish>
+                    <waitUntil>published</waitUntil>
                 </configuration>
             </plugin>
 
