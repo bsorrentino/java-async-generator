@@ -4,7 +4,7 @@
 
     <groupId>org.bsc.async</groupId>
     <artifactId>async-generator</artifactId>
-    <version>3.2.1</version>
+    <version>3.2.2</version>
     <packaging>jar</packaging>
     <description>a Java version of Javascript async generator</description>
 
@@ -35,6 +35,7 @@
         <url>https://github.com/bsorrentino/java-async-generator/issues</url>
     </issueManagement>
 
+<!--
     <distributionManagement>
         <repository>
             <id>${release.repo.id}</id>
@@ -47,6 +48,7 @@
             <url>${snapshot.repo.url}</url>
         </snapshotRepository>
     </distributionManagement>
+-->
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -151,6 +153,18 @@
                 </configuration>
             </plugin>
 
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.8.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>sonatype-central</publishingServerId>
+                    <autoPublish>true</autoPublish>
+                    <waitUntil>published</waitUntil>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
 
@@ -182,11 +196,9 @@
                         </executions>
                     </plugin>
                     <!--
-                    ====================================================================================
-                    # https://github.com/keybase/keybase-issues/issues/2798
-                    export GPG_TTY=$(tty)
-                    mvn -Prelease source:jar javadoc:jar deploy -Dgpg.passphrase=thephrase
-                    ====================================================================================
+                    =====================================================================================================
+                    mvn -Prelease source:jar javadoc:jar install central-publishing:publish -Dgpg.passphrase=thephrase
+                    =====================================================================================================
                     -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -209,17 +221,19 @@
                             </gpgArguments>
                         </configuration>
                     </plugin>
+                    <!--
                     <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.7.0</version>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <serverId>sonatype-server</serverId>
-                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                        </configuration>
+                      <groupId>org.sonatype.plugins</groupId>
+                      <artifactId>nexus-staging-maven-plugin</artifactId>
+                      <version>1.7.0</version>
+                      <extensions>true</extensions>
+                      <configuration>
+                        <serverId>sonatype-central</serverId>
+                        <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                         <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                      </configuration>
                     </plugin>
+                    -->
                 </plugins>
             </build>
         </profile>
