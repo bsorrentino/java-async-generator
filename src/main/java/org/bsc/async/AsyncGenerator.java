@@ -160,7 +160,7 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
         void accept(Object t) throws Exception;
     }
 
-    class Embed<E> {
+    class Embed<E> implements HasResultValue {
         final AsyncGenerator<E> generator;
         final EmbedCompletionHandler onCompletion;
 
@@ -169,6 +169,11 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
             this.generator = generator;
             this.onCompletion = onCompletion;
         }
+
+        @Override
+        public Optional<Object> resultValue() {
+            return AsyncGenerator.resultValue(generator);
+        };
     }
 
     /**
