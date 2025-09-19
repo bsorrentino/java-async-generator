@@ -125,12 +125,12 @@ public interface AsyncGeneratorOperators<E> extends Iterable<E> {
 
     /**
      * method that request to cancel generation
-     * Note: default implementation do nothing and return false
+     * Note: default implementation raise an UnsupportedOperationException
+     *
      * @param reason reason of cancellation
-     * @return true if success otherwise false
      */
-    default boolean cancel( String reason ) {
-        return false;
+    default void cancel( String reason ) {
+        throw new UnsupportedOperationException("cancel is not implemented yet!");
     }
 
 }
