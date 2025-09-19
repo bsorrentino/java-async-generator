@@ -21,7 +21,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
  *
  * @param <E> the type of elements. The generator will emit {@link  java.util.concurrent.CompletableFuture CompletableFutures&lt;E&gt;} elements
  */
-public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<E> {
+public interface AsyncGenerator<E> extends AsyncGeneratorOperators<E> {
 
     interface HasResultValue {
 
@@ -226,7 +226,12 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
      * @return new async generator
      */
     default AsyncGeneratorOperators<E> async( Executor executor ) {
-        return new AsyncGeneratorOperators<E>() {
+        return new AsyncGeneratorOperators<>() {
+            @Override
+            public Iterator<E> iterator() {
+                return AsyncGenerator.this.iterator();
+            }
+
             @Override
             public Data<E> next() {
                 return AsyncGenerator.this.next();
