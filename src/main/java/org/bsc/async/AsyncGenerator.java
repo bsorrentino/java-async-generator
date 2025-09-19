@@ -21,7 +21,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
  *
  * @param <E> the type of elements. The generator will emit {@link  java.util.concurrent.CompletableFuture CompletableFutures&lt;E&gt;} elements
  */
-public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<E> {
+public interface AsyncGenerator<E> extends AsyncGeneratorOperators<E> {
 
     interface HasResultValue {
 
@@ -160,7 +160,7 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
         void accept(Object t) throws Exception;
     }
 
-    class Embed<E> {
+    class Embed<E> implements HasResultValue {
         final AsyncGenerator<E> generator;
         final EmbedCompletionHandler onCompletion;
 
@@ -169,6 +169,11 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
             this.generator = generator;
             this.onCompletion = onCompletion;
         }
+
+        @Override
+        public Optional<Object> resultValue() {
+            return AsyncGenerator.resultValue(generator);
+        };
     }
 
     /**
@@ -221,7 +226,12 @@ public interface AsyncGenerator<E> extends Iterable<E>, AsyncGeneratorOperators<
      * @return new async generator
      */
     default AsyncGeneratorOperators<E> async( Executor executor ) {
-        return new AsyncGeneratorOperators<E>() {
+        return new AsyncGeneratorOperators<>() {
+            @Override
+            public Iterator<E> iterator() {
+                return AsyncGenerator.this.iterator();
+            }
+
             @Override
             public Data<E> next() {
                 return AsyncGenerator.this.next();
