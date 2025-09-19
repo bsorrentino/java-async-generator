@@ -47,11 +47,10 @@ public class GeneratorPublisher<T> implements Flow.Publisher<T> {
             /**
              * Cancels the operation.
              * 
-             * @throws UnsupportedOperationException if the method is not yet implemented.
              */
             @Override
             public void cancel() {
-                throw new UnsupportedOperationException("cancel is not implemented yet!");
+                delegate.cancel("cancellation request got on subscription");
             }
         });
 
