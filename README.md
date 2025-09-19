@@ -21,7 +21,7 @@ Idea is to create an iterator-like interface that emit elements as [CompletableF
 <dependency>
     <groupId>org.bsc.async</groupId>
     <artifactId>async-generator</artifactId>
-    <version>3.2.2</version> <!-- Or the current snapshot version -->
+    <version>3.2.3</version> <!-- Or the current snapshot version -->
 </dependency>
 ```
 
