@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
-public interface AsyncGeneratorOperators<E> {
+public interface AsyncGeneratorOperators<E> extends Iterable<E> {
 
     AsyncGenerator.Data<E> next();
 
@@ -121,6 +121,16 @@ public interface AsyncGeneratorOperators<E> {
                 .thenCompose(v -> collectAsync(result, consumer))
                 ;
 
+    }
+
+    /**
+     * method that request to cancel generation
+     * Note: default implementation do nothing and return false
+     * @param reason reason of cancellation
+     * @return true if success otherwise false
+     */
+    default boolean cancel( String reason ) {
+        return false;
     }
 
 }
