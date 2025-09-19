@@ -2,18 +2,42 @@
 
 
 
-<!-- "name: Unreleased" is a release tag -->
+<!-- "name: v3.2.3" is a release tag -->
 
-## [Unreleased](https://github.com/bsorrentino/java-async-generator/releases/tag/Unreleased) ()
+## [v3.2.3](https://github.com/bsorrentino/java-async-generator/releases/tag/v3.2.3) (2025-09-19)
 
+### Features
+
+ *  **GeneratorPublisher**  Update cancellation method implementation ([324a10e2a85f62e](https://github.com/bsorrentino/java-async-generator/commit/324a10e2a85f62eb8820e26d5407148f449ff8b8))
+     > Replace throw statement with delegate.cancel() call to handle cancellation request on subscription.
+     > work on #2
+   
+ *  add cancel method to allow its extensions to implement a cancellation strategy ([dec058e58d25e23](https://github.com/bsorrentino/java-async-generator/commit/dec058e58d25e230a489210b0d0c0be8c22de061))
+     > work on #2
+   
 
 
 ### Documentation
 
+ -  bump to version 3.2.3 ([11cf718cf09df62](https://github.com/bsorrentino/java-async-generator/commit/11cf718cf09df62ff24eec9901761a633517d598))
+
+ -  update changeme ([363a524c24fc79f](https://github.com/bsorrentino/java-async-generator/commit/363a524c24fc79fec0a024e1777a978329e69378))
+
  -  update changeme ([26c0fb3fd9228ff](https://github.com/bsorrentino/java-async-generator/commit/26c0fb3fd9228ffe0a0feea160e60ae4cecb27bf))
 
 
+### Refactor
 
+ -  default implementation of cancel() method raises UnsupportedOperationException ([a46cf8a01937f7c](https://github.com/bsorrentino/java-async-generator/commit/a46cf8a01937f7c128a25480e912bfdac059d85a))
+    > work on #2
+
+ -  **AsyncGeneratorQueue**  Removed deprecated method of(Q, Consumer, Executor) from AsyncGeneratorQueue ([6b5e7eec9f42d36](https://github.com/bsorrentino/java-async-generator/commit/6b5e7eec9f42d362b73d0fa1aafbf91d86c8c039))
+   
+
+### ALM 
+
+ -  bump to version 3.2.3 ([acc241506cdf609](https://github.com/bsorrentino/java-async-generator/commit/acc241506cdf6098b2eb32d782963e773164dfb2))
+   
 
 
 
