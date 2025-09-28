@@ -8,11 +8,57 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
-public interface AsyncGeneratorOperators<E> extends Iterable<E> {
+public interface AsyncGeneratorBase<E> extends Iterable<E> {
 
-    AsyncGenerator.Data<E> next();
+    /**
+     * Represents a data element in the AsyncGenerator.
+     *
+     * @param <E> the type of the data element
+     */
+    record Data<E> (
+            CompletableFuture<E> future,
+            AsyncGenerator.Embed<E> embed,
+            Object resultValue )
+    {
+
+        public boolean isDone() {
+            return (future == null && embed == null );
+        }
+
+        public boolean isError() {
+            return future != null && future.isCompletedExceptionally();
+        }
+
+        public static <E> Data<E> of(CompletableFuture<E> future) {
+            return new Data<>( requireNonNull(future, "future task cannot be null"), null, null);
+        }
+
+        public static <E> Data<E> of(E data) { return new Data<>( completedFuture(data), null, null); }
+
+        public static <E> Data<E> composeWith( AsyncGenerator<E> generator, AsyncGenerator.EmbedCompletionHandler onCompletion) {
+            return new Data<>( null, new AsyncGenerator.Embed<>(generator, onCompletion), null );
+        }
+
+        public static <E> Data<E> done() { return new Data<>(null, null, null); }
+
+        public static <E> Data<E> done( Object resultValue) { return new Data<>(null, null, resultValue); }
+
+        public static <E> Data<E> error( Throwable exception ) {
+            return Data.of(CompletableFuture.failedFuture(exception));
+        }
+
+    }
+
+    /**
+     * Retrieves the next asynchronous element.
+     *
+     * @return the next element from the generator
+     */
+    Data<E> next();
+
 
     default Executor executor() {
         return Runnable::run;
@@ -29,9 +75,9 @@ public interface AsyncGeneratorOperators<E> extends Iterable<E> {
         return () -> {
             final AsyncGenerator.Data<E> next = next();
             if (next.isDone()) {
-                return AsyncGenerator.Data.done(next.resultValue);
+                return AsyncGenerator.Data.done(next.resultValue());
             }
-            return AsyncGenerator.Data.of(next.data.thenApplyAsync(mapFunction, executor()));
+            return AsyncGenerator.Data.of(next.future().thenApplyAsync(mapFunction, executor()));
         };
     }
 
@@ -46,9 +92,9 @@ public interface AsyncGeneratorOperators<E> extends Iterable<E> {
         return () -> {
             final AsyncGenerator.Data<E> next = next();
             if (next.isDone()) {
-                return AsyncGenerator.Data.done(next.resultValue);
+                return AsyncGenerator.Data.done(next.resultValue());
             }
-            return AsyncGenerator.Data.of(next.data.thenComposeAsync(mapFunction, executor()));
+            return AsyncGenerator.Data.of(next.future().thenComposeAsync(mapFunction, executor()));
         };
     }
 
@@ -64,14 +110,14 @@ public interface AsyncGeneratorOperators<E> extends Iterable<E> {
             AsyncGenerator.Data<E> next = next();
             while (!next.isDone()) {
 
-                final E value = next.data.join();
+                final E value = next.future().join();
 
                 if (predicate.test(value)) {
                     return next;
                 }
                 next = next();
             }
-            return AsyncGenerator.Data.done(next.resultValue);
+            return AsyncGenerator.Data.done(next.resultValue());
         };
     }
 
@@ -81,23 +127,30 @@ public interface AsyncGeneratorOperators<E> extends Iterable<E> {
      * @param consumer the consumer function to be applied to each element
      * @return a CompletableFuture representing the completion of the iteration process.
      */
-    default CompletableFuture<Object> forEachAsync(Consumer<E> consumer) {
+    default CompletableFuture<Object>   forEachAsync(Consumer<E> consumer) {
+/*
+        if( this instanceof AsyncGenerator.IsCancellable isCancellable) {
+            if (isCancellable.isCancelled()) {
+                return completedFuture(AsyncGenerator.IsCancellable.CANCELLED);
+            }
+        }
 
-            final var next = next();
-            if (next.isDone()) {
-                return completedFuture(next.resultValue);
-            }
-            if (next.embed != null) {
-                return next.embed.generator.async(executor()).forEachAsync(consumer)
-                        .thenCompose(v -> forEachAsync(consumer) );
-            } else {
-                return next.data.thenApplyAsync(v -> {
-                            consumer.accept(v);
-                            return null;
-                        }, executor())
-                        .thenCompose(v -> forEachAsync(consumer))
-                        ;
-            }
+ */
+        final var next = next();
+        if (next.isDone()) {
+            return completedFuture(next.resultValue());
+        }
+        if (next.embed() != null) {
+            return next.embed().generator.async(executor()).forEachAsync(consumer)
+                    .thenCompose(v -> forEachAsync(consumer) );
+        } else {
+            return next.future().thenApplyAsync(v -> {
+                        consumer.accept(v);
+                        return null;
+                    }, executor() )
+                    .thenComposeAsync(v -> forEachAsync(consumer), executor())
+                    ;
+        }
 
     }
 
@@ -114,23 +167,13 @@ public interface AsyncGeneratorOperators<E> extends Iterable<E> {
         if (next.isDone()) {
             return completedFuture(result);
         }
-        return next.data.thenApplyAsync(v -> {
+        return next.future().thenApplyAsync(v -> {
                     consumer.accept(result, v);
                     return null;
                 }, executor() )
                 .thenCompose(v -> collectAsync(result, consumer))
                 ;
 
-    }
-
-    /**
-     * method that request to cancel generation
-     * Note: default implementation raise an UnsupportedOperationException
-     *
-     * @param reason reason of cancellation
-     */
-    default void cancel( String reason ) {
-        throw new UnsupportedOperationException("cancel is not implemented yet!");
     }
 
 }
