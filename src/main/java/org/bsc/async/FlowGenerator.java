@@ -24,7 +24,7 @@ public interface FlowGenerator {
      * @return an {@code AsyncGenerator} that emits items from the publisher
      */
     @SuppressWarnings("unchecked")
-    static <T, P extends Flow.Publisher<T>, R> AsyncGenerator<T> fromPublisher( P publisher, Supplier<R> mapResult ) {
+    static <T, P extends Flow.Publisher<T>, R> AsyncGenerator.Cancellable<T> fromPublisher( P publisher, Supplier<R> mapResult ) {
         var queue = new LinkedBlockingQueue<AsyncGenerator.Data<T>>();
         return new GeneratorSubscriber<>( publisher, (Supplier<Object>) mapResult, queue );
     }
@@ -37,7 +37,7 @@ public interface FlowGenerator {
      * @param publisher the publisher to subscribe to for retrieving items asynchronously
      * @return an {@code AsyncGenerator} that emits items from the publisher
      */
-    static <T, P extends Flow.Publisher<T>> AsyncGenerator<T> fromPublisher( P publisher ) {
+    static <T, P extends Flow.Publisher<T>> AsyncGenerator.Cancellable<T> fromPublisher( P publisher ) {
         return fromPublisher( publisher, null );
     }
 
