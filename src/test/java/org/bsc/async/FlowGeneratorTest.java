@@ -99,4 +99,64 @@ public class FlowGeneratorTest {
 
     }
 
+    @Test
+    public void flowGeneratorSubscriberAndCancelTest() throws Exception {
+
+        var executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(20);
+
+        var publisher = new SubmissionPublisher<String>();
+
+        final var data = List.of( "e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8", "e9", "e10" );
+
+        var generator = FlowGenerator.fromPublisher(publisher);
+
+        assertTrue( publisher.hasSubscribers() );
+
+        var submitting = runAsync( () -> {
+
+            try {
+                for (String value : data) {
+                    System.out.printf("publishing: %s\n", value);
+                    publisher.submit(value);
+
+                    Thread.sleep(1000);
+                }
+            } catch( InterruptedException e ) {
+                throw new CompletionException(e);
+            } finally{
+                publisher.close();
+
+            }
+        }, executor );
+
+        final List<String> result = new ArrayList<>();
+        var iterating = generator
+                        .async( executor )
+                        .forEachAsync( value -> {
+                            try {
+                                Thread.sleep(10);
+                                System.out.printf("received: %s\n", value);
+                                result.add(value);
+                            } catch (InterruptedException e) {
+                                throw new CompletionException(e);
+                            }
+                        });
+
+
+        CompletableFuture.allOf(iterating, submitting );
+
+        Thread.sleep( 4000 );
+        generator.cancel();
+
+
+        assertEquals( 4, result.size() );
+        assertIterableEquals( result,  List.of( "e1", "e2", "e3", "e4") );
+
+        System.out.println("Core pool size: " + executor.getCorePoolSize());
+        System.out.println("Largest pool size: " + executor.getLargestPoolSize());
+        System.out.println("Active threads: " + executor.getActiveCount());
+        System.out.println("Completed tasks: " + executor.getCompletedTaskCount());
+
+    }
+
 }

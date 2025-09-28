@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class AsyncGeneratorTest {
 
+
     @Test
     public void asyncGeneratorForEachTest() throws Exception {
         final String[] data = { "e1", "e2", "e3", "e4", "e5"};
@@ -33,6 +34,42 @@ public class AsyncGeneratorTest {
         assertEquals( data.length, forEachResult.size() );
         assertIterableEquals( asList(data), forEachResult );
         assertEquals( 0, iterationResult.size() );
+    }
+
+    @Test
+    public void asyncGeneratorForEachCancelTest() throws Exception {
+/*
+        final var data = List.of( "e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8", "e9", "e10" );
+        final AsyncGenerator<String> it =
+                AsyncGenerator.map(data, CompletableFuture::completedFuture);
+        final var cancellableIt = new AsyncGenerator.Cancellable<>(it);
+
+        List<String> forEachResult = new ArrayList<>();
+        var future = cancellableIt.async(Executors.newSingleThreadExecutor())
+            .forEachAsync( value -> {
+
+                try {
+                    System.out.printf( "adding element: %s\n", value);
+                    Thread.sleep( 1000 );
+                    forEachResult.add(value);
+                    System.out.printf( "added element: %s\n", value);
+                } catch (InterruptedException e) {
+                    System.err.printf("interrupted on : %s\n", value );
+                    Thread.currentThread().interrupt();
+                    throw new CompletionException(e);
+                }
+            } );
+
+        Thread.sleep( 4000 );
+        cancellableIt.cancel();
+
+        //var result = future.get( 5, TimeUnit.SECONDS);
+
+        //assertNotNull( result );
+        //assertEquals( CANCELLED, result );
+        assertEquals( 3, forEachResult.size() );
+        assertIterableEquals( data.subList(0,3), forEachResult );
+*/
     }
 
     @Test
@@ -227,10 +264,10 @@ public class AsyncGeneratorTest {
         assertEquals( 12, forEachResult.size() );
         assertIterableEquals( expected, forEachResult );
         assertEquals( 2, it.resultValues().size() );
-        Object resultValue = it.resultValues().getFirst().resultValue;
+        Object resultValue = it.resultValues().getFirst().resultValue();
         assertNotNull( resultValue );
         assertEquals( 7, resultValue );
-        assertNull( it.resultValues().getLast().resultValue );
+        assertNull( it.resultValues().getLast().resultValue() );
 
         List<String> iterationResult = new ArrayList<>();
         for (String i : it) {
@@ -238,10 +275,10 @@ public class AsyncGeneratorTest {
         }
         System.out.println( "Finished Iterator");
         assertEquals( 2, it.resultValues().size() );
-        resultValue = it.resultValues().getFirst().resultValue;
+        resultValue = it.resultValues().getFirst().resultValue();
         assertNotNull( resultValue );
         assertEquals( 7, resultValue );
-        assertNull( it.resultValues().getLast().resultValue );
+        assertNull( it.resultValues().getLast().resultValue() );
 
 
         assertEquals( 12, iterationResult.size() );
@@ -258,10 +295,10 @@ public class AsyncGeneratorTest {
         assertEquals( 12, forEachResult.size() );
         assertIterableEquals( expected, forEachResult );
         assertEquals( 2, it.resultValues().size() );
-        resultValue = it.resultValues().getFirst().resultValue;
+        resultValue = it.resultValues().getFirst().resultValue();
         assertNotNull( resultValue );
         assertEquals( 7, resultValue );
-        assertNull( it.resultValues().getLast().resultValue );
+        assertNull( it.resultValues().getLast().resultValue());
 
     }
 
