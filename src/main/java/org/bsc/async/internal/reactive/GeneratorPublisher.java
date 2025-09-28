@@ -50,7 +50,9 @@ public class GeneratorPublisher<T> implements Flow.Publisher<T> {
              */
             @Override
             public void cancel() {
-                delegate.cancel("cancellation request got on subscription");
+                if( delegate instanceof AsyncGenerator.Cancellable<?> isCancellable ) {
+                    isCancellable.cancel();
+                }
             }
         });
 
@@ -61,8 +63,7 @@ public class GeneratorPublisher<T> implements Flow.Publisher<T> {
                 .exceptionally( ex -> {
                     subscriber.onError(ex);
                     return null;
-                })
-                .join();
+                });
     }
 
 }
