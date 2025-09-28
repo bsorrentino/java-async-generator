@@ -13,6 +13,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
@@ -21,13 +22,38 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
  *
  * @param <E> the type of elements. The generator will emit {@link  java.util.concurrent.CompletableFuture CompletableFutures&lt;E&gt;} elements
  */
-public interface AsyncGenerator<E> extends AsyncGeneratorOperators<E> {
+public interface AsyncGenerator<E> extends AsyncGeneratorBase<E> {
 
     interface HasResultValue {
 
         Optional<Object> resultValue();
     }
 
+    interface Cancellable<E> extends AsyncGenerator<E> {
+        Object CANCELLED = new Object()  {
+            @Override
+            public String toString() {
+                return "CANCELLED";
+            }
+        };
+
+        /**
+         * Checks if the asynchronous generation has been cancelled.
+         * <p>
+         * The default implementation always returns {@code false}.
+         * Implementations that support cancellation should override this method.
+         *
+         * @return {@code true} if the generator has been cancelled, {@code false} otherwise.
+         */
+        boolean isCancelled();
+
+        /**
+         * method that request to cancel generator
+         */
+        boolean cancel();
+
+
+    }
     static Optional<Object> resultValue( AsyncGenerator<?> generator ) {
         if( generator instanceof HasResultValue withResult ) {
             return withResult.resultValue();
@@ -47,7 +73,7 @@ public interface AsyncGenerator<E> extends AsyncGeneratorOperators<E> {
      *
      * @param <E> the type of elements in the generator
      */
-    class WithResult<E> implements AsyncGenerator<E>, HasResultValue {
+    class WithResult<E> implements AsyncGenerator.Cancellable<E>, HasResultValue {
 
         protected final AsyncGenerator<E> delegate;
         private Object resultValue;
@@ -67,11 +93,28 @@ public interface AsyncGenerator<E> extends AsyncGeneratorOperators<E> {
 
         @Override
         public final Data<E> next() {
-            final Data<E> result = delegate.next();
+            final Data<E> result = ( isCancelled() ) ? Data.done(CANCELLED) : delegate.next();
+
             if( result.isDone() ) {
-                resultValue = result.resultValue;
+                resultValue = result.resultValue();
             }
             return result;
+        }
+
+        @Override
+        public boolean isCancelled() {
+            if( delegate instanceof Cancellable<?> isCancellable ) {
+                return isCancellable.isCancelled();
+            }
+            return false;
+        }
+
+        @Override
+        public boolean cancel() {
+            if( delegate instanceof Cancellable<?> isCancellable ) {
+                return isCancellable.cancel();
+            }
+            return false;
         }
     }
 
@@ -80,7 +123,7 @@ public interface AsyncGenerator<E> extends AsyncGeneratorOperators<E> {
      *
      * @param <E> the type of elements in the generator
      */
-    class WithEmbed<E> implements AsyncGenerator<E>, HasResultValue {
+    class WithEmbed<E> extends AbstractCancellableAsyncGenerator<E> implements  HasResultValue {
         protected final Deque<Embed<E>> generatorsStack = new ArrayDeque<>(2);
         private final Deque<Data<E>> returnValueStack = new ArrayDeque<>(2);
 
@@ -97,7 +140,7 @@ public interface AsyncGenerator<E> extends AsyncGeneratorOperators<E> {
 
         public Optional<Object> resultValue() {
             return ofNullable( returnValueStack.peek() )
-                        .map( r -> r.resultValue );
+                        .map(Data::resultValue);
         }
 
         private void clearPreviousReturnsValuesIfAny() {
@@ -124,14 +167,23 @@ public interface AsyncGenerator<E> extends AsyncGeneratorOperators<E> {
             }
 
             final Embed<E> embed = generatorsStack.peek();
-            final Data<E> result = embed.generator.next();
+            final Data<E> result;
+            if( isCancelled() ) {
+                if( embed.generator instanceof Cancellable<?> isCancellable && !isCancellable.isCancelled() ) {
+                    isCancellable.cancel();
+                }
+                result =  Data.done(CANCELLED);
+            }
+            else  {
+                result = embed.generator.next();
+            }
 
             if( result.isDone() ) {
                 clearPreviousReturnsValuesIfAny();
                 returnValueStack.push( result );
                 if( embed.onCompletion != null /* && result.resultValue != null */ ) {
                     try {
-                        embed.onCompletion.accept( result.resultValue );
+                        embed.onCompletion.accept( result.resultValue() );
                     } catch (Exception e) {
                         return Data.error(e);
                     }
@@ -142,17 +194,27 @@ public interface AsyncGenerator<E> extends AsyncGeneratorOperators<E> {
                 generatorsStack.pop();
                 return next();
             }
-            if( result.embed != null ) {
+            if( result.embed() != null ) {
                 if( generatorsStack.size() >= 2 ) {
                     return Data.error(new UnsupportedOperationException("Currently recursive nested generators are not supported!"));
                 }
-                generatorsStack.push( result.embed );
+                generatorsStack.push( result.embed() );
                 return next();
             }
 
             return result;
         }
 
+        @Override
+        public boolean cancel() {
+            var result = false;
+            for( var embed : generatorsStack ) {
+                if( embed.generator instanceof Cancellable<?> isCancellable ) {
+                    result = result || isCancellable.cancel();
+                }
+            }
+            return result;
+        }
     }
 
     @FunctionalInterface
@@ -165,7 +227,7 @@ public interface AsyncGenerator<E> extends AsyncGeneratorOperators<E> {
         final EmbedCompletionHandler onCompletion;
 
         public Embed(AsyncGenerator<E> generator, EmbedCompletionHandler onCompletion) {
-            Objects.requireNonNull(generator, "generator cannot be null");
+            requireNonNull(generator, "generator cannot be null");
             this.generator = generator;
             this.onCompletion = onCompletion;
         }
@@ -177,56 +239,12 @@ public interface AsyncGenerator<E> extends AsyncGeneratorOperators<E> {
     }
 
     /**
-     * Represents a data element in the AsyncGenerator.
-     *
-     * @param <E> the type of the data element
-     */
-    class Data<E> {
-        final CompletableFuture<E> data;
-        final Embed<E> embed;
-        final Object resultValue;
-
-        public Data( CompletableFuture<E> data, Embed<E> embed, Object resultValue) {
-            this.data = data;
-            this.embed = embed;
-            this.resultValue = resultValue;
-        }
-
-        public boolean isDone() {
-            return data == null && embed == null;
-        }
-
-        public boolean isError() {
-            return data != null && data.isCompletedExceptionally();
-        }
-
-        public static <E> Data<E> of(CompletableFuture<E> data) { return new Data<>(data, null, null);}
-
-        public static <E> Data<E> of(E data) { return new Data<>( completedFuture(data), null, null); }
-
-        public static <E> Data<E> composeWith( AsyncGenerator<E> generator, EmbedCompletionHandler onCompletion) {
-            return new Data<>( null, new Embed<>(generator, onCompletion), null );
-        }
-
-        public static <E> Data<E> done() { return new Data<>(null, null, null); }
-
-        public static <E> Data<E> done( Object resultValue) { return new Data<>(null, null, resultValue); }
-
-        public static <E> Data<E> error( Throwable exception ) {
-            CompletableFuture<E> future = new CompletableFuture<>();
-            future.completeExceptionally(exception);
-            return Data.of(future);
-        }
-
-    }
-
-    /**
      * return an async generator that use the given executor
      * @param executor the executor to use
      * @return new async generator
      */
-    default AsyncGeneratorOperators<E> async( Executor executor ) {
-        return new AsyncGeneratorOperators<>() {
+    default AsyncGeneratorBase<E> async( Executor executor ) {
+        return new AsyncGeneratorBase<>() {
             @Override
             public Iterator<E> iterator() {
                 return AsyncGenerator.this.iterator();
@@ -248,16 +266,9 @@ public interface AsyncGenerator<E> extends AsyncGeneratorOperators<E> {
      * return an async generator that use the ForkJoinPool.commonPool() as default executor
      * @return new async generator
      */
-    default AsyncGeneratorOperators<E> async() {
+    default AsyncGeneratorBase<E> async() {
         return async(ForkJoinPool.commonPool());
     }
-
-    /**
-     * Retrieves the next asynchronous element.
-     *
-     * @return the next element from the generator
-     */
-    Data<E> next();
 
     /**
      * Converts the AsyncGenerator to a CompletableFuture.
@@ -267,9 +278,9 @@ public interface AsyncGenerator<E> extends AsyncGeneratorOperators<E> {
     default CompletableFuture<Object>  toCompletableFuture() {
         final Data<E> next = next();
         if( next.isDone() ) {
-            return completedFuture(next.resultValue);
+            return completedFuture(next.resultValue());
         }
-        return next.data.thenCompose(v -> toCompletableFuture());
+        return next.future().thenCompose(v -> toCompletableFuture());
     }
 
     /**
@@ -410,7 +421,7 @@ class InternalIterator<E> implements Iterator<E>, AsyncGenerator.HasResultValue 
             currentFetchedData.set( delegate.next() );
         }
 
-        return next.data.join();
+        return next.future().join();
     }
 
     @Override
