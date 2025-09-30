@@ -5,14 +5,14 @@ import org.bsc.async.internal.UnmodifiableDeque;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -50,10 +50,11 @@ public interface AsyncGenerator<E> extends AsyncGeneratorBase<E> {
         /**
          * method that request to cancel generator
          */
-        boolean cancel();
+        boolean cancel( boolean mayInterruptIfRunning );
 
 
     }
+
     static Optional<Object> resultValue( AsyncGenerator<?> generator ) {
         if( generator instanceof HasResultValue withResult ) {
             return withResult.resultValue();
@@ -68,12 +69,48 @@ public interface AsyncGenerator<E> extends AsyncGeneratorBase<E> {
         return Optional.empty();
     }
 
+    abstract class Base<E> implements AsyncGenerator<E> {
+
+        private final ExecutorService executor = Executors.newSingleThreadExecutor(runnable ->
+                new Thread(runnable, format("AsyncGenerator[%d]", hashCode() ) ));
+
+        @Override
+        public Executor executor() {
+            return executor;
+        }
+
+    }
+
+    abstract class BaseCancellable<E> extends Base<E> implements Cancellable<E> {
+
+        private final AtomicBoolean cancelled = new AtomicBoolean(false);
+
+        @Override
+        public boolean isCancelled() {
+            return cancelled.get();
+        }
+
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            if( cancelled.compareAndSet( false, true ) ) {
+                if( executor() instanceof ExecutorService service ) {
+                    if( mayInterruptIfRunning && !service.isShutdown() && !service.isTerminated() ) {
+                        service.shutdown();
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+    }
+
     /**
      * An asynchronous generator decorator that allows retrieving the result value of the asynchronous operation, if any.
      *
      * @param <E> the type of elements in the generator
      */
-    class WithResult<E> implements AsyncGenerator.Cancellable<E>, HasResultValue {
+    class WithResult<E> extends Base<E> implements Cancellable<E>, HasResultValue {
 
         protected final AsyncGenerator<E> delegate;
         private Object resultValue;
@@ -84,6 +121,11 @@ public interface AsyncGenerator<E> extends AsyncGeneratorBase<E> {
 
         public AsyncGenerator<E> delegate() { return delegate; }
 
+        @Override
+        public Executor executor() {
+            return delegate.executor();
+        }
+
         /**
          * Retrieves the result value of the generator, if any.
          *
@@ -92,7 +134,7 @@ public interface AsyncGenerator<E> extends AsyncGeneratorBase<E> {
         public Optional<Object> resultValue() { return ofNullable(resultValue); };
 
         @Override
-        public final Data<E> next() {
+        public Data<E> next() {
             final Data<E> result = ( isCancelled() ) ? Data.done(CANCELLED) : delegate.next();
 
             if( result.isDone() ) {
@@ -110,9 +152,9 @@ public interface AsyncGenerator<E> extends AsyncGeneratorBase<E> {
         }
 
         @Override
-        public boolean cancel() {
+        public boolean cancel( boolean mayInterruptIfRunning ) {
             if( delegate instanceof Cancellable<?> isCancellable ) {
-                return isCancellable.cancel();
+                return isCancellable.cancel(mayInterruptIfRunning);
             }
             return false;
         }
@@ -123,7 +165,7 @@ public interface AsyncGenerator<E> extends AsyncGeneratorBase<E> {
      *
      * @param <E> the type of elements in the generator
      */
-    class WithEmbed<E> extends AbstractCancellableAsyncGenerator<E> implements  HasResultValue {
+    class WithEmbed<E> extends BaseCancellable<E> implements HasResultValue {
         protected final Deque<Embed<E>> generatorsStack = new ArrayDeque<>(2);
         private final Deque<Data<E>> returnValueStack = new ArrayDeque<>(2);
 
@@ -132,6 +174,14 @@ public interface AsyncGenerator<E> extends AsyncGeneratorBase<E> {
         }
         public WithEmbed(AsyncGenerator<E> delegate ) {
             this(delegate, null);
+        }
+
+        @Override
+        public final Executor executor() {
+            if( generatorsStack.isEmpty() ) {
+                throw new IllegalStateException("no generator found!");
+            }
+            return generatorsStack.peek().generator.executor();
         }
 
         public Deque<Data<E>> resultValues() {
@@ -150,12 +200,6 @@ public interface AsyncGenerator<E> extends AsyncGeneratorBase<E> {
             }
         }
 
-//        private AsyncGenerator.WithResult<E> toGeneratorWithResult( AsyncGenerator<E> generator ) {
-//            return ( generator instanceof WithResult ) ?
-//                    (AsyncGenerator.WithResult<E>) generator :
-//                    new WithResult<>(generator);
-//        }
-
         protected boolean isLastGenerator() {
             return generatorsStack.size() == 1;
         }
@@ -170,7 +214,7 @@ public interface AsyncGenerator<E> extends AsyncGeneratorBase<E> {
             final Data<E> result;
             if( isCancelled() ) {
                 if( embed.generator instanceof Cancellable<?> isCancellable && !isCancellable.isCancelled() ) {
-                    isCancellable.cancel();
+                    isCancellable.cancel( false );
                 }
                 result =  Data.done(CANCELLED);
             }
@@ -206,14 +250,20 @@ public interface AsyncGenerator<E> extends AsyncGeneratorBase<E> {
         }
 
         @Override
-        public boolean cancel() {
-            var result = false;
-            for( var embed : generatorsStack ) {
-                if( embed.generator instanceof Cancellable<?> isCancellable ) {
-                    result = result || isCancellable.cancel();
+        public boolean cancel(  boolean mayInterruptIfRunning ) {
+            return super.cancel( mayInterruptIfRunning );
+            /*
+            if( super.cancel() ) {
+                var result = false;
+                for (var embed : generatorsStack) {
+                    if (embed.generator instanceof Cancellable<?> isCancellable) {
+                        result = result || isCancellable.cancel();
+                    }
                 }
+                return result;
             }
-            return result;
+            return false;
+            */
         }
     }
 
@@ -236,38 +286,6 @@ public interface AsyncGenerator<E> extends AsyncGeneratorBase<E> {
         public Optional<Object> resultValue() {
             return AsyncGenerator.resultValue(generator);
         };
-    }
-
-    /**
-     * return an async generator that use the given executor
-     * @param executor the executor to use
-     * @return new async generator
-     */
-    default AsyncGeneratorBase<E> async( Executor executor ) {
-        return new AsyncGeneratorBase<>() {
-            @Override
-            public Iterator<E> iterator() {
-                return AsyncGenerator.this.iterator();
-            }
-
-            @Override
-            public Data<E> next() {
-                return AsyncGenerator.this.next();
-            }
-
-            @Override
-            public Executor executor() {
-                return executor;
-            }
-        };
-    }
-
-    /**
-     * return an async generator that use the ForkJoinPool.commonPool() as default executor
-     * @return new async generator
-     */
-    default AsyncGeneratorBase<E> async() {
-        return async(ForkJoinPool.commonPool());
     }
 
     /**
@@ -312,24 +330,11 @@ public interface AsyncGenerator<E> extends AsyncGeneratorBase<E> {
      * @return an empty AsyncGenerator
      */
     static <E> AsyncGenerator<E> empty() {
-        return Data::done;
-    }
-
-    /**
-     * create a generator, mapping each element  to an asynchronous counterpart.
-     *
-     * @param <E> the type of elements in the collection
-     * @param <U> the type of elements in the CompletableFuture
-     * @param iterator the elements iterator
-     * @param mapFunction the function to map elements to {@link  java.util.concurrent.CompletableFuture}
-     * @return an AsyncGenerator instance with mapped elements
-     */
-    static <E,U> AsyncGenerator<U> map(Iterator<E> iterator, Function<E, CompletableFuture<U>> mapFunction ) {
-        return () -> {
-            if( !iterator.hasNext() ) {
+        return new Base<>() {
+            @Override
+            public Data<E> next() {
                 return Data.done();
             }
-            return Data.of(mapFunction.apply( iterator.next() ));
         };
     }
 
@@ -337,59 +342,20 @@ public interface AsyncGenerator<E> extends AsyncGeneratorBase<E> {
      * Collects asynchronous elements from an iterator.
      *
      * @param <E> the type of elements in the iterator
-     * @param <U> the type of elements in the CompletableFuture
      * @param iterator the iterator containing elements to collect
-     * @param consumer the function to consume elements and add them to the accumulator
      * @return an AsyncGenerator instance with collected elements
      */
-    static <E,U> AsyncGenerator<U> collect(Iterator<E> iterator, BiConsumer<E, Consumer<CompletableFuture<U>>> consumer ) {
-        final List<CompletableFuture<U>> accumulator = new ArrayList<>();
+    static <E> AsyncGenerator<E> from(Iterator<E> iterator ) {
+        return new Base<>() {
+            @Override
+            public Data<E> next() {
 
-        final Consumer<CompletableFuture<U>> addElement = accumulator::add;
-        while( iterator.hasNext() ) {
-            consumer.accept(iterator.next(), addElement );
-        }
-
-        final Iterator<CompletableFuture<U>> it = accumulator.iterator();
-        return () -> {
-            if( !it.hasNext() ) {
-                return Data.done();
+                if( !iterator.hasNext() ) {
+                    return Data.done();
+                }
+                return Data.of( completedFuture(iterator.next()));
             }
-            return Data.of(it.next());
         };
-    }
-
-
-    /**
-     * create a generator, mapping each element  to an asynchronous counterpart.
-     *
-     * @param <E> the type of elements in the collection
-     * @param <U> the type of elements in the CompletableFuture
-     * @param collection the collection of elements to map
-     * @param mapFunction the function to map elements to CompletableFuture
-     * @return an AsyncGenerator instance with mapped elements
-     */
-    static <E,U> AsyncGenerator<U> map( Collection<E> collection, Function<E,CompletableFuture<U>> mapFunction ) {
-        if( collection == null || collection.isEmpty()) {
-            return empty();
-        }
-        return map( collection.iterator(), mapFunction);
-    }
-
-    /**
-     * Collects asynchronous elements from a collection.
-     *
-     * @param <E> the type of elements in the iterator
-     * @param <U> the type of elements in the CompletableFuture
-     * @param collection the iterator containing elements to collect
-     * @param consumer the function to consume elements and add them to the accumulator
-     * @return an AsyncGenerator instance with collected elements
-     */
-    static <E,U> AsyncGenerator<U> collect( Collection<E> collection, BiConsumer<E, Consumer<CompletableFuture<U>>> consumer ) {
-        if( collection == null || collection.isEmpty()) {
-            return empty();
-        }
-        return collect( collection.iterator(), consumer);
     }
 
 }
