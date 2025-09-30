@@ -411,7 +411,7 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         return CompletableFuture.supplyAsync(() -> forEachSync(consumer), executor()).join();
     }
 
-    private <R> CompletableFuture<R> reduce(R result, BiFunction<R, E, R> reducer) {
+    default <R> CompletableFuture<R> reduce(R result, BiFunction<R, E, R> reducer) {
         final var next = next();
         if (next.isDone()) {
             return completedFuture(result);
