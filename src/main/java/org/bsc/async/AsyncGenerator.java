@@ -411,20 +411,20 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         return CompletableFuture.supplyAsync(() -> forEachSync(consumer), executor()).join();
     }
 
-    private <R> CompletableFuture<R> reduceSync(R result, BiFunction<R, E, R> reducer) {
+    private <R> CompletableFuture<R> reduce(R result, BiFunction<R, E, R> reducer) {
         final var next = next();
         if (next.isDone()) {
             return completedFuture(result);
         }
         return next.future()
                 .thenApply(v -> reducer.apply(result, v))
-                .thenCompose(v -> reduceSync(result, reducer))
+                .thenCompose(v -> reduce(result, reducer))
                 ;
 
     }
 
     default <R> CompletableFuture<R> reduceAsync(R result, BiFunction<R, E, R> reducer) {
-        return CompletableFuture.supplyAsync(() -> reduceSync(result, reducer), executor()).join();
+        return CompletableFuture.supplyAsync(() -> reduce(result, reducer), executor()).join();
     }
 
     /**
