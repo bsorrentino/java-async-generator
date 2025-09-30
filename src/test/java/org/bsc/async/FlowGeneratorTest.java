@@ -31,9 +31,9 @@ public class FlowGeneratorTest {
             }, executor );
 
         final List<String> result = new ArrayList<>();
-        var iterating = generator.async( executor ).forEachAsync(result::add);
+        var iterating = generator.forEachAsync(result::add);
 
-        CompletableFuture.allOf(iterating, submitting ).join();
+        CompletableFuture.allOf(iterating, submitting );
 
         assertEquals( data.size(), result.size() );
         assertIterableEquals( data, result );
@@ -112,11 +112,11 @@ public class FlowGeneratorTest {
 
         assertTrue( publisher.hasSubscribers() );
 
-        var submitting = runAsync( () -> {
+        var submitting = CompletableFuture.runAsync( () -> {
 
             try {
                 for (String value : data) {
-                    System.out.printf("publishing: %s\n", value);
+                    System.out.printf("publishing: %s on thread[%s]\n", value, Thread.currentThread().getName());
                     publisher.submit(value);
 
                     Thread.sleep(1000);
@@ -129,25 +129,35 @@ public class FlowGeneratorTest {
             }
         }, executor );
 
+        var cancelling = CompletableFuture.runAsync( () -> {
+            try {
+                System.out.printf("cancelling start on thread[%s]\n", Thread.currentThread().getName());
+
+                Thread.sleep( 4000 );
+
+                System.out.printf("generator cancelled: %s\n", generator.cancel( true) );
+
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }, executor );
+
+
         final List<String> result = new ArrayList<>();
         var iterating = generator
-                        .async( executor )
                         .forEachAsync( value -> {
                             try {
                                 Thread.sleep(10);
-                                System.out.printf("received: %s\n", value);
+                                System.out.printf("received: %s on thread[%s]\n", value, Thread.currentThread().getName());
                                 result.add(value);
                             } catch (InterruptedException e) {
+                                System.err.printf( "interrupted on thread[%s]\n", Thread.currentThread().getName() );
                                 throw new CompletionException(e);
                             }
                         });
 
 
-        CompletableFuture.allOf(iterating, submitting );
-
-        Thread.sleep( 4000 );
-        generator.cancel();
-
+        CompletableFuture.allOf(iterating, submitting, cancelling );
 
         assertEquals( 4, result.size() );
         assertIterableEquals( result,  List.of( "e1", "e2", "e3", "e4") );

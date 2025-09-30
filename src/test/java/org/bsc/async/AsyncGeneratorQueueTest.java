@@ -172,7 +172,7 @@ public class AsyncGeneratorQueueTest {
         executor.execute( () -> {
             try {
                 Thread.sleep(3000);
-                it.cancel();
+                it.cancel( true );
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
