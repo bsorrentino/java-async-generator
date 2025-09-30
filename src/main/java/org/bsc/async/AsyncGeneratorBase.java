@@ -1,14 +1,18 @@
 package org.bsc.async;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
+
 
 import static java.util.Objects.requireNonNull;
+import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public interface AsyncGeneratorBase<E> extends Iterable<E> {
@@ -60,9 +64,61 @@ public interface AsyncGeneratorBase<E> extends Iterable<E> {
     Data<E> next();
 
 
-    default Executor executor() {
-        return Runnable::run;
+    Executor executor();
+
+
+    class Mapper<E,U> extends AsyncGenerator.Base<U> implements AsyncGenerator.Cancellable<U>, AsyncGenerator.HasResultValue {
+
+        protected final AsyncGeneratorBase<E> delegate;
+        final Function<E, U> mapFunction;
+        private Object resultValue;
+
+        protected Mapper(AsyncGeneratorBase<E> delegate, Function<E, U> mapFunction) {
+            this.delegate = requireNonNull(delegate, "delegate cannot be null");
+            this.mapFunction = requireNonNull(mapFunction, "mapFunction cannot be null");
+
+        }
+
+        @Override
+        public final Executor executor() {
+            return delegate.executor();
+        }
+
+        /**
+         * Retrieves the result value of the generator, if any.
+         *
+         * @return an {@link Optional} containing the result value if present, or an empty Optional if not
+         */
+        public Optional<Object> resultValue() { return ofNullable(resultValue); };
+
+        @Override
+        public final Data<U> next() {
+            final Data<E> next = ( isCancelled() ) ? Data.done(CANCELLED) : delegate.next();
+
+            if( next.isDone() ) {
+                resultValue = next.resultValue();
+                return Data.done();
+            }
+            return Data.of(next.future().thenApply(mapFunction));
+        }
+
+        @Override
+        public boolean isCancelled() {
+            if( delegate instanceof Cancellable<?> isCancellable ) {
+                return isCancellable.isCancelled();
+            }
+            return false;
+        }
+
+        @Override
+        public boolean cancel( boolean mayInterruptIfRunning ) {
+            if( delegate instanceof Cancellable<?> isCancellable ) {
+                return isCancellable.cancel( mayInterruptIfRunning );
+            }
+            return false;
+        }
     }
+
 
     /**
      * Maps the elements of this generator to a new asynchronous generator.
@@ -72,13 +128,60 @@ public interface AsyncGeneratorBase<E> extends Iterable<E> {
      * @return a generator with mapped elements
      */
     default <U> AsyncGenerator<U> map(Function<E, U> mapFunction) {
-        return () -> {
-            final AsyncGenerator.Data<E> next = next();
-            if (next.isDone()) {
-                return AsyncGenerator.Data.done(next.resultValue());
+        return new Mapper<>( this, mapFunction );
+    }
+
+
+    class FlatMapper<E,U> extends AsyncGenerator.Base<U> implements AsyncGenerator.Cancellable<U>, AsyncGenerator.HasResultValue {
+
+        protected final AsyncGeneratorBase<E> delegate;
+        final Function<E, CompletableFuture<U>> mapFunction;
+        private Object resultValue;
+
+        protected FlatMapper(AsyncGeneratorBase<E> delegate, Function<E, CompletableFuture<U>> mapFunction) {
+            this.delegate = requireNonNull(delegate, "delegate cannot be null");
+            this.mapFunction = requireNonNull(mapFunction, "mapFunction cannot be null");
+
+        }
+
+        @Override
+        public final Executor executor() {
+            return delegate.executor();
+        }
+
+        /**
+         * Retrieves the result value of the generator, if any.
+         *
+         * @return an {@link Optional} containing the result value if present, or an empty Optional if not
+         */
+        public Optional<Object> resultValue() { return ofNullable(resultValue); };
+
+        @Override
+        public final Data<U> next() {
+            final Data<E> next = ( isCancelled() ) ? Data.done(CANCELLED) : delegate.next();
+
+            if( next.isDone() ) {
+                resultValue = next.resultValue();
+                return Data.done();
             }
-            return AsyncGenerator.Data.of(next.future().thenApplyAsync(mapFunction, executor()));
-        };
+            return Data.of(next.future().thenCompose(mapFunction));
+        }
+
+        @Override
+        public boolean isCancelled() {
+            if( delegate instanceof Cancellable<?> isCancellable ) {
+                return isCancellable.isCancelled();
+            }
+            return false;
+        }
+
+        @Override
+        public boolean cancel( boolean mayInterruptIfRunning ) {
+            if( delegate instanceof Cancellable<?> isCancellable ) {
+                return isCancellable.cancel( mayInterruptIfRunning );
+            }
+            return false;
+        }
     }
 
     /**
@@ -89,68 +192,48 @@ public interface AsyncGeneratorBase<E> extends Iterable<E> {
      * @return a generator with mapped and flattened elements
      */
     default <U> AsyncGenerator<U> flatMap(Function<E, CompletableFuture<U>> mapFunction) {
-        return () -> {
-            final AsyncGenerator.Data<E> next = next();
-            if (next.isDone()) {
-                return AsyncGenerator.Data.done(next.resultValue());
-            }
-            return AsyncGenerator.Data.of(next.future().thenComposeAsync(mapFunction, executor()));
-        };
+        return new FlatMapper<>( this, mapFunction );
     }
 
-    /**
-     * Filters the elements of this generator based on the given predicate.
-     * Only elements that satisfy the predicate will be included in the resulting generator.
-     *
-     * @param predicate the predicate to test elements against
-     * @return a generator with elements that satisfy the predicate
-     */
-    default AsyncGenerator<E> filter(Predicate<E> predicate) {
-        return () -> {
-            AsyncGenerator.Data<E> next = next();
-            while (!next.isDone()) {
+    private CompletableFuture<Object> forEachSync(Consumer<E> consumer) {
+        final var next = next();
+        if (next.isDone()) {
+            return completedFuture(next.resultValue());
+        }
+        if (next.embed() != null) {
+            return next.embed().generator.forEachAsync(consumer)
+                    .thenCompose(v -> forEachSync(consumer))
+                    ;
+        } else {
+            return next.future()
+                    .thenApply(v -> {
+                        consumer.accept(v);
+                        return null;
+                    })
+                    .thenCompose(v -> forEachSync(consumer))
+                    ;
+        }
 
-                final E value = next.future().join();
-
-                if (predicate.test(value)) {
-                    return next;
-                }
-                next = next();
-            }
-            return AsyncGenerator.Data.done(next.resultValue());
-        };
     }
-
     /**
      * Asynchronously iterates over the elements of the AsyncGenerator and applies the given consumer to each element.
      *
      * @param consumer the consumer function to be applied to each element
      * @return a CompletableFuture representing the completion of the iteration process.
      */
-    default CompletableFuture<Object>   forEachAsync(Consumer<E> consumer) {
-/*
-        if( this instanceof AsyncGenerator.IsCancellable isCancellable) {
-            if (isCancellable.isCancelled()) {
-                return completedFuture(AsyncGenerator.IsCancellable.CANCELLED);
-            }
-        }
+    default CompletableFuture<Object> forEachAsync(Consumer<E> consumer) {
+        return CompletableFuture.supplyAsync( () -> forEachSync( consumer ), executor() ).join();
+    }
 
- */
+    private <R> CompletableFuture<R> reduceSync(R result, BiFunction<R,E,R> reducer) {
         final var next = next();
         if (next.isDone()) {
-            return completedFuture(next.resultValue());
+            return completedFuture(result);
         }
-        if (next.embed() != null) {
-            return next.embed().generator.async(executor()).forEachAsync(consumer)
-                    .thenCompose(v -> forEachAsync(consumer) );
-        } else {
-            return next.future().thenApplyAsync(v -> {
-                        consumer.accept(v);
-                        return null;
-                    }, executor() )
-                    .thenComposeAsync(v -> forEachAsync(consumer), executor())
-                    ;
-        }
+        return next.future()
+                .thenApplyAsync(v -> reducer.apply(result, v), executor() )
+                .thenCompose(v -> reduceSync(result, reducer))
+                ;
 
     }
 
@@ -159,21 +242,11 @@ public interface AsyncGeneratorBase<E> extends Iterable<E> {
      *
      * @param <R>      the type of the result list
      * @param result   the result list to collect elements into
-     * @param consumer the consumer function for processing elements
+     * @param reducer the reducer function for processing elements
      * @return a CompletableFuture representing the completion of the collection process
      */
-    default <R extends List<E>> CompletableFuture<R> collectAsync(R result, BiConsumer<R,E> consumer) {
-        final var next = next();
-        if (next.isDone()) {
-            return completedFuture(result);
-        }
-        return next.future().thenApplyAsync(v -> {
-                    consumer.accept(result, v);
-                    return null;
-                }, executor() )
-                .thenCompose(v -> collectAsync(result, consumer))
-                ;
-
+    default <R> CompletableFuture<R> reduceAsync(R result, BiFunction<R,E,R> reducer) {
+        return CompletableFuture.supplyAsync( () -> reduceSync( result, reducer ), executor() ).join();
     }
 
 }
