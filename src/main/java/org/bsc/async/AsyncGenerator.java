@@ -574,7 +574,7 @@ class Mapper<E, U> extends AsyncGenerator.Base<U> implements AsyncGenerator.Canc
 
         if (next.isDone()) {
             resultValue = next.resultValue();
-            return Data.done();
+            return Data.done(next.resultValue());
         }
         return Data.of(next.future().thenApply(mapFunction));
     }
@@ -630,7 +630,7 @@ class FlatMapper<E, U> extends AsyncGenerator.Base<U> implements AsyncGenerator.
 
         if (next.isDone()) {
             resultValue = next.resultValue();
-            return Data.done();
+            return Data.done(next.resultValue());
         }
         return Data.of(next.future().thenCompose(mapFunction));
     }
