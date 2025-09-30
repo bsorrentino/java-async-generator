@@ -5,6 +5,7 @@ import org.bsc.async.AsyncGeneratorQueue;
 
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Flow;
 import java.util.function.Supplier;
 
@@ -109,14 +110,19 @@ public class GeneratorSubscriber<T> implements AsyncGenerator.Cancellable<T>, Fl
     }
 
     @Override
+    public final Executor executor() {
+        return delegate.executor();
+    }
+
+    @Override
     public boolean isCancelled() {
         return delegate.isCancelled();
     }
 
     @Override
-    public boolean cancel() {
+    public boolean cancel( boolean mayInterruptIfRunning ) {
         requireNonNull( subscription, "subscription cannot be null");
         subscription.cancel();
-        return delegate.cancel();
+        return delegate.cancel(mayInterruptIfRunning);
     }
 }

@@ -19,7 +19,7 @@ public class AsyncGeneratorQueue    {
      *
      * @param <E> the type of elements in the queue
      */
-    public static class Generator<E> extends AbstractCancellableAsyncGenerator<E> {
+    public static class Generator<E> extends BaseCancellable<E> {
 
         private volatile Thread executorThread = null;
         private volatile Data<E> endData = null;
@@ -73,8 +73,8 @@ public class AsyncGeneratorQueue    {
         }
 
         @Override
-        public boolean cancel() {
-            if( super.cancel() ) {
+        public boolean cancel( boolean mayInterruptIfRunning ) {
+            if( super.cancel(mayInterruptIfRunning) ) {
                 if( executorThread != null ) {
                     executorThread.interrupt();
                 }

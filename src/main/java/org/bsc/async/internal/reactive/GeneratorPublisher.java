@@ -51,7 +51,7 @@ public class GeneratorPublisher<T> implements Flow.Publisher<T> {
             @Override
             public void cancel() {
                 if( delegate instanceof AsyncGenerator.Cancellable<?> isCancellable ) {
-                    isCancellable.cancel();
+                    isCancellable.cancel( true );
                 }
             }
         });
