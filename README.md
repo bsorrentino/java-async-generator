@@ -56,6 +56,9 @@ for( Response response : generator ) {
 }        
 
 ```
+## Cancellation
+
+Take a look the new [Cancellation](CANCELLATION.md) feature
 
 ## Articles:
 
