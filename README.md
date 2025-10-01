@@ -21,7 +21,7 @@ Idea is to create an iterator-like interface that emit elements as [CompletableF
 <dependency>
     <groupId>org.bsc.async</groupId>
     <artifactId>async-generator</artifactId>
-    <version>3.2.3</version> <!-- Or the current snapshot version -->
+    <version>4.0.0-beta1</version> <!-- Or the current snapshot version -->
 </dependency>
 ```
 
@@ -56,6 +56,9 @@ for( Response response : generator ) {
 }        
 
 ```
+## Cancellation
+
+Take a look the new [Cancellation](CANCELLATION.md) feature
 
 ## Articles:
 
