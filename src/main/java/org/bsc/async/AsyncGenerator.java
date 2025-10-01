@@ -84,7 +84,7 @@ public interface AsyncGenerator<E> extends Iterable<E> {
 
     }
 
-    abstract class BaseCancellable<E> extends Base<E> implements AsyncGenerator<E>, IsCancellable {
+    abstract class BaseCancellable<E> extends Base<E> implements Cancellable<E> {
 
         private final AtomicBoolean cancelled = new AtomicBoolean(false);
 
