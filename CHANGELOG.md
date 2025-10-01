@@ -2,6 +2,106 @@
 
 
 
+<!-- "name: v4.0.0-beta1" is a release tag -->
+
+## [v4.0.0-beta1](https://github.com/bsorrentino/java-async-generator/releases/tag/v4.0.0-beta1) (2025-10-01)
+
+### Features
+
+ *  use service.shutdownNow() to force thread interruption ([4942910ec9fafcd](https://github.com/bsorrentino/java-async-generator/commit/4942910ec9fafcd9023b1ee990a21b6911aa11d1))
+   
+ *  Add AbstractCancellableAsyncGenerator class ([2512f981de6ba91](https://github.com/bsorrentino/java-async-generator/commit/2512f981de6ba91d59fef936f1a5dba16ab7f4f4))
+     > - new abstract class that implements AsyncGenerator.Cancellable interface, providing functionality to keep cancellation state .
+     > work on #2
+   
+ *  **AsyncGenerator**  Update AsyncGenerator interface for better cancellation support ([731abd0a76e3d2e](https://github.com/bsorrentino/java-async-generator/commit/731abd0a76e3d2ede66d11711910808ba84ebf71))
+     > - Added Cancellable
+     > - Updated WithResult and WithEmbed classes to implement these new interfaces for managing  cancellation request.
+     > work on #2
+   
+
+### Bug Fixes
+
+ -  **AsyncGenerator**  Ensure Data.done() includes resultValue ([c5f59dea24202cc](https://github.com/bsorrentino/java-async-generator/commit/c5f59dea24202cc88ce9e1294f24a463b059a1d3))
+     > Modify return statements in internal class Mapper and FlatMapper to pass resultValue w.
+     > work on #2
+
+
+### Documentation
+
+ -  bump to new version 4.0.0-beta1 ([76daba668e13893](https://github.com/bsorrentino/java-async-generator/commit/76daba668e1389343ba46f5e523aa1b46fa48776))
+
+ -  update readme ([42d058811c1b28a](https://github.com/bsorrentino/java-async-generator/commit/42d058811c1b28af06c048b269b24199ee7573b9))
+
+ -  **ai**  prompt used in gemini cli ([fc84ce5aaec8c3f](https://github.com/bsorrentino/java-async-generator/commit/fc84ce5aaec8c3fed7ef1a2ca607809383d0583c))
+
+ -  add cancellation document ([668092008616bf4](https://github.com/bsorrentino/java-async-generator/commit/668092008616bf42cbad28e648d70dc20c303bd1))
+
+ -  update changeme ([bb10611598b04f2](https://github.com/bsorrentino/java-async-generator/commit/bb10611598b04f2b901ed9c611c2588c3969dab9))
+
+
+### Refactor
+
+ -  **AsyncGenerator**  Rename abstract class BaseCancellable to use Cancellable interface instead of IsCancellable ([9b87691850bf9bd](https://github.com/bsorrentino/java-async-generator/commit/9b87691850bf9bd66b411fcf611d7adf1711986b))
+    > work on #2
+
+ -  **AsyncGenerator**  extract feature driven IsCancelled interface ([805925b193860e8](https://github.com/bsorrentino/java-async-generator/commit/805925b193860e8c32a919566e8a143b25dd2e41))
+    > work on #2
+
+ -  **AsyncGenerator**  make reduce public ([06099f66d0d8a14](https://github.com/bsorrentino/java-async-generator/commit/06099f66d0d8a14740e4c83916933d422145e453))
+    > work on #2
+
+ -  **AsyncGenerator**  rename reduceSync to reduce and update references ([56d4e15242918da](https://github.com/bsorrentino/java-async-generator/commit/56d4e15242918da2d03e2467fd57cfb98dfbead4))
+    > work on #2
+
+ -  Merge AsyncGenerator with AsyncGeneratorBase ([13a9c8a4b8d6617](https://github.com/bsorrentino/java-async-generator/commit/13a9c8a4b8d6617a6fa23b529048039458d8283d))
+    > work on #2
+
+ -  **reactive**  update with new Cancellable model ([c2c5437928bf1cd](https://github.com/bsorrentino/java-async-generator/commit/c2c5437928bf1cd76337fcc35bb0941487be0460))
+   
+ -  **AsyncGenerator**  Refactor AsyncGenerator class with ExecutorService support to force execution on a single controlled thread ([e9439a1fc9f8ea7](https://github.com/bsorrentino/java-async-generator/commit/e9439a1fc9f8ea7bf7e3aacda89abed3c662e1f5))
+    > work on #2
+
+ -  remove unused AbstractCancellableAsyncGenerator ([57c3e0251b4d54f](https://github.com/bsorrentino/java-async-generator/commit/57c3e0251b4d54ffed086e1f6e4608360efd9750))
+    > work on #2
+
+ -  make FlowGenerator compliant with AsyncGenerator.Cancellable ([2f07f1b4a83f24f](https://github.com/bsorrentino/java-async-generator/commit/2f07f1b4a83f24fa212dc479fbe6865caff7cdf1))
+    > work on #2
+
+ -  **reactive**  Refactor GeneratorSubscriber to manage cancellation ([4f6f8b3f468676f](https://github.com/bsorrentino/java-async-generator/commit/4f6f8b3f468676f6966baf213f0e03dac176cac9))
+    > - adding a private subscription field to hold the Flow.Subscription on which we will invoke cancel() during cancellation request process
+ > work on #2
+
+ -  **AsyncGeneratorQueue**  Refactor AsyncGeneratorQueue to manage cancellation ([0e84e4c5a5afaf6](https://github.com/bsorrentino/java-async-generator/commit/0e84e4c5a5afaf6d21eec145d948350090f0609a))
+    > - keep track of execution thread and perform its interruption on cancellation request
+ > work on #2
+
+ -  rename AsyncGeneratorOperators to AsyncGeneratorBase ([53efcfba852cf51](https://github.com/bsorrentino/java-async-generator/commit/53efcfba852cf519655d75351af2b73474d877c7))
+    > work on #2
+
+
+### ALM 
+
+ -  bump to new version 4.0.0-beta1 ([12b2a80a091728c](https://github.com/bsorrentino/java-async-generator/commit/12b2a80a091728c983cbcaec2082a3085a8979e0))
+   
+ -  bump to version 4.0-SNAPSHOT ([c81d50f7879c735](https://github.com/bsorrentino/java-async-generator/commit/c81d50f7879c7354f6973b8133e548968edea30f))
+   
+ -  bump to 3.2-SNAPSHOT version ([e20d846ba5d9c3e](https://github.com/bsorrentino/java-async-generator/commit/e20d846ba5d9c3eacba363663901e1d2ce8cdb11))
+   
+ -  **settings-template.xml**  update xml namespaces ([df2f07ac67f362f](https://github.com/bsorrentino/java-async-generator/commit/df2f07ac67f362f87bfe8cbe8d326afa344d99de))
+   
+
+### Test 
+
+ -  update unit test add cancellation tests ([c7e9f28e31b9387](https://github.com/bsorrentino/java-async-generator/commit/c7e9f28e31b938797854c0f88a98edf729daa895))
+   
+ -  add cancellation tests ([cb6b15653a2b860](https://github.com/bsorrentino/java-async-generator/commit/cb6b15653a2b86035b883c025475be942f4aa0c6))
+   
+
+
+
+
+
 <!-- "name: v3.2.3" is a release tag -->
 
 ## [v3.2.3](https://github.com/bsorrentino/java-async-generator/releases/tag/v3.2.3) (2025-09-19)
