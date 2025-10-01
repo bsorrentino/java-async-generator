@@ -5,8 +5,11 @@ import org.bsc.async.AsyncGeneratorQueue;
 
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Flow;
 import java.util.function.Supplier;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Represents a subscriber for generating asynchronous data streams.
@@ -17,10 +20,11 @@ import java.util.function.Supplier;
  *
  * @param <T> The type of elements produced by this generator.
  */
-public class GeneratorSubscriber<T> implements Flow.Subscriber<T>, AsyncGenerator<T> {
+public class GeneratorSubscriber<T> implements AsyncGenerator.Cancellable<T>, Flow.Subscriber<T> {
 
-    private final AsyncGeneratorQueue.Generator<T> delegate;
     private final Supplier<Object> mapResult;
+    private Flow.Subscription subscription;
+    private final AsyncGeneratorQueue.Generator<T> delegate;
 
     public Optional<Supplier<Object>> mapResult() {
         return Optional.ofNullable(mapResult);
@@ -62,6 +66,7 @@ public class GeneratorSubscriber<T> implements Flow.Subscriber<T>, AsyncGenerato
      */
     @Override
     public void onSubscribe(Flow.Subscription subscription) {
+        this.subscription = subscription;
         subscription.request(Long.MAX_VALUE);
     }
 
@@ -102,5 +107,22 @@ public class GeneratorSubscriber<T> implements Flow.Subscriber<T>, AsyncGenerato
     @Override
     public Data<T> next() {
         return delegate.next();
+    }
+
+    @Override
+    public final Executor executor() {
+        return delegate.executor();
+    }
+
+    @Override
+    public boolean isCancelled() {
+        return delegate.isCancelled();
+    }
+
+    @Override
+    public boolean cancel( boolean mayInterruptIfRunning ) {
+        requireNonNull( subscription, "subscription cannot be null");
+        subscription.cancel();
+        return delegate.cancel(mayInterruptIfRunning);
     }
 }

@@ -19,10 +19,11 @@ public class AsyncGeneratorQueue    {
      *
      * @param <E> the type of elements in the queue
      */
-    public static class Generator<E> implements AsyncGenerator<E> {
+    public static class Generator<E> extends BaseCancellable<E> {
 
-        Data<E> isEnd = null;
-        final java.util.concurrent.BlockingQueue<Data<E>> queue;
+        private volatile Thread executorThread = null;
+        private volatile Data<E> endData = null;
+        private final java.util.concurrent.BlockingQueue<Data<E>> queue;
 
         /**
          * Constructs a Generator with the specified queue.
@@ -37,6 +38,10 @@ public class AsyncGeneratorQueue    {
             return queue;
         }
 
+        private boolean isEnded() {
+            return endData != null;
+        }
+
         /**
          * Retrieves the next element from the queue asynchronously.
          *
@@ -44,16 +49,38 @@ public class AsyncGeneratorQueue    {
          */
         @Override
         public Data<E> next() {
-            while ( isEnd == null ) {
-                Data<E> value = queue.poll();
-                if (value != null) {
-                    if (value.isDone()) {
-                        isEnd = value;
-                    }
-                    return value;
-                }
+            if( isEnded() ) {
+                return endData;
             }
-            return isEnd;
+            if(executorThread!=null) {
+                endData = Data.error(new IllegalStateException("illegal concurrent next() invocation"));
+                return endData;
+            }
+            executorThread = Thread.currentThread();
+            try {
+                Data<E> value = queue.take();
+                if (value.isDone()) {
+                    endData = value;
+                }
+                return value;
+            } catch (InterruptedException e) {
+                endData = Data.done(CANCELLED);
+                return endData;
+            }
+            finally {
+                executorThread = null;
+            }
+        }
+
+        @Override
+        public boolean cancel( boolean mayInterruptIfRunning ) {
+            if( super.cancel(mayInterruptIfRunning) ) {
+                if( executorThread != null ) {
+                    executorThread.interrupt();
+                }
+                return true;
+            }
+            return false;
         }
     }
 
