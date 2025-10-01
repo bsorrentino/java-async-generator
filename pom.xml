@@ -4,7 +4,7 @@
 
     <groupId>org.bsc.async</groupId>
     <artifactId>async-generator</artifactId>
-    <version>3.2.3</version>
+    <version>4.0.0-beta1</version>
     <packaging>jar</packaging>
     <description>a Java version of Javascript async generator</description>
 

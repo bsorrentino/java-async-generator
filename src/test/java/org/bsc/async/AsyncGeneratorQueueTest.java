@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.ForkJoinPool.commonPool;
+import static org.bsc.async.AsyncGenerator.Cancellable.CANCELLED;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class AsyncGeneratorQueueTest {
@@ -138,5 +139,58 @@ public class AsyncGeneratorQueueTest {
         assertIterableEquals( Arrays.asList(data), iterationResult );
         assertEquals( 0, forEachResult.size() );
     }
+
+    @Test
+    public void asyncGeneratorCancelTest() throws Exception {
+
+        final BlockingQueue<AsyncGenerator.Data<String>> queue = new LinkedBlockingQueue<>();
+
+        final var data = List.of( "e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8", "e9", "e10" );
+
+        final AsyncGenerator.WithResult<String> it = new AsyncGenerator.WithResult<>( new AsyncGeneratorQueue.Generator<>(queue) );
+
+        var executor = Executors.newFixedThreadPool(10);
+
+        executor.execute( () -> {
+            try {
+                for( String value: data ) {
+                    Thread.sleep( 1000 );
+                    queue.add(AsyncGenerator.Data.of(completedFuture(value)));
+                }
+                queue.add(AsyncGenerator.Data.done( "END"));
+            }
+            catch( Throwable ex ) {
+                CompletableFuture<String> error = new CompletableFuture<>();
+                error.completeExceptionally(ex);
+                queue.add( AsyncGenerator.Data.error(ex));
+            }
+
+        });
+
+        var forEachResult = new ArrayList<String>();
+
+        executor.execute( () -> {
+            try {
+                Thread.sleep(3000);
+                it.cancel( true );
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        var futureResult = it.forEachAsync( value -> {
+                    System.out.println( value );
+                    forEachResult.add(value);
+                });
+
+        var result = futureResult.get( 10, TimeUnit.SECONDS);
+
+        assertNotNull( result );
+        assertEquals( CANCELLED, result );
+        assertTrue( forEachResult.size() < data.size() );
+
+
+    }
+
 }
 
