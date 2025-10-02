@@ -74,7 +74,10 @@ var futureResult = cancellableIt.forEachAsync( value -> {
 When you use the standard `for-each` loop with an `AsyncGenerator` (which uses the `iterator()` method), the iteration runs on the *current* thread. The `iterator()` blocks on each call to `next()` until the `CompletableFuture` for that element is resolved.
 
 -   `cancel(false)` will cause `hasNext()` to return `false` on the next check, effectively stopping the loop.
--   `cancel(true)` will also cause `hasNext()` to return `false`. Since the iteration is running on the calling thread, interrupting it depends on how the caller manages its own thread. The `cancel(true)` call will attempt to shutdown the generator's executor, but if the main work is happening on the calling thread via the iterator, the effect of thread interruption is different than with `forEachAsync`.
+-   `cancel(true)` will also cause `hasNext()` to return `false`. Since the iteration is running on the calling thread, interrupting should not have any effect on the current thread.
+
+### How check if iteration is interrupted
+
 
 ## Summary
 
