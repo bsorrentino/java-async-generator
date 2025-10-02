@@ -142,11 +142,7 @@ public interface AsyncGenerator<E> extends Iterable<E> {
 
         @Override
         public Data<E> next() {
-            if( isCancelled() ) {
-                throw new CancellationException("generator is cancelled");
-            }
-
-            final Data<E> result = delegate.next();
+            final Data<E> result = (isCancelled()) ? Data.done(CANCELLED) : delegate.next();
 
             if (result.isDone()) {
                 resultValue = result.resultValue();
@@ -224,7 +220,7 @@ public interface AsyncGenerator<E> extends Iterable<E> {
                 throw new IllegalStateException("no generator found!");
             }
             if( isCancelled() ) {
-                throw new CancellationException("generator is cancelled");
+                return Data.done(CANCELLED);
             }
 
             final Embed<E> embed = requireNonNull(generatorsStack.peek(), "embed generator cannot be null");
