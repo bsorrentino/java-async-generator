@@ -113,7 +113,7 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      *
      * @param <E> the type of elements in the generator
      */
-    class WithResult<E> extends Base<E> implements AsyncGenerator<E>, IsCancellable, HasResultValue {
+    class WithResult<E> extends BaseCancellable<E> implements HasResultValue {
 
         protected final AsyncGenerator<E> delegate;
         private Object resultValue;
@@ -151,22 +151,17 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         }
 
         @Override
-        public boolean isCancelled() {
-            if (delegate instanceof IsCancellable isCancellable) {
-                return isCancellable.isCancelled();
-            }
-            return false;
-        }
-
-        @Override
         public boolean cancel(boolean mayInterruptIfRunning) {
-            if (delegate instanceof IsCancellable isCancellable) {
-                return isCancellable.cancel(mayInterruptIfRunning);
-            } else if (mayInterruptIfRunning) {
-                if (delegate.executor() instanceof ExecutorService service) {
-                    if (!(service.isShutdown() || service.isTerminated())) {
-                        service.shutdownNow();
-                        return true;
+            if( super.cancel( mayInterruptIfRunning ) ) {
+
+                if (delegate instanceof IsCancellable isCancellable) {
+                    return isCancellable.cancel(mayInterruptIfRunning);
+                } else if (mayInterruptIfRunning) {
+                    if (delegate.executor() instanceof ExecutorService service) {
+                        if (!(service.isShutdown() || service.isTerminated())) {
+                            service.shutdownNow();
+                            return true;
+                        }
                     }
                 }
             }
@@ -224,17 +219,14 @@ public interface AsyncGenerator<E> extends Iterable<E> {
             if (generatorsStack.isEmpty()) { // GUARD
                 throw new IllegalStateException("no generator found!");
             }
-
-            final Embed<E> embed = generatorsStack.peek();
-            final Data<E> result;
-            if (isCancelled()) {
-                if (embed.generator instanceof IsCancellable isCancellable && !isCancellable.isCancelled()) {
-                    isCancellable.cancel(false);
-                }
-                result = Data.done(CANCELLED);
-            } else {
-                result = embed.generator.next();
+            if( isCancelled() ) {
+                return Data.done(CANCELLED);
             }
+
+            final Embed<E> embed = requireNonNull(generatorsStack.peek(), "embed generator cannot be null");
+
+            final Data<E> result = embed.generator.next();
+
 
             if (result.isDone()) {
                 clearPreviousReturnsValuesIfAny();
@@ -265,19 +257,15 @@ public interface AsyncGenerator<E> extends Iterable<E> {
 
         @Override
         public boolean cancel(boolean mayInterruptIfRunning) {
-            return super.cancel(mayInterruptIfRunning);
-            /*
-            if( super.cancel() ) {
-                var result = false;
+            if( super.cancel(mayInterruptIfRunning) ) {
                 for (var embed : generatorsStack) {
                     if (embed.generator instanceof Cancellable<?> isCancellable) {
-                        result = result || isCancellable.cancel();
+                        isCancellable.cancel(mayInterruptIfRunning);
                     }
                 }
-                return result;
+                return true;
             }
             return false;
-            */
         }
     }
 
@@ -567,7 +555,7 @@ class InternalIterator<E> implements Iterator<E>, AsyncGenerator.HasResultValue,
     }
 };
 
-class Mapper<E, U> extends AsyncGenerator.Base<U> implements AsyncGenerator<U>, AsyncGenerator.IsCancellable, AsyncGenerator.HasResultValue {
+class Mapper<E, U> extends AsyncGenerator.BaseCancellable<U> implements AsyncGenerator.HasResultValue {
 
     protected final AsyncGenerator<E> delegate;
     final Function<E, U> mapFunction;
@@ -576,7 +564,6 @@ class Mapper<E, U> extends AsyncGenerator.Base<U> implements AsyncGenerator<U>, 
     protected Mapper(AsyncGenerator<E> delegate, Function<E, U> mapFunction) {
         this.delegate = requireNonNull(delegate, "delegate cannot be null");
         this.mapFunction = requireNonNull(mapFunction, "mapFunction cannot be null");
-
     }
 
     @Override
@@ -593,11 +580,13 @@ class Mapper<E, U> extends AsyncGenerator.Base<U> implements AsyncGenerator<U>, 
         return ofNullable(resultValue);
     }
 
-    ;
-
     @Override
     public final Data<U> next() {
-        final Data<E> next = (isCancelled()) ? Data.done(CANCELLED) : delegate.next();
+        if( isCancelled() ) {
+            throw new CancellationException("generator is cancelled");
+        }
+
+        final Data<E> next = delegate.next();
 
         if (next.isDone()) {
             resultValue = next.resultValue();
@@ -607,23 +596,25 @@ class Mapper<E, U> extends AsyncGenerator.Base<U> implements AsyncGenerator<U>, 
     }
 
     @Override
-    public boolean isCancelled() {
-        if (delegate instanceof IsCancellable isCancellable) {
-            return isCancellable.isCancelled();
-        }
-        return false;
-    }
-
-    @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
-        if (delegate instanceof IsCancellable isCancellable) {
-            return isCancellable.cancel(mayInterruptIfRunning);
+        if( super.cancel( mayInterruptIfRunning ) ) {
+
+            if (delegate instanceof IsCancellable isCancellable) {
+                return isCancellable.cancel(mayInterruptIfRunning);
+            } else if (mayInterruptIfRunning) {
+                if (delegate.executor() instanceof ExecutorService service) {
+                    if (!(service.isShutdown() || service.isTerminated())) {
+                        service.shutdownNow();
+                        return true;
+                    }
+                }
+            }
         }
         return false;
     }
 }
 
-class FlatMapper<E, U> extends AsyncGenerator.Base<U> implements AsyncGenerator<U>, AsyncGenerator.IsCancellable, AsyncGenerator.HasResultValue {
+class FlatMapper<E, U> extends AsyncGenerator.BaseCancellable<U> implements AsyncGenerator.HasResultValue {
 
     protected final AsyncGenerator<E> delegate;
     final Function<E, CompletableFuture<U>> mapFunction;
@@ -653,7 +644,11 @@ class FlatMapper<E, U> extends AsyncGenerator.Base<U> implements AsyncGenerator<
 
     @Override
     public final Data<U> next() {
-        final Data<E> next = (isCancelled()) ? Data.done(CANCELLED) : delegate.next();
+        if( isCancelled() ) {
+            throw new CancellationException("generator is cancelled");
+        }
+
+        final Data<E> next = delegate.next();
 
         if (next.isDone()) {
             resultValue = next.resultValue();
@@ -663,17 +658,19 @@ class FlatMapper<E, U> extends AsyncGenerator.Base<U> implements AsyncGenerator<
     }
 
     @Override
-    public boolean isCancelled() {
-        if (delegate instanceof IsCancellable isCancellable) {
-            return isCancellable.isCancelled();
-        }
-        return false;
-    }
-
-    @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
-        if (delegate instanceof IsCancellable isCancellable) {
-            return isCancellable.cancel(mayInterruptIfRunning);
+        if( super.cancel( mayInterruptIfRunning ) ) {
+
+            if (delegate instanceof IsCancellable isCancellable) {
+                return isCancellable.cancel(mayInterruptIfRunning);
+            } else if (mayInterruptIfRunning) {
+                if (delegate.executor() instanceof ExecutorService service) {
+                    if (!(service.isShutdown() || service.isTerminated())) {
+                        service.shutdownNow();
+                        return true;
+                    }
+                }
+            }
         }
         return false;
     }
