@@ -2,6 +2,60 @@
 
 
 
+<!-- "name: v4.0.0-beta2" is a release tag -->
+
+## [v4.0.0-beta2](https://github.com/bsorrentino/java-async-generator/releases/tag/v4.0.0-beta2) (2025-10-02)
+
+
+
+### Documentation
+
+ -  bump to 4.0.0-beta2 version ([2f8860fb77fc1b4](https://github.com/bsorrentino/java-async-generator/commit/2f8860fb77fc1b45521f1904eb32b8cc9f2de7d2))
+
+ -  update cancellation doc ([7e100f9432b5726](https://github.com/bsorrentino/java-async-generator/commit/7e100f9432b572627b55eb074adee21d18ab5585))
+
+ -  update cancellation doc ([07c9e389b439c96](https://github.com/bsorrentino/java-async-generator/commit/07c9e389b439c965043884c8e490e336fac2837b))
+
+ -  update GEMINI cli default prompt ([bc0aa5bfeebba13](https://github.com/bsorrentino/java-async-generator/commit/bc0aa5bfeebba131ddecbe9cdb166ae7eb3f11f7))
+
+ -  refine cancellation guide ([fc689106ec11025](https://github.com/bsorrentino/java-async-generator/commit/fc689106ec110250e745c3520294bfa7408fe0d8))
+     > work on #2
+
+ -  update changeme ([f9fa28ac55169c1](https://github.com/bsorrentino/java-async-generator/commit/f9fa28ac55169c105484f26d385de6f7a1ca1d91))
+
+
+### Refactor
+
+ -  return CANCELLED result if cancellation is detected in next() method ([4f5c479031a3169](https://github.com/bsorrentino/java-async-generator/commit/4f5c479031a31691cd6f22f9a1255b23f2e97db5))
+    > work on #2
+
+ -  **AsyncGenerator**  Refactored cancellation logic across AsyncGenerator subclasses ([1046e25b0004110](https://github.com/bsorrentino/java-async-generator/commit/1046e25b00041100da297afd21784413882eae77))
+    > - handle cancellation regardless that delegate is cancellable
+ > work on #2
+
+
+### ALM 
+
+ -  bump to 4.0.0-beta2 version ([720ef0ba54250e3](https://github.com/bsorrentino/java-async-generator/commit/720ef0ba54250e3fe5a07291bf73a9843b1031f9))
+   
+ -  **action**  update deploy snapshot github action ([0d324a536bddd74](https://github.com/bsorrentino/java-async-generator/commit/0d324a536bddd741f7e1e913ac990bdbe8a2dacf))
+   
+ -  bump to 4.0-SNAPSHOT release ([756ba4fb9f4461f](https://github.com/bsorrentino/java-async-generator/commit/756ba4fb9f4461f43974e3b732bc060deff61f00))
+   
+ -  update deploy script ([4cc8accbbda3812](https://github.com/bsorrentino/java-async-generator/commit/4cc8accbbda3812517defcd5ed880b6e29632a5e))
+   
+
+### Test 
+
+ -  **AsyncGenerator**  Refactored cancellation logic across AsyncGenerator subclasses ([23b9a57ff806dcf](https://github.com/bsorrentino/java-async-generator/commit/23b9a57ff806dcfafae764734a31117b131ab1f6))
+    > - handle cancellation regardless that delegate is cancellable
+ > work on [#2](https://github.com/bsorrentino/java-async-generator/issues/2)
+
+
+
+
+
+
 <!-- "name: v4.0.0-beta1" is a release tag -->
 
 ## [v4.0.0-beta1](https://github.com/bsorrentino/java-async-generator/releases/tag/v4.0.0-beta1) (2025-10-01)
