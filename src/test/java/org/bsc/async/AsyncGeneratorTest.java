@@ -78,6 +78,41 @@ public class AsyncGeneratorTest {
 
     }
 
+    @Test
+    public void asyncGeneratorIteratorCancelTest() throws Exception {
+
+        final var data = List.of( "e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8", "e9", "e10" );
+        final AsyncGenerator<String> it = AsyncGenerator.from(data.iterator());
+        final var cancellableIt = new AsyncGenerator.WithResult<>(it);
+
+        CompletableFuture.runAsync( () -> {
+            try {
+                Thread.sleep( 1000 );
+                System.out.printf( "cancellation invoked on thread[%s]\n", Thread.currentThread().getName());
+                cancellableIt.cancel(true);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        final var iteratorResult = new ArrayList<String>();
+
+        for (String value : cancellableIt) {
+            try {
+                System.out.printf( "adding element: %s on thread[%s]\n", value, Thread.currentThread().getName());
+                Thread.sleep( 500 );
+                iteratorResult.add(value);
+                System.out.printf( "added element: %s\n", value);
+            } catch (InterruptedException e) {
+                System.err.printf("interrupted on : %s\n", value );
+                Thread.currentThread().interrupt();
+                throw new CompletionException(e);
+            }
+        }
+        assertNotEquals( data.size(), iteratorResult.size() );
+
+    }
+
 
     @Test
     public void asyncGeneratorMapTest() throws Exception {
@@ -326,7 +361,7 @@ public class AsyncGeneratorTest {
 
         assertTrue( it.isCancelled() , "generator should be cancelled");
         assertTrue( forEachResult.size() < 12, "result should be partial" );
-        assertEquals( 2, it.resultValues().size() );
+        assertEquals( 1, it.resultValues().size() ); // cancelled on second iterator
 
     }
 
