@@ -11,4 +11,4 @@ Explain in the clear technical way that:
 * Invoking `AsyncGenerator.iterator()` will not create any thread and iteration will be executed in the current thread
 * Invoking `IsCancellable.cancel(false)` set an internal state that will stop iteration when a next value is required
 * Invoking `IsCancellable.cancel(true)` set an internal state and try to interrupt the thread on which the iteration is executing
-
+* how to check if iteration has been interrupted
