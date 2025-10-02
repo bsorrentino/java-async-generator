@@ -29,5 +29,6 @@ jobs:
 
       - name: Build with Maven
         env:
-          OSS_SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN  }}
+          OSS_SONATYPE_TOKEN: ${{ secrets.OSS_SONATYPE_TOKEN }}
         run: mvn -B clean source:jar javadoc:jar install central-publishing:publish --file pom.xml -s settings-template.xml
