@@ -76,8 +76,16 @@ When you use the standard `for-each` loop with an `AsyncGenerator` (which uses t
 -   `cancel(false)` will cause `hasNext()` to return `false` on the next check, effectively stopping the loop.
 -   `cancel(true)` will also cause `hasNext()` to return `false`. Since the iteration is running on the calling thread, interrupting should not have any effect on the current thread.
 
-### How check if iteration is interrupted
+### How check if iteration has been interrupted
 
+To check if an iteration has been interrupted, you can use the `isCancelled()` available on on your `IsCancellable` generator.
+This method will return `true` if `cancel()` has been called, regardless of the `mayInterruptIfRunning` parameter.
+
+```java
+if (cancellableGenerator.isCancelled()) {
+    // Logic to handle the cancellation
+}
+```
 
 ## Summary
 
