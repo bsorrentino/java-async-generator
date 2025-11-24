@@ -434,7 +434,7 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      * @return a CompletableFuture representing the completion of the AsyncGenerator
      */
     default CompletableFuture<Object> toCompletableFutureAsync() {
-        return CompletableFuture.supplyAsync(this::toCompletableFuture, executor()).join();
+        return CompletableFuture.supplyAsync( () -> toCompletableFuture().join(), executor());
     }
 
     /**
