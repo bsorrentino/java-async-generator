@@ -429,15 +429,6 @@ public interface AsyncGenerator<E> extends Iterable<E> {
     }
 
     /**
-     * Converts the AsyncGenerator to a CompletableFuture asynchronously.
-     *
-     * @return a CompletableFuture representing the completion of the AsyncGenerator
-     */
-    default CompletableFuture<Object> toCompletableFutureAsync() {
-        return CompletableFuture.supplyAsync( () -> toCompletableFuture().join(), executor());
-    }
-
-    /**
      * Returns a sequential Stream with the elements of this AsyncGenerator.
      * Each CompletableFuture is resolved and then make available to the stream.
      *
