@@ -1,11 +1,13 @@
 package org.bsc.async;
 
-import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import static java.util.Objects.requireNonNull;
+import static java.util.Optional.ofNullable;
 import static java.util.concurrent.ForkJoinPool.commonPool;
 import static org.bsc.async.AsyncGenerator.*;
 
@@ -13,6 +15,48 @@ import static org.bsc.async.AsyncGenerator.*;
  * Represents a queue-based asynchronous generator.
  */
 public interface AsyncGeneratorQueue    {
+
+
+    @FunctionalInterface
+    interface TakeElementFunction<E> {
+        Data<E> apply( BlockingQueue<Data<E>> queue ) throws InterruptedException;
+    }
+
+    class Builder<E> {
+        private BlockingQueue<Data<E>> queue;
+        private TakeElementFunction<E> takeElementFunction;
+
+        public Builder<E> blockingQueue( BlockingQueue<Data<E>> queue ) {
+            this.queue = queue;
+            return this;
+        }
+
+        public Builder<E> takeElementFunction( TakeElementFunction<E> takeElementFunction ) {
+            this.takeElementFunction = takeElementFunction;
+            return this;
+        }
+
+        public Builder<E> takeElementFunctionUsingPoll( long timeout, TimeUnit unit ) {
+            this.takeElementFunction = (queue) -> {
+                Data<E> result = null;
+                do {
+                    result = queue.poll(timeout, unit);
+                } while( result == null );
+
+                return result;
+            };
+            return this;
+        }
+
+        public Generator<E> build() {
+            return new Generator<>( queue, ofNullable(takeElementFunction)
+                                            .orElseGet( () -> BlockingQueue::take) );
+        }
+    }
+
+    static <E> Builder<E> builder() {
+        return new Builder<>();
+    }
 
     /**
      * Inner class to generate asynchronous elements from the queue.
@@ -24,17 +68,30 @@ public interface AsyncGeneratorQueue    {
         private volatile Thread executorThread = null;
         private volatile Data<E> endData = null;
         private final java.util.concurrent.BlockingQueue<Data<E>> queue;
+        private final TakeElementFunction<E> takeElementFunction;
+
+
+        /**
+         * Constructs a Generator with the specified queue and takeElement function.
+         *
+         * @param queue the blocking queue to generate elements from
+         * @param takeElementFunction the function to take elements from the queue
+         */
+        public Generator( BlockingQueue<Data<E>> queue, TakeElementFunction<E> takeElementFunction ) {
+            this.queue = requireNonNull(queue, "queue cannot be null!");
+            this.takeElementFunction = requireNonNull( takeElementFunction, "takeElementFunction cannot be null!");
+        }
 
         /**
          * Constructs a Generator with the specified queue.
          *
          * @param queue the blocking queue to generate elements from
          */
-        public Generator(java.util.concurrent.BlockingQueue<Data<E>> queue) {
-            this.queue = queue;
+        public Generator( BlockingQueue<Data<E>> queue ) {
+            this( queue, BlockingQueue::take);
         }
 
-        public java.util.concurrent.BlockingQueue<Data<E>> queue() {
+        public BlockingQueue<Data<E>> queue() {
             return queue;
         }
 
@@ -58,7 +115,7 @@ public interface AsyncGeneratorQueue    {
             }
             executorThread = Thread.currentThread();
             try {
-                Data<E> value = queue.take();
+                Data<E> value = takeElementFunction.apply(queue);
                 if (value.isDone()) {
                     endData = value;
                 }
@@ -108,9 +165,9 @@ public interface AsyncGeneratorQueue    {
      * @return an AsyncGenerator instance
      */
     static <E, Q extends BlockingQueue<AsyncGenerator.Data<E>>> AsyncGenerator<E> of(Q queue, Consumer<Q> consumer, Executor executor ) {
-        Objects.requireNonNull(queue);
-        Objects.requireNonNull(executor);
-        Objects.requireNonNull(consumer);
+        requireNonNull(queue);
+        requireNonNull(executor);
+        requireNonNull(consumer);
 
         executor.execute( () -> {
             try {
