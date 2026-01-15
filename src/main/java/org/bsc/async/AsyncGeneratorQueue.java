@@ -12,14 +12,14 @@ import static org.bsc.async.AsyncGenerator.*;
 /**
  * Represents a queue-based asynchronous generator.
  */
-public class AsyncGeneratorQueue    {
+public interface AsyncGeneratorQueue    {
 
     /**
      * Inner class to generate asynchronous elements from the queue.
      *
      * @param <E> the type of elements in the queue
      */
-    public static class Generator<E> extends BaseCancellable<E> {
+    class Generator<E> extends BaseCancellable<E> {
 
         private volatile Thread executorThread = null;
         private volatile Data<E> endData = null;
@@ -93,7 +93,7 @@ public class AsyncGeneratorQueue    {
      * @param consumer the consumer for processing elements from the queue
      * @return an AsyncGenerator instance
      */
-    public static <E, Q extends BlockingQueue<AsyncGenerator.Data<E>>> AsyncGenerator<E> of(Q queue, Consumer<Q> consumer) {
+    static <E, Q extends BlockingQueue<AsyncGenerator.Data<E>>> AsyncGenerator<E> of(Q queue, Consumer<Q> consumer) {
         return of( queue, consumer, commonPool() );
     }
 
@@ -107,7 +107,7 @@ public class AsyncGeneratorQueue    {
      * @param executor the executor for asynchronous processing
      * @return an AsyncGenerator instance
      */
-    public static <E, Q extends BlockingQueue<AsyncGenerator.Data<E>>> AsyncGenerator<E> of(Q queue, Consumer<Q> consumer, Executor executor ) {
+    static <E, Q extends BlockingQueue<AsyncGenerator.Data<E>>> AsyncGenerator<E> of(Q queue, Consumer<Q> consumer, Executor executor ) {
         Objects.requireNonNull(queue);
         Objects.requireNonNull(executor);
         Objects.requireNonNull(consumer);
