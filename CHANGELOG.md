@@ -2,6 +2,45 @@
 
 
 
+<!-- "name: v4.0.0" is a release tag -->
+
+## [v4.0.0](https://github.com/bsorrentino/java-async-generator/releases/tag/v4.0.0) (2026-01-15)
+
+### Features
+
+ *  add toCompletableFuture async version ([f3707f1e8807df3](https://github.com/bsorrentino/java-async-generator/commit/f3707f1e8807df317da4301841b931ed2e0e8547))
+   
+
+
+### Documentation
+
+ -  bump to version 4.0.0 ([ff972ba0304f230](https://github.com/bsorrentino/java-async-generator/commit/ff972ba0304f230e20fa6212ed85368e6c037d4c))
+
+ -  update changeme ([1883fa772348f7b](https://github.com/bsorrentino/java-async-generator/commit/1883fa772348f7bf332812601024083b6c6ba623))
+
+
+### Refactor
+
+ -  **AsyncGenerator**  Refactor Embed to record and fix syntax ([26c473efc9a8e75](https://github.com/bsorrentino/java-async-generator/commit/26c473efc9a8e75b08bc2ea7cc0f4b06821713b5))
+   
+ -  **AsyncGeneratorQueue**  Refactor class to interface ([ee93ff2677a29ba](https://github.com/bsorrentino/java-async-generator/commit/ee93ff2677a29bae37c84ac9ee114ea415be8499))
+    > Converted AsyncGeneratorQueue class to interface and adjusted static method signatures
+
+ -  shift left the join() in toCompletableFuture async version ([05dd58ba274f14f](https://github.com/bsorrentino/java-async-generator/commit/05dd58ba274f14fa52fb926cb00c3e35bbaabc99))
+   
+
+### ALM 
+
+ -  bump to version 4.0.0 ([bc57a84660a6317](https://github.com/bsorrentino/java-async-generator/commit/bc57a84660a6317d324dbc3ad8adc9f82c38ae59))
+   
+ -  bump to next dev version ([b774d813de93d8f](https://github.com/bsorrentino/java-async-generator/commit/b774d813de93d8fa6a45f46e5a7e354c9bc3001a))
+   
+
+
+
+
+
+
 <!-- "name: v4.0.0-beta2" is a release tag -->
 
 ## [v4.0.0-beta2](https://github.com/bsorrentino/java-async-generator/releases/tag/v4.0.0-beta2) (2025-10-02)
