@@ -274,22 +274,19 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         void accept(Object t) throws Exception;
     }
 
-    class Embed<E> implements HasResultValue {
-        final AsyncGenerator<E> generator;
-        final EmbedCompletionHandler onCompletion;
+    record Embed<E>(
+            AsyncGenerator<E> generator,
+            EmbedCompletionHandler onCompletion
+    ) implements HasResultValue {
 
-        public Embed(AsyncGenerator<E> generator, EmbedCompletionHandler onCompletion) {
+        public Embed {
             requireNonNull(generator, "generator cannot be null");
-            this.generator = generator;
-            this.onCompletion = onCompletion;
         }
 
         @Override
         public Optional<Object> resultValue() {
             return AsyncGenerator.resultValue(generator);
         }
-
-        ;
     }
 
     /**
@@ -447,7 +444,7 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      * @return an iterator over the elements of this AsyncGenerator
      */
     default Iterator<E> iterator() {
-        return new InternalIterator<E>(this);
+        return new InternalIterator<>(this);
     }
 
 
@@ -553,7 +550,7 @@ class InternalIterator<E> implements Iterator<E>, AsyncGenerator.HasResultValue,
         }
         return false;
     }
-};
+}
 
 class Mapper<E, U> extends AsyncGenerator.BaseCancellable<U> implements AsyncGenerator.HasResultValue {
 
@@ -640,7 +637,6 @@ class FlatMapper<E, U> extends AsyncGenerator.BaseCancellable<U> implements Asyn
         return ofNullable(resultValue);
     }
 
-    ;
 
     @Override
     public final Data<U> next() {
