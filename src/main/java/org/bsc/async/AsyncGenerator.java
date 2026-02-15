@@ -99,12 +99,11 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         private static final Cleaner CLEANER = Cleaner.create();
         private static final AtomicLong ID_GENERATOR = new AtomicLong(0);
 
-        private final long instanceId = ID_GENERATOR.getAndIncrement();
         private final AtomicBoolean closed = new AtomicBoolean(false);
         private final Cleaner.Cleanable cleanable;
 
         private final ExecutorService executor = Executors.newSingleThreadExecutor(runnable ->
-                new Thread(runnable, format("AsyncGenerator[%d]", instanceId)));
+                new Thread(runnable, format("AsyncGenerator[%d]", ID_GENERATOR.getAndIncrement())));
 
         /**
          * Creates a new Base instance and registers it with the Cleaner for automatic cleanup.
