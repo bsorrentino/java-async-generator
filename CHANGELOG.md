@@ -2,6 +2,32 @@
 
 
 
+<!-- "name: v4.0.1" is a release tag -->
+
+## [v4.0.1](https://github.com/bsorrentino/java-async-generator/releases/tag/v4.0.1) (2026-02-15)
+
+### Features
+
+ *  **AsyncGenerator**  Add AutoCloseable support to Base class for explicit resource cleanup
+     > - Base class now implements AutoCloseable interface
+     > - Added close() method to explicitly release ExecutorService resources
+     > - Added isClosed() method to check if generator has been closed
+     > - Added try-with-resources usage example in Javadoc
+
+### Bug Fixes
+
+ -  **AsyncGenerator**  Fix ExecutorService memory leak on JDK 21
+     > Fixed memory leak caused by circular reference between Base instance and AutoShutdownDelegatedExecutorService on JDK 21.
+     > The fix uses a static AtomicLong ID generator instead of this.hashCode() to break the circular reference,
+     > and implements a custom Cleaner mechanism as fallback for automatic resource cleanup.
+
+### Improvements
+
+ -  **AsyncGenerator**  Use custom Cleaner mechanism as automatic cleanup fallback
+     > Added a dedicated Cleaner instance to ensure ExecutorService is properly closed even when close() is not called explicitly.
+
+
+
 <!-- "name: v4.0.0" is a release tag -->
 
 ## [v4.0.0](https://github.com/bsorrentino/java-async-generator/releases/tag/v4.0.0) (2026-01-15)

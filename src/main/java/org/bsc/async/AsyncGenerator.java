@@ -2,9 +2,11 @@ package org.bsc.async;
 
 import org.bsc.async.internal.UnmodifiableDeque;
 
+import java.lang.ref.Cleaner;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -72,16 +74,98 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         return Optional.empty();
     }
 
-    abstract class Base<E> implements AsyncGenerator<E> {
+    /**
+     * Abstract base class for AsyncGenerator implementations.
+     * <p>
+     * This class manages an internal ExecutorService for asynchronous operations.
+     * It implements {@link AutoCloseable} to ensure proper resource cleanup.
+     * <p>
+     * <b>Usage with try-with-resources:</b>
+     * <pre>{@code
+     * try (AsyncGenerator<String> generator = AsyncGenerator.from(list)) {
+     *     generator.forEachAsync(System.out::println);
+     * }
+     * }</pre>
+     * <p>
+     * <b>Note:</b> Even if {@code close()} is not called explicitly, the internal Cleaner
+     * mechanism will ensure the ExecutorService is properly shutdown when this instance
+     * is garbage collected. However, explicit cleanup via {@code close()} or {@code cancel()}
+     * is recommended for deterministic resource management.
+     *
+     * @param <E> the type of elements
+     */
+    abstract class Base<E> implements AsyncGenerator<E>, AutoCloseable {
+
+        private static final Cleaner CLEANER = Cleaner.create();
+        private static final AtomicLong ID_GENERATOR = new AtomicLong(0);
+
+        private final AtomicBoolean closed = new AtomicBoolean(false);
+        private final Cleaner.Cleanable cleanable;
 
         private final ExecutorService executor = Executors.newSingleThreadExecutor(runnable ->
-                new Thread(runnable, format("AsyncGenerator[%d]", hashCode())));
+                new Thread(runnable, format("AsyncGenerator[%d]", ID_GENERATOR.getAndIncrement())));
+
+        /**
+         * Creates a new Base instance and registers it with the Cleaner for automatic cleanup.
+         */
+        protected Base() {
+            this.cleanable = CLEANER.register(this, new CleanupAction(executor, closed));
+        }
 
         @Override
         public Executor executor() {
             return executor;
         }
 
+        /**
+         * Closes this AsyncGenerator and releases its resources.
+         * <p>
+         * This method shuts down the internal ExecutorService. After calling this method,
+         * the generator should not be used for further operations.
+         * <p>
+         * This method is idempotent - calling it multiple times has no additional effect.
+         *
+         * @see #cancel(boolean)
+         */
+        @Override
+        public void close() {
+            if (closed.compareAndSet(false, true)) {
+                cleanable.clean();
+            }
+        }
+
+        /**
+         * Checks if this generator has been closed.
+         *
+         * @return {@code true} if the generator has been closed, {@code false} otherwise
+         */
+        public boolean isClosed() {
+            return closed.get();
+        }
+
+        /**
+         * Internal cleanup action for the Cleaner mechanism.
+         * <p>
+         * This class holds references to the ExecutorService and closed flag without
+         * capturing the outer Base instance, avoiding circular references that would
+         * prevent garbage collection.
+         */
+        private static class CleanupAction implements Runnable {
+            private final ExecutorService executor;
+            private final AtomicBoolean closed;
+
+            CleanupAction(ExecutorService executor, AtomicBoolean closed) {
+                this.executor = executor;
+                this.closed = closed;
+            }
+
+            @Override
+            public void run() {
+                if (closed.compareAndSet(false, true)) {
+                    executor.shutdown();
+                }
+            }
+        }
     }
 
     abstract class BaseCancellable<E> extends Base<E> implements Cancellable<E> {
@@ -93,11 +177,22 @@ public interface AsyncGenerator<E> extends Iterable<E> {
             return cancelled.get();
         }
 
+        /**
+         * Requests cancellation of the generator.
+         * <p>
+         * This method sets the cancelled flag and closes the executor to release resources.
+         * If {@code mayInterruptIfRunning} is {@code true}, the executor will be shut down
+         * immediately, interrupting any running tasks.
+         *
+         * @param mayInterruptIfRunning if {@code true}, interrupt running tasks
+         * @return {@code true} if cancellation was successful, {@code false} if already cancelled
+         */
         @Override
         public boolean cancel(boolean mayInterruptIfRunning) {
             if (cancelled.compareAndSet(false, true)) {
-                if (executor() instanceof ExecutorService service) {
-                    if (mayInterruptIfRunning && !service.isShutdown() && !service.isTerminated()) {
+                close();
+                if (mayInterruptIfRunning && executor() instanceof ExecutorService service) {
+                    if (!service.isTerminated()) {
                         service.shutdownNow();
                     }
                 }
