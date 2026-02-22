@@ -2,6 +2,45 @@
 
 
 
+<!-- "name: v4.2.0" is a release tag -->
+
+## [v4.2.0](https://github.com/bsorrentino/java-async-generator/releases/tag/v4.2.0) (2026-02-22)
+
+
+
+### Documentation
+
+ -  bump to next version 4.2.0 ([04af96be1ead009](https://github.com/bsorrentino/java-async-generator/commit/04af96be1ead0098429e98baf003ad05c20f7f3f))
+
+ -  bump to version  4.1.0 ([28d614079852036](https://github.com/bsorrentino/java-async-generator/commit/28d6140798520366d6a7742c2acd8282db4204c5))
+
+ -  update changeme ([5e7d727f6dd3733](https://github.com/bsorrentino/java-async-generator/commit/5e7d727f6dd3733e6d7e961148a05a2663201389))
+
+
+### Refactor
+
+ -  **AsyncGenerator**  Refactor async methods to use thenCompose instead of join ([b0baab9c2c3a7a9](https://github.com/bsorrentino/java-async-generator/commit/b0baab9c2c3a7a9a2a82ff2e7ce6f8f4b4a4f220))
+    > Replace .join() with .thenCompose() for non-blocking behavior and add new toCompletableFutureAsync() method
+
+
+### ALM 
+
+ -  bump to next version 4.2.0 ([5c333e54bac9af7](https://github.com/bsorrentino/java-async-generator/commit/5c333e54bac9af78d5d8563abe8bacfd764e85b3))
+   
+ -  move to nex dev version 4.2-SNAPSHOT ([3c643b510e29adc](https://github.com/bsorrentino/java-async-generator/commit/3c643b510e29adc10b0c7ffd317cd79d4ee6bb24))
+   
+
+### Test 
+
+ -  update test to verify the AsyncGenerator behaviour ([c3bd51e7ef6de8f](https://github.com/bsorrentino/java-async-generator/commit/c3bd51e7ef6de8fdde8a850b48df2aee71b6294e))
+   
+ -  **Task**  add  sync task handling ([fea665b8a74d10e](https://github.com/bsorrentino/java-async-generator/commit/fea665b8a74d10ecc66d43e507cd0e8d90bd5660))
+   
+
+
+
+
+
 <!-- "name: v4.1.0" is a release tag -->
 
 ## [v4.1.0](https://github.com/bsorrentino/java-async-generator/releases/tag/v4.1.0) (2026-02-16)
