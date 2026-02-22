@@ -488,7 +488,8 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      * @return a CompletableFuture representing the completion of the iteration process.
      */
     default CompletableFuture<Object> forEachAsync(Consumer<E> consumer) {
-        return CompletableFuture.supplyAsync(() -> forEachSync(consumer), executor()).join();
+        return CompletableFuture.supplyAsync(() -> forEachSync(consumer), executor())
+                .thenCompose(Function.identity());
     }
 
     default <R> CompletableFuture<R> reduce(R result, BiFunction<R, E, R> reducer) {
@@ -504,7 +505,8 @@ public interface AsyncGenerator<E> extends Iterable<E> {
     }
 
     default <R> CompletableFuture<R> reduceAsync(R result, BiFunction<R, E, R> reducer) {
-        return CompletableFuture.supplyAsync(() -> reduce(result, reducer), executor()).join();
+        return CompletableFuture.supplyAsync(() -> reduce(result, reducer), executor())
+                .thenCompose( Function.identity() );
     }
 
     /**
@@ -518,6 +520,11 @@ public interface AsyncGenerator<E> extends Iterable<E> {
             return completedFuture(next.resultValue());
         }
         return next.future().thenCompose(v -> toCompletableFuture());
+    }
+
+    default CompletableFuture<Object> toCompletableFutureAsync() {
+        return CompletableFuture.supplyAsync(this::toCompletableFuture, executor())
+                .thenCompose( Function.identity() );
     }
 
     /**
