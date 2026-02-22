@@ -15,55 +15,55 @@ public class FlowGeneratorTest {
     @Test
     public void flowGeneratorSubscriberTest() throws Exception {
 
-        var executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(20);
+        final var executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(20);
 
-        var publisher = new SubmissionPublisher<String>();
+        final var publisher = new SubmissionPublisher<String>();
 
         final var data = List.of( "e1", "e2", "e3", "e4", "e5" );
 
-        var generator = FlowGenerator.fromPublisher(publisher);
+        final var generator = FlowGenerator.fromPublisher(publisher);
 
         assertTrue( publisher.hasSubscribers() );
 
-        var submitting = runAsync( () -> {
+        final var submitting = runAsync( () -> {
                 data.stream().peek(System.out::println).forEach( publisher::submit );
                 publisher.close();
             }, executor );
 
-        final List<String> result = new ArrayList<>();
-        var iterating = generator.forEachAsync(result::add);
+        final var result = new ArrayList<>();
+        final var iterating = generator.forEachAsync(result::add);
 
-        CompletableFuture.allOf(iterating, submitting );
+        CompletableFuture.allOf(iterating, submitting ).join();
 
         assertEquals( data.size(), result.size() );
         assertIterableEquals( data, result );
 
-        System.out.println("Core pool size: " + executor.getCorePoolSize());
-        System.out.println("Largest pool size: " + executor.getLargestPoolSize());
-        System.out.println("Active threads: " + executor.getActiveCount());
-        System.out.println("Completed tasks: " + executor.getCompletedTaskCount());
+        System.out.printf("Core pool size: %d%n", executor.getCorePoolSize());
+        System.out.printf("Largest pool size: %d%n",executor.getLargestPoolSize());
+        System.out.printf("Active threads: %d%n", executor.getActiveCount());
+        System.out.printf("Completed tasks: %d%n", executor.getCompletedTaskCount());
 
     }
 
     @Test
     public void flowGeneratorPublisherTest() throws Exception {
 
-        var executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(20);
+        final var executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(20);
 
-        var queue = new LinkedBlockingQueue<AsyncGenerator.Data<String>>();
+        final var queue = new LinkedBlockingQueue<AsyncGenerator.Data<String>>();
 
         final var data = List.of( "e1", "e2", "e3", "e4", "e5" );
 
-        var generator = AsyncGeneratorQueue.of( queue, q -> {
+        final var generator = AsyncGeneratorQueue.of( queue, q -> {
 
             for( String value: data ) {
                 queue.add(AsyncGenerator.Data.of(completedFuture(value)));
             }
         }, executor);
 
-        var publisher = FlowGenerator.toPublisher( generator );
+        final var publisher = FlowGenerator.toPublisher( generator );
 
-        var result = new ArrayList<String>();
+        final var result = new ArrayList<String>();
 
         publisher.subscribe(new Flow.Subscriber<String>() {
             @Override
@@ -102,17 +102,17 @@ public class FlowGeneratorTest {
     @Test
     public void flowGeneratorSubscriberAndCancelTest() throws Exception {
 
-        var executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(20);
+        final var executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(20);
 
-        var publisher = new SubmissionPublisher<String>();
+        final var publisher = new SubmissionPublisher<String>();
 
         final var data = List.of( "e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8", "e9", "e10" );
 
-        var generator = FlowGenerator.fromPublisher(publisher);
+        final var generator = FlowGenerator.fromPublisher(publisher);
 
         assertTrue( publisher.hasSubscribers() );
 
-        var submitting = CompletableFuture.runAsync( () -> {
+        final var submittingFuture = CompletableFuture.runAsync( () -> {
 
             try {
                 for (String value : data) {
@@ -129,13 +129,15 @@ public class FlowGeneratorTest {
             }
         }, executor );
 
-        var cancelling = CompletableFuture.runAsync( () -> {
+        final var cancellingFuture = CompletableFuture.runAsync( () -> {
             try {
-                System.out.printf("cancelling start on thread[%s]\n", Thread.currentThread().getName());
+                System.out.printf("cancelling start on thread[%s]%n",
+                        Thread.currentThread().getName());
 
                 Thread.sleep( 4000 );
 
-                System.out.printf("generator cancelled: %s\n", generator.cancel( true) );
+                System.out.printf("generator cancelled: %s%n",
+                        generator.cancel( true) );
 
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
@@ -143,29 +145,29 @@ public class FlowGeneratorTest {
         }, executor );
 
 
-        final List<String> result = new ArrayList<>();
-        var iterating = generator
+        final var result = new ArrayList<>();
+        final var iterating = generator
                         .forEachAsync( value -> {
                             try {
                                 Thread.sleep(10);
-                                System.out.printf("received: %s on thread[%s]\n", value, Thread.currentThread().getName());
+                                System.out.printf("received: %s on thread[%s]%n", value, Thread.currentThread().getName());
                                 result.add(value);
                             } catch (InterruptedException e) {
-                                System.err.printf( "interrupted on thread[%s]\n", Thread.currentThread().getName() );
+                                System.err.printf( "interrupted on thread[%s]%n", Thread.currentThread().getName() );
                                 throw new CompletionException(e);
                             }
                         });
 
 
-        CompletableFuture.allOf(iterating, submitting, cancelling );
+        CompletableFuture.allOf(iterating, submittingFuture, cancellingFuture ).join();
 
         assertEquals( 4, result.size() );
         assertIterableEquals( result,  List.of( "e1", "e2", "e3", "e4") );
 
-        System.out.println("Core pool size: " + executor.getCorePoolSize());
-        System.out.println("Largest pool size: " + executor.getLargestPoolSize());
-        System.out.println("Active threads: " + executor.getActiveCount());
-        System.out.println("Completed tasks: " + executor.getCompletedTaskCount());
+        System.out.printf("Core pool size: %d%n", executor.getCorePoolSize());
+        System.out.printf("Largest pool size: %d%n",executor.getLargestPoolSize());
+        System.out.printf("Active threads: %d%n", executor.getActiveCount());
+        System.out.printf("Completed tasks: %d%n", executor.getCompletedTaskCount());
 
     }
 

@@ -1,23 +1,28 @@
 package org.bsc.async;
 
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public class Task {
 
-    static CompletableFuture<String> of(int index, long delayInMills) {
+    static CompletableFuture<String> async(int index, Duration delay ) {
         return CompletableFuture.supplyAsync( () -> {
             try {
-                Thread.sleep( delayInMills );
+                Thread.sleep( delay.toMillis() );
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            return "e" + index;
+            return "e%d".formatted(index);
         } );
-        //return completedFuture("e" + index);
     }
-    static CompletableFuture<String> of(int index) {
-        return CompletableFuture.supplyAsync( () -> {
-            return "e" + index;
-        } );
+    static CompletableFuture<String> async(int index) {
+        return CompletableFuture.supplyAsync( () -> "e%d".formatted(index));
+    }
+
+    static CompletableFuture<String> sync(int index) {
+        System.out.printf("task[%d] - thread[%s]%n", index, Thread.currentThread().getName());
+        return completedFuture( "e%d".formatted(index));
     }
 }
