@@ -125,7 +125,6 @@ public interface AsyncGenerator<E> extends Iterable<E> {
          * <p>
          * This method is idempotent - calling it multiple times has no additional effect.
          *
-         * @see #cancel(boolean)
          */
         @Override
         public void close() {
@@ -150,22 +149,15 @@ public interface AsyncGenerator<E> extends Iterable<E> {
          * capturing the outer Base instance, avoiding circular references that would
          * prevent garbage collection.
          */
-        private static class CleanupAction implements Runnable {
-            private final ExecutorService executor;
-            private final AtomicBoolean closed;
-
-            CleanupAction(ExecutorService executor, AtomicBoolean closed) {
-                this.executor = executor;
-                this.closed = closed;
-            }
+        private record CleanupAction(ExecutorService executor, AtomicBoolean closed) implements Runnable {
 
             @Override
-            public void run() {
-                if (closed.compareAndSet(false, true)) {
-                    executor.shutdown();
+                    public void run() {
+                        if (closed.compareAndSet(false, true)) {
+                            executor.shutdown();
+                        }
+                    }
                 }
-            }
-        }
     }
 
     abstract class BaseCancellable<E> extends Base<E> implements Cancellable<E> {
