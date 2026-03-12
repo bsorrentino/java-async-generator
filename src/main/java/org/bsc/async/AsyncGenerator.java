@@ -125,7 +125,6 @@ public interface AsyncGenerator<E> extends Iterable<E> {
          * <p>
          * This method is idempotent - calling it multiple times has no additional effect.
          *
-         * @see #cancel(boolean)
          */
         @Override
         public void close() {
@@ -150,22 +149,15 @@ public interface AsyncGenerator<E> extends Iterable<E> {
          * capturing the outer Base instance, avoiding circular references that would
          * prevent garbage collection.
          */
-        private static class CleanupAction implements Runnable {
-            private final ExecutorService executor;
-            private final AtomicBoolean closed;
-
-            CleanupAction(ExecutorService executor, AtomicBoolean closed) {
-                this.executor = executor;
-                this.closed = closed;
-            }
+        private record CleanupAction(ExecutorService executor, AtomicBoolean closed) implements Runnable {
 
             @Override
-            public void run() {
-                if (closed.compareAndSet(false, true)) {
-                    executor.shutdown();
+                    public void run() {
+                        if (closed.compareAndSet(false, true)) {
+                            executor.shutdown();
+                        }
+                    }
                 }
-            }
-        }
     }
 
     abstract class BaseCancellable<E> extends Base<E> implements Cancellable<E> {
@@ -590,13 +582,11 @@ public interface AsyncGenerator<E> extends Iterable<E> {
 class InternalIterator<E> implements Iterator<E>, AsyncGenerator.HasResultValue, AsyncGenerator.IsCancellable {
     private final AsyncGenerator<E> delegate;
 
-    //final AtomicReference<AsyncGenerator.Data<E>> currentFetchedData;
     private volatile AsyncGenerator.Data<E> currentFetchedData;
 
     public InternalIterator(AsyncGenerator<E> delegate) {
         this.delegate = delegate;
-        //currentFetchedData = new AtomicReference<>(delegate.next());
-        currentFetchedData = delegate.next();
+        // currentFetchedData = delegate.next();
     }
 
     @Override
@@ -604,9 +594,11 @@ class InternalIterator<E> implements Iterator<E>, AsyncGenerator.HasResultValue,
         if( isCancelled() ) {
             return false;
         }
-        //final var value = currentFetchedData.get();
-        final var value = currentFetchedData;
-        return value != null && !value.isDone();
+
+        final var next = delegate.next();
+        currentFetchedData = next;
+
+        return next != null && !next.isDone();
     }
 
     @Override
@@ -614,16 +606,11 @@ class InternalIterator<E> implements Iterator<E>, AsyncGenerator.HasResultValue,
         if( isCancelled() ) {
             throw new CancellationException("generator is cancelled");
         }
-        //var next = currentFetchedData.get();
-        var next = currentFetchedData;
+
+        final var next = currentFetchedData;
 
         if (next == null || next.isDone()) {
-            throw new IllegalStateException("no more elements into iterator");
-        }
-
-        if (!next.isError()) {
-            //currentFetchedData.set(delegate.next());
-            currentFetchedData = delegate.next();
+            throw new NoSuchElementException("no more elements into iterator");
         }
 
         return next.future().join();

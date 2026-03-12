@@ -13,5 +13,13 @@ fi
 
 mvn versions:set -DnewVersion=$ver
 
-# after this, you need to commit the changes
-# mvn versions:commit
+# Prompt user to confirm version change
+read -p "Commit version change? (Y/n): " -n 1 -r confirm
+echo  # Move to new line
+if [[ $confirm =~ ^[Yy]$ ]] || [[ -z $confirm ]]; then
+    echo "Committing version change..."
+    mvn versions:commit
+else
+    echo "Reverting version change..."
+    mvn versions:revert
+fi
