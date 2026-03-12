@@ -598,7 +598,7 @@ class InternalIterator<E> implements Iterator<E>, AsyncGenerator.HasResultValue,
         final var next = delegate.next();
         currentFetchedData = next;
 
-        return next != null && !next.isDone();
+        return !isCancelled() && next != null && !next.isDone();
     }
 
     @Override
