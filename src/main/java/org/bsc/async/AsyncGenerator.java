@@ -582,13 +582,11 @@ public interface AsyncGenerator<E> extends Iterable<E> {
 class InternalIterator<E> implements Iterator<E>, AsyncGenerator.HasResultValue, AsyncGenerator.IsCancellable {
     private final AsyncGenerator<E> delegate;
 
-    //final AtomicReference<AsyncGenerator.Data<E>> currentFetchedData;
     private volatile AsyncGenerator.Data<E> currentFetchedData;
 
     public InternalIterator(AsyncGenerator<E> delegate) {
         this.delegate = delegate;
-        //currentFetchedData = new AtomicReference<>(delegate.next());
-        currentFetchedData = delegate.next();
+        // currentFetchedData = delegate.next();
     }
 
     @Override
@@ -596,9 +594,11 @@ class InternalIterator<E> implements Iterator<E>, AsyncGenerator.HasResultValue,
         if( isCancelled() ) {
             return false;
         }
-        //final var value = currentFetchedData.get();
-        final var value = currentFetchedData;
-        return value != null && !value.isDone();
+
+        final var next = delegate.next();
+        currentFetchedData = next;
+
+        return next != null && !next.isDone();
     }
 
     @Override
@@ -606,16 +606,11 @@ class InternalIterator<E> implements Iterator<E>, AsyncGenerator.HasResultValue,
         if( isCancelled() ) {
             throw new CancellationException("generator is cancelled");
         }
-        //var next = currentFetchedData.get();
-        var next = currentFetchedData;
+
+        final var next = currentFetchedData;
 
         if (next == null || next.isDone()) {
-            throw new IllegalStateException("no more elements into iterator");
-        }
-
-        if (!next.isError()) {
-            //currentFetchedData.set(delegate.next());
-            currentFetchedData = delegate.next();
+            throw new NoSuchElementException("no more elements into iterator");
         }
 
         return next.future().join();
