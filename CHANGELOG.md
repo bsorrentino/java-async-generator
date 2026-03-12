@@ -2,6 +2,42 @@
 
 
 
+<!-- "name: v4.2.2" is a release tag -->
+
+## [v4.2.2](https://github.com/bsorrentino/java-async-generator/releases/tag/v4.2.2) (2026-03-12)
+
+
+### Bug Fixes
+
+ -  **AsyncGenerator**  handle cancellation properly for result check in hasNext() ([7e5c1603f22cc5c](https://github.com/bsorrentino/java-async-generator/commit/7e5c1603f22cc5cc0db228635c14dd628950f55d))
+     > The commit adds a check for cancellation state before evaluating the next element&#x27;s completion status.
+     > This fix breaking change introducted by previous version where cancellation check was delegate to next() and thrown an exception rather than break the iteration loop
+
+
+### Refactor
+
+            -  **changelog.mustache**  Remove leading spaces in Refactor and Test sections ([55da5ffe363dfcb](https://github.com/bsorrentino/java-async-generator/commit/55da5ffe363dfcb7ed317b1b382c248392cd6823))
+            
+
+
+### Documentation
+
+ -  update changelog ([3d0ec3832f298fb](https://github.com/bsorrentino/java-async-generator/commit/3d0ec3832f298fb8c59dc1ea847962e217638d45))
+
+
+### ALM 
+
+ -  **docs**  bump to release 4.2.2 ([4f6e44d5befa283](https://github.com/bsorrentino/java-async-generator/commit/4f6e44d5befa283d46e2405dceaead9d4887764f))
+   
+ -  bump to next version 4.2.2 ([f5a9ba177088894](https://github.com/bsorrentino/java-async-generator/commit/f5a9ba177088894f14713c5bc54b7cc99a3569d4))
+   
+ -  bump to nex dev release ([542b7bcd852a51f](https://github.com/bsorrentino/java-async-generator/commit/542b7bcd852a51faaefb211d41978ce4ecfc5c41))
+   
+
+
+
+
+
 <!-- "name: v4.2.1" is a release tag -->
 
 ## [v4.2.1](https://github.com/bsorrentino/java-async-generator/releases/tag/v4.2.1) (2026-03-12)
@@ -13,7 +49,7 @@
      > resolve #5
 
 
-    ### Refactor
+### Refactor
 
             -  **src/main/java/org/bsc/async/AsyncGenerator.java**  Replace static CleanupAction class with record ([820508d4cfe3c01](https://github.com/bsorrentino/java-async-generator/commit/820508d4cfe3c016a9bb7833948aa3a111a08de0))
             
@@ -45,13 +81,13 @@
 
 
 
-    ### Refactor
+### Refactor
 
             -  **AsyncGenerator**  Refactor async methods to use thenCompose instead of join ([b0baab9c2c3a7a9](https://github.com/bsorrentino/java-async-generator/commit/b0baab9c2c3a7a9a2a82ff2e7ce6f8f4b4a4f220))
              > Replace .join() with .thenCompose() for non-blocking behavior and add new toCompletableFutureAsync() method
 
 
-    ### Test
+### Test
 
             -  update test to verify the AsyncGenerator behaviour ([c3bd51e7ef6de8f](https://github.com/bsorrentino/java-async-generator/commit/c3bd51e7ef6de8fdde8a850b48df2aee71b6294e))
             
@@ -116,7 +152,7 @@
    
 
 
-    ### Refactor
+### Refactor
 
             -  **AsyncGenerator**  Refactor Embed to record and fix syntax ([26c473efc9a8e75](https://github.com/bsorrentino/java-async-generator/commit/26c473efc9a8e75b08bc2ea7cc0f4b06821713b5))
             
@@ -151,7 +187,7 @@
 
 
 
-    ### Refactor
+### Refactor
 
             -  return CANCELLED result if cancellation is detected in next() method ([4f5c479031a3169](https://github.com/bsorrentino/java-async-generator/commit/4f5c479031a31691cd6f22f9a1255b23f2e97db5))
              > work on #2
@@ -161,7 +197,7 @@
  > work on #2
 
 
-    ### Test
+### Test
 
             -  **AsyncGenerator**  Refactored cancellation logic across AsyncGenerator subclasses ([23b9a57ff806dcf](https://github.com/bsorrentino/java-async-generator/commit/23b9a57ff806dcfafae764734a31117b131ab1f6))
              > - handle cancellation regardless that delegate is cancellable
@@ -224,7 +260,7 @@
      > work on #2
 
 
-    ### Refactor
+### Refactor
 
             -  **AsyncGenerator**  Rename abstract class BaseCancellable to use Cancellable interface instead of IsCancellable ([9b87691850bf9bd](https://github.com/bsorrentino/java-async-generator/commit/9b87691850bf9bd66b411fcf611d7adf1711986b))
              > work on #2
@@ -264,7 +300,7 @@
              > work on #2
 
 
-    ### Test
+### Test
 
             -  update unit test add cancellation tests ([c7e9f28e31b9387](https://github.com/bsorrentino/java-async-generator/commit/c7e9f28e31b938797854c0f88a98edf729daa895))
             
@@ -314,7 +350,7 @@
    
 
 
-    ### Refactor
+### Refactor
 
             -  default implementation of cancel() method raises UnsupportedOperationException ([a46cf8a01937f7c](https://github.com/bsorrentino/java-async-generator/commit/a46cf8a01937f7c128a25480e912bfdac059d85a))
              > work on #2
@@ -353,7 +389,7 @@
    
 
 
-    ### Refactor
+### Refactor
 
             -  **deploy**  refactor: move to sonatype-central deployment repo ([f7365d58f4e75e2](https://github.com/bsorrentino/java-async-generator/commit/f7365d58f4e75e2bbbefe841c2ef3298247813b6))
             
@@ -386,7 +422,7 @@
    
 
 
-    ### Refactor
+### Refactor
 
             -  replace ReentrantReadWriteLock with AtomicReference ([49ae7dd5cbed212](https://github.com/bsorrentino/java-async-generator/commit/49ae7dd5cbed212aec341592783e84803013abc7))
              > - Introduced &#x60;AtomicReference&#x60; to manage the current fetched data, simplifying the locking mechanism and improving performance.
@@ -431,7 +467,7 @@
    
 
 
-    ### Refactor
+### Refactor
 
             -  update changelog template ([0acddcf388ee5bb](https://github.com/bsorrentino/java-async-generator/commit/0acddcf388ee5bb858105c8bfccf94c350d328d9))
             
@@ -472,7 +508,7 @@
  -  configure Maven Javadoc Plugin to exclude module-info.java ([d9adb3d9fcc273e](https://github.com/bsorrentino/java-async-generator/commit/d9adb3d9fcc273ec939a920f42dd33a6bae287a1))
 
 
-    ### Refactor
+### Refactor
 
             -  **AsyncGeneratorOperators.java**  update async usage ([71aab83bb26c04a](https://github.com/bsorrentino/java-async-generator/commit/71aab83bb26c04a87b6285bd6f730455f61e7529))
              > - use async operator thenApplyAsync
@@ -518,7 +554,7 @@
  -  **AsyncGenerator**  add UnmodifiableDeque import ([47d4b323f0f0306](https://github.com/bsorrentino/java-async-generator/commit/47d4b323f0f0306425f7464c925bbb239433df2e))
 
 
-    ### Refactor
+### Refactor
 
             -  **AsyncGeneratorOperators.java**  improve asynchronous iteration and collection ([9dd666d47a19627](https://github.com/bsorrentino/java-async-generator/commit/9dd666d47a19627747a310326e7c37d763073031))
              > This commit refactors the &#x60;AsyncGeneratorOperators&#x60; interface to improve the performance of asynchronous iteration and collection operations. The changes include:
@@ -532,7 +568,7 @@
             -  **maven-javadoc-plugin**  update version to 3.11.1 ([ef818c6b26b81fe](https://github.com/bsorrentino/java-async-generator/commit/ef818c6b26b81fe66a2cb416117e60296722e7ff))
             
 
-    ### Test
+### Test
 
             -  add test for reactive stream integration ([09adc3cd805d03d](https://github.com/bsorrentino/java-async-generator/commit/09adc3cd805d03d2923eb54f2bf0cf83a0b6faca))
             
@@ -580,7 +616,7 @@
  -  **pom-jdk8.xml**  update version to SNAPSHOT for async-generator-jdk8 ([1c27cf97df06971](https://github.com/bsorrentino/java-async-generator/commit/1c27cf97df069715fdfab277405800843bfb1b54))
 
 
-    ### Refactor
+### Refactor
 
             -  update async-generator version to SNAPSHOT ([5ffcf2b873f2963](https://github.com/bsorrentino/java-async-generator/commit/5ffcf2b873f2963d50aab7beb9e33ebc09a9fb01))
             
@@ -618,7 +654,7 @@
    
 
 
-    ### Refactor
+### Refactor
 
             -  replace data.done with data.isDone() ([5dffc8ef83e286f](https://github.com/bsorrentino/java-async-generator/commit/5dffc8ef83e286fd46cff2d352ca36b8d7601d8a))
             
@@ -695,7 +731,7 @@
  -  deployment signing ([80ae69ced67514c](https://github.com/bsorrentino/java-async-generator/commit/80ae69ced67514c104742c4430067ed2939238fb))
 
 
-    ### Refactor
+### Refactor
 
             -  **AsyncGeneratorQuest**  deprecate method of( queue, executor, consumer) ([73d3ed4b65b79f6](https://github.com/bsorrentino/java-async-generator/commit/73d3ed4b65b79f668c239b31632537270843c86c))
              > now the standard is of( queue, consumer, executor )
@@ -776,7 +812,7 @@
    
 
 
-    ### Refactor
+### Refactor
 
             -  clean code ([b95ffe647e23b1f](https://github.com/bsorrentino/java-async-generator/commit/b95ffe647e23b1f964d2a05ddc675a5c0d87744e))
             
