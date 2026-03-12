@@ -37,6 +37,32 @@
     {{/commits}}
 {{/ifContainsType}}
 
+{{#ifContainsType commits type='refactor'}}
+    ### Refactor
+
+    {{#commits}}
+        {{#ifCommitType . type='refactor'}}
+            - {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{hash}}](https://github.com/bsorrentino/java-async-generator/commit/{{hashFull}}))
+            {{#messageBodyItems}} > {{.}}
+            {{/messageBodyItems}}
+
+        {{/ifCommitType}}
+    {{/commits}}
+{{/ifContainsType}}
+
+{{#ifContainsType commits type='test'}}
+    ### Test
+
+    {{#commits}}
+        {{#ifCommitType . type='test'}}
+            - {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{hash}}](https://github.com/bsorrentino/java-async-generator/commit/{{hashFull}}))
+            {{#messageBodyItems}} > {{.}}
+            {{/messageBodyItems}}
+
+        {{/ifCommitType}}
+    {{/commits}}
+{{/ifContainsType}}
+
 {{#ifContainsType commits type='docs'}}
 ### Documentation
 
@@ -51,37 +77,11 @@
     {{/commits}}
 {{/ifContainsType}}
 
-{{#ifContainsType commits type='refactor'}}
-### Refactor
-
-    {{#commits}}
-      {{#ifCommitType . type='refactor'}}
- - {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{hash}}](https://github.com/bsorrentino/java-async-generator/commit/{{hashFull}}))
-   {{#messageBodyItems}} > {{.}}
-   {{/messageBodyItems}}
-
-      {{/ifCommitType}}
-    {{/commits}}
-{{/ifContainsType}}
-
 {{#ifContainsType commits type='build'}}
 ### ALM 
 
     {{#commits}}
       {{#ifCommitType . type='build'}}
- - {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{hash}}](https://github.com/bsorrentino/java-async-generator/commit/{{hashFull}}))
-   {{#messageBodyItems}} > {{.}}
-   {{/messageBodyItems}}
-
-      {{/ifCommitType}}
-    {{/commits}}
-{{/ifContainsType}}
-
-{{#ifContainsType commits type='test'}}
-### Test 
-
-    {{#commits}}
-      {{#ifCommitType . type='test'}}
  - {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{hash}}](https://github.com/bsorrentino/java-async-generator/commit/{{hashFull}}))
    {{#messageBodyItems}} > {{.}}
    {{/messageBodyItems}}
