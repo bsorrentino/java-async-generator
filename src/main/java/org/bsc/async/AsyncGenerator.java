@@ -262,62 +262,70 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      * @param <E> the type of elements in the generator
      */
     class WithEmbed<E> extends BaseCancellable<E> implements HasResultValue {
-        protected final Deque<Embed<E>> generatorsStack = new ArrayDeque<>(2);
-        private final Deque<Data<E>> returnValueStack = new ArrayDeque<>(2);
+        protected final Deque<Embed<E>> generatorStack = new ArrayDeque<>(2);
+        private final Deque<Optional<Object>> returnValueStack = new ArrayDeque<>(2);
+        private final Embed<E> firstEmbed;
 
         public WithEmbed(AsyncGenerator<E> delegate, EmbedCompletionHandler onGeneratorDoneWithResult) {
-            generatorsStack.push(new Embed<>(delegate, onGeneratorDoneWithResult));
+            firstEmbed = new Embed<>(delegate, onGeneratorDoneWithResult);
+            generatorStack.push(firstEmbed);
         }
 
         public WithEmbed(AsyncGenerator<E> delegate) {
             this(delegate, null);
         }
 
-        @Override
-        public final Executor executor() {
-            if (generatorsStack.isEmpty()) {
-                throw new IllegalStateException("no generator found!");
-            }
-            return generatorsStack.peek().generator.executor();
+        private void reset() {
+            returnValueStack.clear();
+            generatorStack.clear();
+            generatorStack.push(firstEmbed);
         }
 
-        public Deque<Data<E>> resultValues() {
+        @Override
+        public final Executor executor() {
+            if (generatorStack.isEmpty()) {
+                throw new IllegalStateException("no generator found!");
+            }
+            return generatorStack.peek().generator.executor();
+        }
+
+        public Deque<Optional<Object>> resultValues() {
             return new UnmodifiableDeque<>(returnValueStack);
         }
 
         public Optional<Object> resultValue() {
-            return ofNullable(returnValueStack.peek())
-                    .map(Data::resultValue);
+            return ofNullable(returnValueStack.peek()).flatMap( Function.identity());
         }
 
         private void clearPreviousReturnsValuesIfAny() {
             // Check if the return values are which ones from previous run
-            if (returnValueStack.size() > 1 && returnValueStack.size() == generatorsStack.size()) {
+            if (returnValueStack.size() > 1 && returnValueStack.size() == generatorStack.size()) {
                 returnValueStack.clear();
             }
         }
 
         protected boolean isLastGenerator() {
-            return generatorsStack.size() == 1;
+            return generatorStack.size() == 1;
         }
 
         @Override
         public Data<E> next() {
-            if (generatorsStack.isEmpty()) { // GUARD
+            if (generatorStack.isEmpty()) { // GUARD
                 throw new IllegalStateException("no generator found!");
             }
             if( isCancelled() ) {
+                generatorStack.clear();
                 return Data.done(CANCELLED);
             }
 
-            final Embed<E> embed = requireNonNull(generatorsStack.peek(), "embed generator cannot be null");
+            final Embed<E> embed = requireNonNull(generatorStack.peek(), "embed generator cannot be null");
 
             final Data<E> result = embed.generator.next();
 
 
             if (result.isDone()) {
                 clearPreviousReturnsValuesIfAny();
-                returnValueStack.push(result);
+                returnValueStack.push( ofNullable(result.resultValue()) );
                 if (embed.onCompletion != null /* && result.resultValue != null */) {
                     try {
                         embed.onCompletion.accept(result.resultValue());
@@ -325,17 +333,18 @@ public interface AsyncGenerator<E> extends Iterable<E> {
                         return Data.error(e);
                     }
                 }
-                if (isLastGenerator()) {
+                final var isLast = isLastGenerator();
+                generatorStack.pop();
+                if (isLast) {
                     return result;
                 }
-                generatorsStack.pop();
                 return next();
             }
             if (result.embed() != null) {
-                if (generatorsStack.size() >= 2) {
+                if (generatorStack.size() >= 2) {
                     return Data.error(new UnsupportedOperationException("Currently recursive nested generators are not supported!"));
                 }
-                generatorsStack.push(result.embed());
+                generatorStack.push(result.embed());
                 return next();
             }
 
@@ -345,7 +354,7 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         @Override
         public boolean cancel(boolean mayInterruptIfRunning) {
             if( super.cancel(mayInterruptIfRunning) ) {
-                for (var embed : generatorsStack) {
+                for (var embed : generatorStack) {
                     if (embed.generator instanceof Cancellable<?> isCancellable) {
                         isCancellable.cancel(mayInterruptIfRunning);
                     }
@@ -353,6 +362,42 @@ public interface AsyncGenerator<E> extends Iterable<E> {
                 return true;
             }
             return false;
+        }
+
+        @Override
+        public Iterator<E> iterator() {
+            reset();
+            return super.iterator();
+        }
+
+        @Override
+        public CompletableFuture<Object> forEachAsync(Consumer<E> consumer) {
+            reset();
+            return super.forEachAsync(consumer);
+        }
+
+        @Override
+        public <R> CompletableFuture<R> reduce(R result, BiFunction<R, E, R> reducer) {
+            reset();
+            return super.reduce(result, reducer);
+        }
+
+        @Override
+        public <R> CompletableFuture<R> reduceAsync(R result, BiFunction<R, E, R> reducer) {
+            reset();
+            return super.reduceAsync(result, reducer);
+        }
+
+        @Override
+        public CompletableFuture<Object> toCompletableFuture() {
+            reset();
+            return super.toCompletableFuture();
+        }
+
+        @Override
+        public CompletableFuture<Object> toCompletableFutureAsync() {
+            reset();
+            return super.toCompletableFutureAsync();
         }
     }
 
@@ -426,7 +471,6 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      * @return the next element from the generator
      */
     Data<E> next();
-
 
     Executor executor();
 

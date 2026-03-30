@@ -247,7 +247,7 @@ public class AsyncGeneratorTest {
     @Test
     public void asyncEmbedGeneratorTest() throws Exception {
         final List<String> expected = List.of("e1", "e2", "e3", "n1", "n2", "n3", "n4", "n5", "e4", "e5", "e6", "e7");
-        AsyncGenerator.WithEmbed<String> it = new AsyncGenerator.WithEmbed<>(new NestedAsyncGenerator());
+        final var it = new AsyncGenerator.WithEmbed<>(new NestedAsyncGenerator());
 
         List<String> forEachResult = new ArrayList<>();
         it.forEachAsync(forEachResult::add)
@@ -279,12 +279,14 @@ public class AsyncGeneratorTest {
 
         assertEquals(12, forEachResult.size());
         assertIterableEquals(expected, forEachResult);
+        assertTrue(it.generatorStack.isEmpty(), "generator stack should be empty");
+
     }
 
     @Test
     public void asyncEmbedGeneratorWithResultTest() throws Exception {
         final List<String> expected = asList("e1", "e2", "e3", "n1", "n2", "n3", "n4", "n5", "e4", "e5", "e6", "e7");
-        AsyncGenerator.WithEmbed<String> it = new AsyncGenerator.WithEmbed<>(new NestedAsyncGenerator(), result -> {
+        final var it = new AsyncGenerator.WithEmbed<>(new NestedAsyncGenerator(), result -> {
             System.out.println("generator done ");
             assertNotNull(result);
             assertEquals(7, result);
@@ -302,10 +304,10 @@ public class AsyncGeneratorTest {
         assertEquals(12, forEachResult.size());
         assertIterableEquals(expected, forEachResult);
         assertEquals(2, it.resultValues().size());
-        Object resultValue = it.resultValues().getFirst().resultValue();
+        Object resultValue = it.resultValues().getFirst().orElse(null);
         assertNotNull(resultValue);
         assertEquals(7, resultValue);
-        assertNull(it.resultValues().getLast().resultValue());
+        assertNull(it.resultValues().getLast().orElse(null));
 
         List<String> iterationResult = new ArrayList<>();
         for (String i : it) {
@@ -313,10 +315,10 @@ public class AsyncGeneratorTest {
         }
         System.out.println("Finished Iterator");
         assertEquals(2, it.resultValues().size());
-        resultValue = it.resultValues().getFirst().resultValue();
+        resultValue = it.resultValues().getFirst().orElse(null);
         assertNotNull(resultValue);
         assertEquals(7, resultValue);
-        assertNull(it.resultValues().getLast().resultValue());
+        assertNull(it.resultValues().getLast().orElse(null));
 
 
         assertEquals(12, iterationResult.size());
@@ -333,10 +335,11 @@ public class AsyncGeneratorTest {
         assertEquals(12, forEachResult.size());
         assertIterableEquals(expected, forEachResult);
         assertEquals(2, it.resultValues().size());
-        resultValue = it.resultValues().getFirst().resultValue();
+        resultValue = it.resultValues().getFirst().orElse(null);
         assertNotNull(resultValue);
         assertEquals(7, resultValue);
-        assertNull(it.resultValues().getLast().resultValue());
+        assertNull(it.resultValues().getLast().orElse(null));
+        assertTrue(it.generatorStack.isEmpty(), "generator stack should be empty");
 
     }
 
@@ -381,6 +384,7 @@ public class AsyncGeneratorTest {
         assertTrue(it.isCancelled(), "generator should be cancelled");
         assertTrue(forEachResult.size() < 12, "result should be partial");
         assertEquals(1, it.resultValues().size()); // cancelled on second iterator
+        assertTrue(it.generatorStack.isEmpty(), "generator stack should be empty");
 
     }
 
