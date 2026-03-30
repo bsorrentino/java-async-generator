@@ -42,7 +42,7 @@
 
     {{#commits}}
         {{#ifCommitType . type='refactor'}}
-            - {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{hash}}](https://github.com/bsorrentino/java-async-generator/commit/{{hashFull}}))
+ - {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{hash}}](https://github.com/bsorrentino/java-async-generator/commit/{{hashFull}}))
             {{#messageBodyItems}} > {{.}}
             {{/messageBodyItems}}
 
@@ -55,7 +55,7 @@
 
     {{#commits}}
         {{#ifCommitType . type='test'}}
-            - {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{hash}}](https://github.com/bsorrentino/java-async-generator/commit/{{hashFull}}))
+ - {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{hash}}](https://github.com/bsorrentino/java-async-generator/commit/{{hashFull}}))
             {{#messageBodyItems}} > {{.}}
             {{/messageBodyItems}}
 
