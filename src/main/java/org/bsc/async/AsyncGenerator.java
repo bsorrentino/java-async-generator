@@ -100,21 +100,26 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         private static final AtomicLong ID_GENERATOR = new AtomicLong(0);
 
         private final AtomicBoolean closed = new AtomicBoolean(false);
-        private final Cleaner.Cleanable cleanable;
+        private Cleaner.Cleanable cleanable;
 
-        private final ExecutorService executor = Executors.newSingleThreadExecutor(runnable ->
-                new Thread(runnable, format("AsyncGenerator[%d]", ID_GENERATOR.getAndIncrement())));
+        ExecutorService executorService;
 
         /**
          * Creates a new Base instance and registers it with the Cleaner for automatic cleanup.
          */
         protected Base() {
-            this.cleanable = CLEANER.register(this, new CleanupAction(executor, closed));
+
         }
 
         @Override
         public Executor executor() {
-            return executor;
+
+            if( executorService == null ) {
+                executorService = Executors.newSingleThreadExecutor(runnable ->
+                        new Thread(runnable, "AsyncGenerator[%d]".formatted( ID_GENERATOR.getAndIncrement())));
+                this.cleanable = CLEANER.register(this, new CleanupAction(executorService, closed));
+            }
+            return executorService;
         }
 
         /**
@@ -129,7 +134,9 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         @Override
         public void close() {
             if (closed.compareAndSet(false, true)) {
-                cleanable.clean();
+                if( cleanable!= null ) {
+                    cleanable.clean();
+                }
             }
         }
 
