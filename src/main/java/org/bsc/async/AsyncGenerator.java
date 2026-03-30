@@ -13,7 +13,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -190,9 +189,9 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         public boolean cancel(boolean mayInterruptIfRunning) {
             if (cancelled.compareAndSet(false, true)) {
                 close();
-                if (mayInterruptIfRunning && executor() instanceof ExecutorService service) {
-                    if (!service.isTerminated()) {
-                        service.shutdownNow();
+                if (mayInterruptIfRunning && executorService != null) {
+                    if (!executorService.isTerminated()) {
+                        executorService.shutdownNow();
                     }
                 }
                 return true;
