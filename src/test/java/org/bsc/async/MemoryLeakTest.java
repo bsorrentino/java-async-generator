@@ -58,10 +58,6 @@ public class MemoryLeakTest {
             Thread.sleep(100);
         }
 
-        // Run finalization
-        System.runFinalization();
-        Thread.sleep(500);
-
         // Verify thread count hasn't exploded
         // The key test: if there was a memory leak with circular reference,
         // the threads would NOT be cleaned up even after GC
@@ -80,7 +76,7 @@ public class MemoryLeakTest {
      */
     private void createAndDiscardGenerators(int count) {
         for (int i = 0; i < count; i++) {
-            TestGenerator gen = new TestGenerator(5);
+            final var gen = new TestGenerator(5);
             // Consume some elements to ensure executor is used
             gen.next();
             // Don't close - let GC handle it via Cleaner
@@ -181,7 +177,7 @@ public class MemoryLeakTest {
         assertTrue(gen.isClosed());
 
         // Should not throw
-        assertDoesNotThrow(() -> gen.close());
+        assertDoesNotThrow(gen::close);
     }
 
     /**
