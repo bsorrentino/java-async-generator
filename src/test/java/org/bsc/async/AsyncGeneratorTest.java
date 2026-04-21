@@ -9,6 +9,7 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
+import static java.util.Optional.ofNullable;
 import static org.bsc.async.AsyncGenerator.IsCancellable.CANCELLED;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -272,6 +273,7 @@ public class AsyncGeneratorTest {
 
         @Override
         public Data<String> next() {
+
             ++index;
             if (index >= data.size()) {
                 index = -1;
@@ -290,9 +292,43 @@ public class AsyncGeneratorTest {
         }
     }
 
+    @Test
+    public void asyncEmbedGeneratorToCompletableFuTest() throws Exception {
+        final var it = new AsyncGenerator.WithEmbed<>(new NestedAsyncGenerator());
+
+        var result = it.toCompletableFuture().join();
+        assertNotNull(result);
+        assertEquals(7, result);
+
+        result = it.toCompletableFutureAsync().join();
+        assertNotNull(result);
+        assertEquals(7, result);
+
+    }
 
     @Test
-    public void asyncEmbedGeneratorTest() throws Exception {
+    public void asyncEmbedGeneratorReduceTest() throws Exception {
+        final var expected = List.of("e1", "e2", "e3", "n1", "n2", "n3", "n4", "n5", "e4", "e5", "e6", "e7");
+        final var it = new AsyncGenerator.WithEmbed<>(new NestedAsyncGenerator());
+
+        var result = it.reduce(new ArrayList<>(), (list, value) -> {
+            list.add(value);
+            return list;
+        }).join();
+        assertNotNull(result);
+        assertEquals(expected, result);
+
+        result = it.reduceAsync(new ArrayList<>(), (list, value) -> {
+            list.add(value);
+            return list;
+        }).join();
+        assertNotNull(result);
+        assertEquals(expected, result);
+
+    }
+
+    @Test
+    public void asyncEmbedGeneratorForEachAsyncTest() throws Exception {
         final List<String> expected = List.of("e1", "e2", "e3", "n1", "n2", "n3", "n4", "n5", "e4", "e5", "e6", "e7");
         final var it = new AsyncGenerator.WithEmbed<>(new NestedAsyncGenerator());
 
