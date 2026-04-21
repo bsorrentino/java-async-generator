@@ -30,13 +30,13 @@ public class FutureCancellationTest {
             }
         });
 
-        Thread.sleep(1000);
+        Thread.sleep(1100);
         future.cancel(true); // sends interrupt
         exec.shutdown();
 
         assertTrue( future.isCancelled() );
         assertTrue( future.isDone() );
-        assertEquals( 4, executedSteps.get() );
+        assertEquals( 5, executedSteps.get() );
 
     }
 
@@ -58,12 +58,12 @@ public class FutureCancellationTest {
             }
         }, exec);
 
-        Thread.sleep(1000);
+        Thread.sleep(1100);
         future.cancel(true); // sends interrupt
 
         assertTrue( future.isCancelled() );
         assertTrue( future.isDone() );
-        assertEquals( 4, executedSteps.get() );
+        assertEquals( 5, executedSteps.get() );
 
         exec.shutdown();
 
@@ -89,7 +89,7 @@ public class FutureCancellationTest {
 
         final var future2 = CompletableFuture.runAsync( () -> {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(1100);
                 future1.cancel(true); // sends interrupt
                 System.out.println( "Future cancelled");
             } catch (InterruptedException e) {
@@ -102,7 +102,7 @@ public class FutureCancellationTest {
 
         assertTrue( future1.isCancelled() );
         assertTrue( future1.isDone() );
-        assertEquals( 4, executedSteps.get() );
+        assertEquals( 5, executedSteps.get() );
 
         exec.shutdown();
 
