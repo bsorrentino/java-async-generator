@@ -135,6 +135,52 @@ public class AsyncGeneratorTest {
     }
 
     @Test
+    public void  asyncGeneratorCompletableFutureCancelTest() throws Exception {
+
+        final var data = List.of(1, 2, 3, 4, 5);
+
+        final var taskIt = AsyncGenerator.from(data.iterator())
+                .flatMap( v -> Task.async(v, Duration.ofMillis(1000)) );
+
+        try( final var it = new AsyncGenerator.WithResult<>(taskIt) ) {
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                Thread.sleep(2000);
+                System.out.println("cancellation invoked");
+                var cancelled = it.cancel(false);
+                assertTrue(cancelled);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        final var value = it.toCompletableFuture().join();
+
+        assertNotNull( value );
+        assertEquals(CANCELLED, value);
+        assertTrue(it.isCancelled() );
+        }
+    }
+
+    @Test
+    public void asyncGeneratorCompletableFutureTest() throws Exception {
+        final var data = List.of(1, 2, 3, 4, 5);
+
+        final AsyncGenerator<String> it = AsyncGenerator.from(data.iterator())
+                .flatMap(Task::sync);
+
+        var futureResult = it.toCompletableFuture();
+
+        System.out.printf("Finished iteration - Thread[%s]%n", Thread.currentThread().getName());
+
+        final var result = futureResult.join();
+        assertNull( result );
+        // assertEquals(data.size(), futureResult.get().size());
+        // assertIterableEquals(asList("a10", "b20", "c30", "d40", "e10"), forEachResult);
+    }
+
+    @Test
     public void asyncGeneratorCompletableFutureAsyncTest() throws Exception {
         final var data = List.of(1, 2, 3, 4, 5);
 
@@ -150,6 +196,7 @@ public class AsyncGeneratorTest {
         // assertEquals(data.size(), futureResult.get().size());
         // assertIterableEquals(asList("a10", "b20", "c30", "d40", "e10"), forEachResult);
     }
+
 
     @Test
     public void asyncGeneratorFlatMapTest() throws Exception {
@@ -428,5 +475,6 @@ public class AsyncGeneratorTest {
         assertTrue(AsyncGenerator.resultValue(it).isPresent());
         assertEquals(12, AsyncGenerator.resultValue(it).get());
     }
+
 
 }
