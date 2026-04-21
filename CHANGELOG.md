@@ -2,9 +2,51 @@
 
 
 
-<!-- "name: v4.3" is a release tag -->
+<!-- "name: v4.3.1" is a release tag -->
 
-## [v4.3](https://github.com/bsorrentino/java-async-generator/releases/tag/v4.3) (2026-03-30)
+## [v4.3.1](https://github.com/bsorrentino/java-async-generator/releases/tag/v4.3.1) (2026-04-21)
+
+
+### Bug Fixes
+
+ -  **AsyncGenerator**  ad private methods reduce$(), toCompletableFuture$() to fix recursion ([7209dd461213af1](https://github.com/bsorrentino/java-async-generator/commit/7209dd461213af11c6ff80d056037ef45cf5aa85))
+
+
+### Refactor
+
+ -  **AsyncGenerator**  use direct access to executorService on cancel ([2a857e5b29df337](https://github.com/bsorrentino/java-async-generator/commit/2a857e5b29df337a2f8e2a8ba2104d12c9aa6bb2))
+            
+ -  **MemoryLeakTest.java**  remove deprecated finalization calls ([0e5c9ee6c30880d](https://github.com/bsorrentino/java-async-generator/commit/0e5c9ee6c30880daafbf39ab2ad31134437fbc47))
+            
+
+### Test
+
+ -  **AsyncGeneratorTest**  add new tests for CompletableFuture and reduce operations ([a654703f5c4f2d7](https://github.com/bsorrentino/java-async-generator/commit/a654703f5c4f2d732586f59b0db63d00a779733f))
+            
+ -  **AsyncGeneratorTest**  add CompletableFuture integration tests for async generator cancellation and result handling ([e28286f2330a146](https://github.com/bsorrentino/java-async-generator/commit/e28286f2330a1460d87b2d836d698d7a3182fa15))
+            
+
+### Documentation
+
+ -  bump to release 4.3.0 ([768065e69ae1e4f](https://github.com/bsorrentino/java-async-generator/commit/768065e69ae1e4f9abce53b26e9d2163b2bfe853))
+
+ -  update changelog ([36b2778970d9c2e](https://github.com/bsorrentino/java-async-generator/commit/36b2778970d9c2eb4662242dfceae6a8ce68c812))
+
+
+### ALM 
+
+ -  bump to next version 4.3.1 ([7f6e7b531aa4244](https://github.com/bsorrentino/java-async-generator/commit/7f6e7b531aa42442c37f33fb780a1978946dd5fe))
+   
+ -  bump to version 4.3.0 ([757c99b5deccf87](https://github.com/bsorrentino/java-async-generator/commit/757c99b5deccf87d03f53ddaae90dedb628cd239))
+   
+
+
+
+
+
+<!-- "name: v4.3.0" is a release tag -->
+
+## [v4.3.0](https://github.com/bsorrentino/java-async-generator/releases/tag/v4.3.0) (2026-03-30)
 
 
 ### Bug Fixes
