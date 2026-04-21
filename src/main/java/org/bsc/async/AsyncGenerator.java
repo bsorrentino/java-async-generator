@@ -13,7 +13,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -190,9 +189,9 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         public boolean cancel(boolean mayInterruptIfRunning) {
             if (cancelled.compareAndSet(false, true)) {
                 close();
-                if (mayInterruptIfRunning && executor() instanceof ExecutorService service) {
-                    if (!service.isTerminated()) {
-                        service.shutdownNow();
+                if (mayInterruptIfRunning && executorService != null) {
+                    if (!executorService.isTerminated()) {
+                        executorService.shutdownNow();
                     }
                 }
                 return true;
@@ -503,24 +502,18 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         return new FlatMapper<>(this, mapFunction);
     }
 
-    private CompletableFuture<Object> forEachSync(Consumer<E> consumer) {
+    private CompletableFuture<Object> forEach$(Consumer<E> consumer) {
         final var next = next();
         if (next.isDone()) {
             return completedFuture(next.resultValue());
         }
         if (next.embed() != null) {
-            return next.embed().generator.forEachSync(consumer)
-                    .thenCompose(v -> forEachSync(consumer))
-                    ;
-        } else {
-            return next.future()
-                    .thenApply(v -> {
-                        consumer.accept(v);
-                        return null;
-                    })
-                    .thenCompose(v -> forEachSync(consumer))
-                    ;
+            return next.embed().generator.forEach$(consumer)
+                    .thenCompose(v -> forEach$(consumer));
         }
+        return next.future()
+                .thenAccept(consumer)
+                .thenCompose(v -> forEach$(consumer));
 
     }
 
@@ -531,25 +524,45 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      * @return a CompletableFuture representing the completion of the iteration process.
      */
     default CompletableFuture<Object> forEachAsync(Consumer<E> consumer) {
-        return CompletableFuture.supplyAsync(() -> forEachSync(consumer), executor())
+        return CompletableFuture.supplyAsync(() -> forEach$(consumer), executor())
                 .thenCompose(Function.identity());
     }
 
-    default <R> CompletableFuture<R> reduce(R result, BiFunction<R, E, R> reducer) {
+    private <R> CompletableFuture<R> reduce$(R result, BiFunction<R, E, R> reducer) {
         final var next = next();
         if (next.isDone()) {
             return completedFuture(result);
         }
+        if (next.embed() != null) {
+            return next.embed().generator.reduce$(result, reducer)
+                    .thenCompose(v -> reduce$(result, reducer));
+        }
         return next.future()
                 .thenApply(v -> reducer.apply(result, v))
-                .thenCompose(v -> reduce(result, reducer))
+                .thenCompose(v -> reduce$(result, reducer))
                 ;
 
     }
 
+    default <R> CompletableFuture<R> reduce(R result, BiFunction<R, E, R> reducer) {
+        return reduce$(result, reducer);
+    }
+
     default <R> CompletableFuture<R> reduceAsync(R result, BiFunction<R, E, R> reducer) {
-        return CompletableFuture.supplyAsync(() -> reduce(result, reducer), executor())
+        return CompletableFuture.supplyAsync(() -> reduce$(result, reducer), executor())
                 .thenCompose( Function.identity() );
+    }
+
+    private CompletableFuture<Object> toCompletableFuture$() {
+        final Data<E> next = next();
+        if (next.isDone()) {
+            return completedFuture(next.resultValue());
+        }
+        if (next.embed() != null) {
+            return next.embed().generator.toCompletableFuture$()
+                    .thenCompose(v -> toCompletableFuture$());
+        }
+        return next.future().thenCompose(v -> toCompletableFuture$());
     }
 
     /**
@@ -558,15 +571,11 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      * @return a CompletableFuture representing the completion of the AsyncGenerator
      */
     default CompletableFuture<Object> toCompletableFuture() {
-        final Data<E> next = next();
-        if (next.isDone()) {
-            return completedFuture(next.resultValue());
-        }
-        return next.future().thenCompose(v -> toCompletableFuture());
+        return toCompletableFuture$();
     }
 
     default CompletableFuture<Object> toCompletableFutureAsync() {
-        return CompletableFuture.supplyAsync(this::toCompletableFuture, executor())
+        return CompletableFuture.supplyAsync(this::toCompletableFuture$, executor())
                 .thenCompose( Function.identity() );
     }
 

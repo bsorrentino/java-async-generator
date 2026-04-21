@@ -9,6 +9,7 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
+import static java.util.Optional.ofNullable;
 import static org.bsc.async.AsyncGenerator.IsCancellable.CANCELLED;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -135,6 +136,52 @@ public class AsyncGeneratorTest {
     }
 
     @Test
+    public void  asyncGeneratorCompletableFutureCancelTest() throws Exception {
+
+        final var data = List.of(1, 2, 3, 4, 5);
+
+        final var taskIt = AsyncGenerator.from(data.iterator())
+                .flatMap( v -> Task.async(v, Duration.ofMillis(1000)) );
+
+        try( final var it = new AsyncGenerator.WithResult<>(taskIt) ) {
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                Thread.sleep(2000);
+                System.out.println("cancellation invoked");
+                var cancelled = it.cancel(false);
+                assertTrue(cancelled);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        final var value = it.toCompletableFuture().join();
+
+        assertNotNull( value );
+        assertEquals(CANCELLED, value);
+        assertTrue(it.isCancelled() );
+        }
+    }
+
+    @Test
+    public void asyncGeneratorCompletableFutureTest() throws Exception {
+        final var data = List.of(1, 2, 3, 4, 5);
+
+        final AsyncGenerator<String> it = AsyncGenerator.from(data.iterator())
+                .flatMap(Task::sync);
+
+        var futureResult = it.toCompletableFuture();
+
+        System.out.printf("Finished iteration - Thread[%s]%n", Thread.currentThread().getName());
+
+        final var result = futureResult.join();
+        assertNull( result );
+        // assertEquals(data.size(), futureResult.get().size());
+        // assertIterableEquals(asList("a10", "b20", "c30", "d40", "e10"), forEachResult);
+    }
+
+    @Test
     public void asyncGeneratorCompletableFutureAsyncTest() throws Exception {
         final var data = List.of(1, 2, 3, 4, 5);
 
@@ -150,6 +197,7 @@ public class AsyncGeneratorTest {
         // assertEquals(data.size(), futureResult.get().size());
         // assertIterableEquals(asList("a10", "b20", "c30", "d40", "e10"), forEachResult);
     }
+
 
     @Test
     public void asyncGeneratorFlatMapTest() throws Exception {
@@ -225,6 +273,7 @@ public class AsyncGeneratorTest {
 
         @Override
         public Data<String> next() {
+
             ++index;
             if (index >= data.size()) {
                 index = -1;
@@ -243,9 +292,43 @@ public class AsyncGeneratorTest {
         }
     }
 
+    @Test
+    public void asyncEmbedGeneratorToCompletableFuTest() throws Exception {
+        final var it = new AsyncGenerator.WithEmbed<>(new NestedAsyncGenerator());
+
+        var result = it.toCompletableFuture().join();
+        assertNotNull(result);
+        assertEquals(7, result);
+
+        result = it.toCompletableFutureAsync().join();
+        assertNotNull(result);
+        assertEquals(7, result);
+
+    }
 
     @Test
-    public void asyncEmbedGeneratorTest() throws Exception {
+    public void asyncEmbedGeneratorReduceTest() throws Exception {
+        final var expected = List.of("e1", "e2", "e3", "n1", "n2", "n3", "n4", "n5", "e4", "e5", "e6", "e7");
+        final var it = new AsyncGenerator.WithEmbed<>(new NestedAsyncGenerator());
+
+        var result = it.reduce(new ArrayList<>(), (list, value) -> {
+            list.add(value);
+            return list;
+        }).join();
+        assertNotNull(result);
+        assertEquals(expected, result);
+
+        result = it.reduceAsync(new ArrayList<>(), (list, value) -> {
+            list.add(value);
+            return list;
+        }).join();
+        assertNotNull(result);
+        assertEquals(expected, result);
+
+    }
+
+    @Test
+    public void asyncEmbedGeneratorForEachAsyncTest() throws Exception {
         final List<String> expected = List.of("e1", "e2", "e3", "n1", "n2", "n3", "n4", "n5", "e4", "e5", "e6", "e7");
         final var it = new AsyncGenerator.WithEmbed<>(new NestedAsyncGenerator());
 
@@ -428,5 +511,6 @@ public class AsyncGeneratorTest {
         assertTrue(AsyncGenerator.resultValue(it).isPresent());
         assertEquals(12, AsyncGenerator.resultValue(it).get());
     }
+
 
 }
