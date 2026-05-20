@@ -1,12 +1,11 @@
 package org.bsc.async.internal.reactive;
 
 import org.bsc.async.AsyncGenerator;
-import org.bsc.async.AsyncGeneratorQueue;
+import org.bsc.async.AsyncGeneratorFlow;
 
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Flow;
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
@@ -14,17 +13,18 @@ import static java.util.Objects.requireNonNull;
 /**
  * Represents a subscriber for generating asynchronous data streams.
  *
- * <p>This class implements the {@link Flow.Subscriber} and {@link AsyncGenerator} interfaces to handle data flow
+ * <p>This class implements the {@link java.util.concurrent.Flow.Subscriber} and {@link AsyncGenerator} interfaces to handle data flow
  * and produce asynchronous data. It is designed to subscribe to a publisher, process incoming items,
  * and manage error and completion signals.</p>
  *
  * @param <T> The type of elements produced by this generator.
  */
-public class GeneratorSubscriber<T> implements AsyncGenerator.Cancellable<T>, Flow.Subscriber<T> {
+public class GeneratorSubscriber<T> implements AsyncGenerator.Cancellable<T>, java.util.concurrent.Flow.Subscriber<T> {
 
     private final Supplier<Object> mapResult;
-    private Flow.Subscription subscription;
-    private final AsyncGeneratorQueue.Generator<T> delegate;
+    private java.util.concurrent.Flow.Subscription subscription;
+    private final AsyncGeneratorFlow.Generator<T> delegate;
+    private final AsyncGeneratorFlow.Processor<T> processor;
 
     public Optional<Supplier<Object>> mapResult() {
         return Optional.ofNullable(mapResult);
@@ -33,39 +33,40 @@ public class GeneratorSubscriber<T> implements AsyncGenerator.Cancellable<T>, Fl
     /**
      * Constructs a new instance of {@code GeneratorSubscriber}.
      *
-     * @param <P> the type of the publisher, which must extend {@link Flow.Publisher}
-         * @param mapResult function that will set generator's result
+     * @param <P> the type of the publisher, which must extend {@link java.util.concurrent.Flow.Publisher}
+     * @param mapResult function that will set generator's result
      * @param publisher the source publisher that will push data to this subscriber
-     * @param queue the blocking queue used for storing asynchronous generator data
+     * @param processor the dispatcher and receiver for asynchronous generator data
      */
-    public <P extends Flow.Publisher<T>> GeneratorSubscriber(P publisher,
-                                                             Supplier<Object> mapResult,
-                                                             BlockingQueue<AsyncGenerator.Data<T>> queue) {
-        this.delegate = new AsyncGeneratorQueue.Generator<>( queue );
+    public <P extends java.util.concurrent.Flow.Publisher<T>> GeneratorSubscriber(P publisher,
+                                                                                  Supplier<Object> mapResult,
+                                                                                  AsyncGeneratorFlow.Processor<T> processor) {
+        this.delegate = new AsyncGeneratorFlow.Generator<>( processor );
         this.mapResult = mapResult;
+        this.processor = processor;
         publisher.subscribe(this);
     }
     /**
      * Constructs a new instance of {@code GeneratorSubscriber}.
      *
-     * @param <P> the type of the publisher, which must extend {@link Flow.Publisher}
+     * @param <P> the type of the publisher, which must extend {@link java.util.concurrent.Flow.Publisher}
      * @param publisher the source publisher that will push data to this subscriber
-     * @param queue the blocking queue used for storing asynchronous generator data
+     * @param processor the dispatcher and receiver for asynchronous generator data
      */
-    public <P extends Flow.Publisher<T>> GeneratorSubscriber(P publisher, BlockingQueue<AsyncGenerator.Data<T>> queue) {
-        this( publisher, null, queue );
+    public <P extends java.util.concurrent.Flow.Publisher<T>> GeneratorSubscriber(P publisher, AsyncGeneratorFlow.Processor<T> processor) {
+        this( publisher, null, processor );
     }
 
     /**
      * Handles the subscription event from a Flux.
      * <p>
-     * This method is called when a subscription to the source {@link Flow} has been established.
+     * This method is called when a subscription to the source {@link java.util.concurrent.Flow} has been established.
      * The provided {@code Flow.Subscription} can be used to manage and control the flow of data emissions.
      *
      * @param subscription The subscription object representing this resource owner lifecycle. Used to signal that resources being subscribed to should not be released until this subscription is disposed.
      */
     @Override
-    public void onSubscribe(Flow.Subscription subscription) {
+    public void onSubscribe(java.util.concurrent.Flow.Subscription subscription) {
         this.subscription = subscription;
         subscription.request(Long.MAX_VALUE);
     }
@@ -77,7 +78,7 @@ public class GeneratorSubscriber<T> implements AsyncGenerator.Cancellable<T>, Fl
      */
     @Override
     public void onNext(T item) {
-        delegate.queue().add( AsyncGenerator.Data.of( item ) );
+        processor.dispatchAsync( AsyncGenerator.Data.of( item ) );
     }
 
     /**
@@ -87,7 +88,7 @@ public class GeneratorSubscriber<T> implements AsyncGenerator.Cancellable<T>, Fl
      */
     @Override
     public void onError(Throwable error) {
-        delegate.queue().add( AsyncGenerator.Data.error(error) );
+        processor.dispatchAsync( AsyncGenerator.Data.error(error) );
     }
 
     /**
@@ -96,7 +97,7 @@ public class GeneratorSubscriber<T> implements AsyncGenerator.Cancellable<T>, Fl
      */
     @Override
     public void onComplete() {
-        delegate.queue().add(AsyncGenerator.Data.done( mapResult().map(Supplier::get).orElse(null)));
+        processor.dispatchAsync(AsyncGenerator.Data.done( mapResult().map(Supplier::get).orElse(null)));
     }
 
     /**
