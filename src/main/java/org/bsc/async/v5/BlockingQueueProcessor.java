@@ -1,7 +1,6 @@
-package org.bsc.async.internal;
+package org.bsc.async.v5;
 
 import org.bsc.async.AsyncGenerator;
-import org.bsc.async.AsyncGeneratorFlow;
 
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
