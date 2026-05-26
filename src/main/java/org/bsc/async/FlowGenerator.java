@@ -1,6 +1,5 @@
 package org.bsc.async;
 
-import org.bsc.async.internal.BlockingQueueProcessor;
 import org.bsc.async.internal.reactive.GeneratorPublisher;
 import org.bsc.async.internal.reactive.GeneratorSubscriber;
 
@@ -26,8 +25,8 @@ public interface FlowGenerator {
      */
     @SuppressWarnings("unchecked")
     static <T, P extends Flow.Publisher<T>, R> AsyncGenerator.Cancellable<T> fromPublisher( P publisher, Supplier<R> mapResult ) {
-        final var processor = new BlockingQueueProcessor<T>();
-        return new GeneratorSubscriber<>( publisher, (Supplier<Object>) mapResult, processor );
+        var queue = new LinkedBlockingQueue<AsyncGenerator.Data<T>>();
+        return new GeneratorSubscriber<>( publisher, (Supplier<Object>) mapResult, queue );
     }
 
     /**
