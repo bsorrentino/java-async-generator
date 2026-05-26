@@ -34,7 +34,7 @@ public class GeneratorSubscriber<T> implements AsyncGenerator.Cancellable<T>, Fl
      * Constructs a new instance of {@code GeneratorSubscriber}.
      *
      * @param <P> the type of the publisher, which must extend {@link Flow.Publisher}
-         * @param mapResult function that will set generator's result
+     * @param mapResult function that will set generator's result
      * @param publisher the source publisher that will push data to this subscriber
      * @param queue the blocking queue used for storing asynchronous generator data
      */
@@ -101,7 +101,7 @@ public class GeneratorSubscriber<T> implements AsyncGenerator.Cancellable<T>, Fl
 
     /**
      * Returns the next {@code Data<T>} object from this iteration.
-     * 
+     *
      * @return the next element in the iteration, or null if there is no such element
      */
     @Override

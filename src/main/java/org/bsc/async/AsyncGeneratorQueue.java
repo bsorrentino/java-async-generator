@@ -11,7 +11,9 @@ import static org.bsc.async.AsyncGenerator.*;
 
 /**
  * Represents a queue-based asynchronous generator.
+ * @deprecated use {@link org.bsc.async.v5.AsyncGeneratorFlow} instead
  */
+@Deprecated( since = "5.0.0", forRemoval = true )
 public interface AsyncGeneratorQueue    {
 
     /**
