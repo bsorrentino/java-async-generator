@@ -1,6 +1,6 @@
-package org.bsc.async;
+package org.bsc.async.v5;
 
-import org.bsc.async.internal.BlockingQueueProcessor;
+import org.bsc.async.AsyncGenerator;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ public class AsyncGeneratorFlowTest {
         final String[] data = { "e1", "e2", "e3", "e4", "e5"};
 
 
-        try( final var it = AsyncGeneratorFlow.<String>create( dispatcher -> {
+        try( final var it = AsyncGeneratorFlow.<String>create(dispatcher -> {
             for( String value: data ) {
                 dispatcher.dispatchAsync(AsyncGenerator.Data.of(completedFuture(value)));
             }
@@ -199,14 +199,11 @@ public class AsyncGeneratorFlowTest {
         }
     }
 
-    private  Result<String> newAsyncGeneratorFlow(AsyncGeneratorFlow.Processor<String> processor,
-                                                  Executor executor,
-                                                  String prefix ) {
+    private  Result<String> newEmbedAsyncGeneratorFlow(String prefix ) {
 
         final Supplier<AsyncGeneratorFlow.Generator<String>> generator = () ->
                 AsyncGeneratorFlow.builder()
-                        .processor(processor)
-                        .executor( executor )
+                        .executor(Runnable::run)
                         .build( dispatcher -> {
 
                     try {
@@ -214,6 +211,8 @@ public class AsyncGeneratorFlowTest {
                             //Thread.sleep(1000);
                             dispatcher.dispatchAsync(AsyncGenerator.Data.of(completedFuture("%s%d".formatted(prefix, i+1))));
                         }
+                        // !!IMPORTANT!!
+                        // Embed must not dispatch end marker
                         dispatcher.dispatchAsync( AsyncGenerator.Data.done( "DONE"));
                     } catch (Throwable ex) {
                         dispatcher.dispatchAsync(AsyncGenerator.Data.error(ex));
@@ -225,10 +224,7 @@ public class AsyncGeneratorFlowTest {
     @Test
     public void asyncGeneratorWithResultStreamAndEmbedTest() throws Exception {
 
-        final var processor = new BlockingQueueProcessor<String>();
-        final var embed = newAsyncGeneratorFlow(AsyncGeneratorFlow.EmbedProcessor.of(processor),
-                                                        Runnable::run,
-                                                        "e4." );
+        final var embed = newEmbedAsyncGeneratorFlow("e4." );
 
         List<Result<String>> data = List.of(
                 new Result<>( completedFuture("e1")),
@@ -239,23 +235,29 @@ public class AsyncGeneratorFlowTest {
         );
 
         try( final var it = AsyncGeneratorFlow.builder()
-                                .processor( processor )
                                 .<String>build( $1 -> {
             try {
                 for (final var value : data) {
 
                     if( value.generator() != null ) {
                         final var generator = value.generator().get();
+                        generator.stream().forEach( v -> {
+                            try {
+                                $1.dispatchAsync( AsyncGenerator.Data.of( completedFuture(v) ) );
+                            } catch (Throwable ex) {
+                                $1.dispatchAsync( AsyncGenerator.Data.error(ex));
+                            }
+                        });
 
                     }
                     else {
-                        processor.dispatchAsync( AsyncGenerator.Data.of(value.publisher()));
+                        $1.dispatchAsync( AsyncGenerator.Data.of(value.publisher()));
                     }
                 }
             } catch (Throwable ex) {
-                processor.dispatchAsync(AsyncGenerator.Data.error(ex));
+                $1.dispatchAsync(AsyncGenerator.Data.error(ex));
             } finally {
-                processor.dispatchAsync(AsyncGenerator.Data.done("END"));
+                $1.dispatchAsync(AsyncGenerator.Data.done("END"));
             }
 
         })) {
@@ -264,12 +266,12 @@ public class AsyncGeneratorFlowTest {
             System.out.println( "Finished iteration " + iterationResult);
 
             List<String> forEachResult = new ArrayList<>();
-            it.forEachAsync( forEachResult::add ).thenAccept( t -> {
-                System.out.println( "Finished forEach");
+            final var result = it.forEachAsync( forEachResult::add ).whenComplete( (v,ex) -> {
+                System.out.printf( "Finished forEach with value '%s'%n", v);
             }).join();
 
-            assertTrue(it.resultValue().isPresent());
-            assertEquals("END", it.resultValue().get());
+            assertNotNull(result);
+            assertEquals("END", result);
             assertEquals(9, iterationResult.size());
             assertIterableEquals(
                     List.of( "e1", "e2", "e3", "e4.1", "e4.2", "e4.3", "e4.4", "e4.5", "e5" ),
