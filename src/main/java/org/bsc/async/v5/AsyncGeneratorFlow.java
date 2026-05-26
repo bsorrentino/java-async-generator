@@ -1,6 +1,4 @@
-package org.bsc.async;
-
-import org.bsc.async.internal.BlockingQueueProcessor;
+package org.bsc.async.v5;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -30,51 +28,6 @@ public interface AsyncGeneratorFlow {
     interface Processor<E> extends Dispatcher<E>, Receiver<E> {
     }
 
-    class EmbedProcessor<E> implements AsyncGeneratorFlow.Processor<E> {
-
-        public record ResultValue( Object resultValue )  {
-
-            public static ResultValue of( AsyncGenerator.Data<?> data ) {
-                return new ResultValue( data.resultValue() );
-            }
-        }
-
-        static <E> AsyncGeneratorFlow.Processor<E> of(AsyncGeneratorFlow.Processor<E> processor ) {
-            return new EmbedProcessor<>( processor );
-        }
-
-        final AsyncGeneratorFlow.Processor<E> parent;
-
-        protected EmbedProcessor(AsyncGeneratorFlow.Processor<E> parent) {
-            this.parent = requireNonNull(parent, "parent cannot be null");
-        }
-
-        @Override
-        public void dispatchSync(AsyncGenerator.Data<E> data) throws InterruptedException {
-            parent.dispatchSync( data.isDone() ?
-                    new AsyncGenerator.Data<>( null, null, ResultValue.of(data) ) :
-                    data);
-        }
-
-        @Override
-        public void dispatchAsync(AsyncGenerator.Data<E> data) {
-            parent.dispatchAsync( data.isDone() ?
-                    new AsyncGenerator.Data<>( null, null, ResultValue.of(data) ) :
-                    data);
-        }
-
-        @Override
-        public AsyncGenerator.Data<E> waitSync() throws InterruptedException {
-            return parent.waitSync();
-        }
-
-        @Override
-        public Optional<AsyncGenerator.Data<E>> waitAsync() {
-            return parent.waitAsync();
-        }
-    }
-
-
     class Builder {
         private Processor<?> processor;
         private Executor executor;
@@ -90,16 +43,26 @@ public interface AsyncGeneratorFlow {
 
         @SuppressWarnings("unchecked")
         public <E> Generator<E> build( Consumer<Dispatcher<E>> emitter ) {
-            if( processor == null ) {
-                processor = new BlockingQueueProcessor<E>();
-            }
+            final var result = this.<E>build();
+
+            final Runnable emitterTask = () -> emitter.accept((Dispatcher<E>) processor);
+
             if( executor != null ) {
-                CompletableFuture.runAsync(() -> emitter.accept((Dispatcher<E>) processor), executor );
+                CompletableFuture.runAsync( emitterTask, executor );
             }
             else {
-                CompletableFuture.runAsync( () -> emitter.accept((Dispatcher<E>) processor) );
+                CompletableFuture.runAsync( emitterTask );
             }
-            return new AsyncGeneratorFlow.Generator<>( (Receiver<E>) processor);
+
+            return result;
+        }
+
+        @SuppressWarnings("unchecked")
+        public <E> Generator<E> build() {
+            if( processor == null ) {
+                processor = new BlockingQueueProcessor<>();
+            }
+            return new AsyncGeneratorFlow.Generator<>( (Receiver<E>)processor );
         }
     }
 
@@ -108,7 +71,11 @@ public interface AsyncGeneratorFlow {
     }
 
     static <E> Generator<E> create( Consumer<Dispatcher<E>> emitter ) {
-        return builder().processor( new BlockingQueueProcessor<>() ).build( emitter );
+        return builder().build( emitter );
+    }
+
+    static <E> Generator<E> create( Processor<E> processor ) {
+        return builder().processor(processor).build();
     }
 
     /**
@@ -122,8 +89,12 @@ public interface AsyncGeneratorFlow {
         private volatile Data<E> endData = null;
         private final Receiver<E> receiver;
 
-        public Generator(Receiver<E> receiver) {
-            this.receiver = receiver;
+        public Generator(Receiver<E> receiver ) {
+            this.receiver = requireNonNull(receiver, "receiver cannot be null");
+        }
+
+        public Receiver<E> receiver() {
+            return receiver;
         }
 
         private boolean isEnded() {
@@ -149,11 +120,8 @@ public interface AsyncGeneratorFlow {
                 Data<E> value = null;
                 while( true ) {
                     value = receiver.waitSync();
-                    if (value.isDone() ) {
 
-                        if( value.resultValue() instanceof EmbedProcessor.ResultValue ) {
-                            continue;
-                        }
+                    if (value.isDone() ) {
                         endData = value;
                     }
                     break;
