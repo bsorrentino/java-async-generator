@@ -2,6 +2,65 @@
 
 
 
+<!-- "name: v5.0.0" is a release tag -->
+
+## [v5.0.0](https://github.com/bsorrentino/java-async-generator/releases/tag/v5.0.0) (2026-06-08)
+
+### Features
+
+ *  **AsyncGenerator**  add reduce and reduceAsync methods with BinaryOperator support ([e0cb4ebab9fc9d9](https://github.com/bsorrentino/java-async-generator/commit/e0cb4ebab9fc9d9c2f5b9c3e8d3e19a9ce96f439))
+   
+ *  **AsyncGeneratorFlow**  refactor old AsyncGeneratorQueue to AsyncGeneratorFlow. ([3eff9255964905f](https://github.com/bsorrentino/java-async-generator/commit/3eff9255964905f13f593ec7aba0f889f9f0b1e5))
+     > This new class is compliant with reactive paradigm introducing a event streaming as backbone
+   
+
+
+### Refactor
+
+ -  **GeneratorSubscriber**  replace AsyncGeneratorQueue with AsyncGeneratorFlow ([727561629e1ad32](https://github.com/bsorrentino/java-async-generator/commit/727561629e1ad321e37d9bc73672a15f3feed7a4))
+            
+ -  **FlowGenerator**  replace LinkedBlockingQueue with BlockingQueueProcessor ([ec25b851e0282ec](https://github.com/bsorrentino/java-async-generator/commit/ec25b851e0282ec557e3bfa33c5c74f69e7bd0c2))
+            
+ -  **BlockingQueueProcessor**  update package name to org.bsc.async.v5 ([e90acccfe382cf6](https://github.com/bsorrentino/java-async-generator/commit/e90acccfe382cf6cce7f15d9abc177487ae0d372))
+            
+ -  deprecate AsyncGeneratorQueue ([311ca9de4cf34a5](https://github.com/bsorrentino/java-async-generator/commit/311ca9de4cf34a59037bc166075f7abc2279f8aa))
+            
+ -  **AsyncGeneratorFlowTest**  update package name to org.bsc.async.v5; ([a98dd4b852101b6](https://github.com/bsorrentino/java-async-generator/commit/a98dd4b852101b6c58bd9f9477e82d8398207dec))
+            
+ -  **AsyncGeneratorFlow**  update package structure to org.bsc.async.v5; ([aa2fae1054717db](https://github.com/bsorrentino/java-async-generator/commit/aa2fae1054717db90614666d0fd5a176982a53a2))
+            
+
+### Test
+
+ -  **AsyncGeneratorTest**  add additional assertions for reduce method ([a28fd15ccb7195a](https://github.com/bsorrentino/java-async-generator/commit/a28fd15ccb7195ab6be8687e9af67040ab5a6bfa))
+            
+ -  **FutureCancellationTest**  adjust sleep duration and expected steps to account for cancellation timing ([7901a1fb23520d0](https://github.com/bsorrentino/java-async-generator/commit/7901a1fb23520d0cf0a863fb8f736fbf2dc7d549))
+            
+ -  **FutureCancellationTest**  Improve test to handle CompletionException and check correct future state ([1ca14f86a025f76](https://github.com/bsorrentino/java-async-generator/commit/1ca14f86a025f76320fd3afe9ea1f4172b6fe198))
+            
+
+### Documentation
+
+ -  update changelog ([36538e1b2f2a915](https://github.com/bsorrentino/java-async-generator/commit/36538e1b2f2a915797c8a2406697c5d849de9d9a))
+
+
+### ALM 
+
+ -  bump to next version 5.0.0 ([fc4f212a5c0671a](https://github.com/bsorrentino/java-async-generator/commit/fc4f212a5c0671a3910a18d1a7a78d97e7acf87a))
+   
+ -  add export for org.bsc.async.v5 in module-info ([164a4d23b21c36e](https://github.com/bsorrentino/java-async-generator/commit/164a4d23b21c36e00a1f95cc54e3066002dea3f4))
+   
+ -  bump to next dev version 5.0-SNAPSHOT ([5fa21d02cde0d68](https://github.com/bsorrentino/java-async-generator/commit/5fa21d02cde0d68c2df84d10b73bb923c5eda711))
+   
+ -  remove versions backup artifact ([5884772f310ccff](https://github.com/bsorrentino/java-async-generator/commit/5884772f310ccffc86ee51ed502490a9a6e0dbf3))
+   
+ -  remove versions backup artifact ([54a5aa7a3445067](https://github.com/bsorrentino/java-async-generator/commit/54a5aa7a3445067880a28bc765eaced047728aec))
+   
+
+
+
+
+
 <!-- "name: v4.3.1" is a release tag -->
 
 ## [v4.3.1](https://github.com/bsorrentino/java-async-generator/releases/tag/v4.3.1) (2026-04-21)
