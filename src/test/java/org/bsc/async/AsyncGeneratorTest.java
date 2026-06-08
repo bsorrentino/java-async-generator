@@ -311,6 +311,7 @@ public class AsyncGeneratorTest {
         final var expected = List.of("e1", "e2", "e3", "n1", "n2", "n3", "n4", "n5", "e4", "e5", "e6", "e7");
         final var it = new AsyncGenerator.WithEmbed<>(new NestedAsyncGenerator());
 
+
         var result = it.reduce(new ArrayList<>(), (list, value) -> {
             list.add(value);
             return list;
@@ -324,6 +325,13 @@ public class AsyncGeneratorTest {
         }).join();
         assertNotNull(result);
         assertEquals(expected, result);
+
+        final var reduceResult = it.reduce( ( a, b ) -> b ).join();
+
+        assertNotNull(reduceResult);
+        assertEquals("e7", reduceResult.result());
+        assertEquals(7, reduceResult.resultValue());
+
 
     }
 

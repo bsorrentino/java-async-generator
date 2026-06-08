@@ -8,6 +8,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -395,6 +396,18 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         }
 
         @Override
+        public CompletableFuture<ReduceResult<E>> reduce(BinaryOperator<E> reducer) {
+            reset();
+            return super.reduce(reducer);
+        }
+
+        @Override
+        public CompletableFuture<ReduceResult<E>> reduceAsync(BinaryOperator<E> reducer) {
+            reset();
+            return super.reduceAsync(reducer);
+        }
+
+        @Override
         public CompletableFuture<Object> toCompletableFuture() {
             reset();
             return super.toCompletableFuture();
@@ -528,29 +541,37 @@ public interface AsyncGenerator<E> extends Iterable<E> {
                 .thenCompose(Function.identity());
     }
 
-    private <R> CompletableFuture<R> reduce$(R result, BiFunction<R, E, R> reducer) {
+    record ReduceResult<E>( E result, Object resultValue )  {}
+
+
+    private <R> CompletableFuture<ReduceResult<R>> reduce$(R result, BiFunction<R, E, R> reducer) {
         final var next = next();
         if (next.isDone()) {
-            return completedFuture(result);
-        }
-        if (next.embed() != null) {
-            return next.embed().generator.reduce$(result, reducer)
-                    .thenCompose(v -> reduce$(result, reducer));
+            return completedFuture( new ReduceResult<>(result, next.resultValue()));
         }
         return next.future()
-                .thenApply(v -> reducer.apply(result, v))
-                .thenCompose(v -> reduce$(result, reducer))
+                .thenApply(v -> new ReduceResult<>(reducer.apply(result, v), null))
+                .thenCompose(v -> reduce$( v.result(), reducer))
                 ;
 
     }
 
     default <R> CompletableFuture<R> reduce(R result, BiFunction<R, E, R> reducer) {
-        return reduce$(result, reducer);
+        return reduce$( result, reducer).thenApply( ReduceResult::result );
     }
 
     default <R> CompletableFuture<R> reduceAsync(R result, BiFunction<R, E, R> reducer) {
         return CompletableFuture.supplyAsync(() -> reduce$(result, reducer), executor())
-                .thenCompose( Function.identity() );
+                .thenCompose( r -> r.thenApply( ReduceResult::result ));
+    }
+
+    default  CompletableFuture<ReduceResult<E>> reduce( BinaryOperator<E> reducer) {
+        return reduce$( null, reducer);
+    }
+
+    default  CompletableFuture<ReduceResult<E>> reduceAsync( BinaryOperator<E> reducer ) {
+        return CompletableFuture.supplyAsync(() -> reduce$(null, reducer), executor())
+                .thenCompose( Function.identity());
     }
 
     private CompletableFuture<Object> toCompletableFuture$() {
@@ -705,7 +726,6 @@ class Mapper<E, U> extends AsyncGenerator.BaseCancellable<U> implements AsyncGen
 
     protected final AsyncGenerator<E> delegate;
     final Function<E, U> mapFunction;
-    private Object resultValue;
 
     protected Mapper(AsyncGenerator<E> delegate, Function<E, U> mapFunction) {
         this.delegate = requireNonNull(delegate, "delegate cannot be null");
@@ -723,7 +743,7 @@ class Mapper<E, U> extends AsyncGenerator.BaseCancellable<U> implements AsyncGen
      * @return an {@link Optional} containing the result value if present, or an empty Optional if not
      */
     public Optional<Object> resultValue() {
-        return ofNullable(resultValue);
+        return AsyncGenerator.resultValue(delegate);
     }
 
     @Override
@@ -735,7 +755,6 @@ class Mapper<E, U> extends AsyncGenerator.BaseCancellable<U> implements AsyncGen
         final Data<E> next = delegate.next();
 
         if (next.isDone()) {
-            resultValue = next.resultValue();
             return Data.done(next.resultValue());
         }
         return Data.of(next.future().thenApply(mapFunction));
@@ -764,7 +783,6 @@ class FlatMapper<E, U> extends AsyncGenerator.BaseCancellable<U> implements Asyn
 
     protected final AsyncGenerator<E> delegate;
     final Function<E, CompletableFuture<U>> mapFunction;
-    private Object resultValue;
 
     protected FlatMapper(AsyncGenerator<E> delegate, Function<E, CompletableFuture<U>> mapFunction) {
         this.delegate = requireNonNull(delegate, "delegate cannot be null");
@@ -783,7 +801,7 @@ class FlatMapper<E, U> extends AsyncGenerator.BaseCancellable<U> implements Asyn
      * @return an {@link Optional} containing the result value if present, or an empty Optional if not
      */
     public Optional<Object> resultValue() {
-        return ofNullable(resultValue);
+        return AsyncGenerator.resultValue(delegate);
     }
 
 
@@ -796,7 +814,6 @@ class FlatMapper<E, U> extends AsyncGenerator.BaseCancellable<U> implements Asyn
         final Data<E> next = delegate.next();
 
         if (next.isDone()) {
-            resultValue = next.resultValue();
             return Data.done(next.resultValue());
         }
         return Data.of(next.future().thenCompose(mapFunction));
