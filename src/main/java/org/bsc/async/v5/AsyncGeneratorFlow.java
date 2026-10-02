@@ -1,8 +1,8 @@
 package org.bsc.async.v5;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
@@ -38,12 +38,17 @@ public interface AsyncGeneratorFlow {
         boolean isCancelled();
 
         /**
-         * Calls {@code listener} once with {@code mayInterruptIfRunning}, on the thread that cancels the generator,
-         * or immediately if it is already cancelled.
+         * Calls {@code listener} once, on the thread that cancels the generator, before the generator interrupts
+         * its own threads, or immediately if it is already cancelled.
          *
          * @return removes the listener when closed
          */
-        Registration onCancel( Consumer<Boolean> listener );
+        Registration onCancel( Listener listener );
+
+        @FunctionalInterface
+        interface Listener {
+            void cancelled( boolean mayInterruptIfRunning );
+        }
 
         interface Registration extends AutoCloseable {
             @Override
@@ -67,6 +72,7 @@ public interface AsyncGeneratorFlow {
 
         /**
          * Cancels the generator, with the same {@code mayInterruptIfRunning}, when {@code parent} is cancelled.
+         * The link lasts until the generator's stream ends, either one is cancelled, or the generator is closed.
          */
         public Builder cancelledBy( CancellationToken parent ) {
             this.parent = requireNonNull(parent, "parent cannot be null");
@@ -79,8 +85,7 @@ public interface AsyncGeneratorFlow {
         }
 
         /**
-         * Like {@link #build(Consumer)}, also handing the emitter the generator's {@link CancellationToken}.
-         * Data dispatched after cancellation is discarded.
+         * Data the emitter dispatches after cancellation is discarded.
          */
         @SuppressWarnings("unchecked")
         public <E> Generator<E> build( BiConsumer<Dispatcher<E>, CancellationToken> emitter ) {
@@ -140,15 +145,16 @@ public interface AsyncGeneratorFlow {
     class Generator<E> extends BaseCancellable<E> implements HasResultValue {
 
         private static final System.Logger log = System.getLogger(AsyncGeneratorFlow.class.getName());
+        private static final ThreadLocal<Generator<?>> runningEmitter = new ThreadLocal<>();
 
         private static final class ListenerEntry {
-            private final Consumer<Boolean> listener;
+            private final CancellationToken.Listener listener;
 
-            ListenerEntry( Consumer<Boolean> listener ) {
+            ListenerEntry( CancellationToken.Listener listener ) {
                 this.listener = listener;
             }
 
-            Consumer<Boolean> listener() {
+            CancellationToken.Listener listener() {
                 return listener;
             }
         }
@@ -163,10 +169,11 @@ public interface AsyncGeneratorFlow {
             }
 
             @Override
-            public Registration onCancel(Consumer<Boolean> listener) {
+            public Registration onCancel(Listener listener) {
                 return Generator.this.onCancel(listener);
             }
         };
+        private volatile boolean cancelledWithInterrupt;
 
         private final Object lock = new Object();
         // guarded by lock
@@ -175,8 +182,7 @@ public interface AsyncGeneratorFlow {
         private Thread emitterThread;
         private boolean emitterInDispatchSync;
         private boolean emitterInterruptedByCancel;
-        private Boolean cancelledWithInterrupt;
-        private List<ListenerEntry> cancelListeners = new ArrayList<>();
+        private Set<ListenerEntry> cancelListeners = new LinkedHashSet<>();
 
         public Generator(Receiver<E> receiver ) {
             this.receiver = requireNonNull(receiver, "receiver cannot be null");
@@ -233,12 +239,14 @@ public interface AsyncGeneratorFlow {
                 }
             }
             finally {
+                final boolean ownInterrupt;
                 synchronized (lock) {
                     consumerThread = null;
-                    if( consumerInterruptedByCancel ) {
-                        consumerInterruptedByCancel = false;
-                        Thread.interrupted();
-                    }
+                    ownInterrupt = consumerInterruptedByCancel;
+                    consumerInterruptedByCancel = false;
+                }
+                if( ownInterrupt ) {
+                    releaseOwnInterrupt();
                 }
             }
             if( interruptedByOther ) {
@@ -248,21 +256,44 @@ public interface AsyncGeneratorFlow {
             return end( Data.done(CANCELLED) );
         }
 
+        /**
+         * Clears an interrupt this generator sent to the current thread, unless an enclosing emitter running on the
+         * same thread was cancelled with interrupt too: that emitter's own interrupt found the thread already
+         * interrupted by us, so the interrupt is handed over to it instead.
+         */
+        private static void releaseOwnInterrupt() {
+            final var enclosing = runningEmitter.get();
+            if( enclosing != null && enclosing.isCancelled() && enclosing.cancelledWithInterrupt ) {
+                Thread.currentThread().interrupt();
+                enclosing.adoptEmitterInterrupt();
+            }
+            else {
+                Thread.interrupted();
+            }
+        }
+
+        private void adoptEmitterInterrupt() {
+            synchronized (lock) {
+                if( emitterThread == Thread.currentThread() ) {
+                    emitterInterruptedByCancel = true;
+                }
+            }
+        }
+
         @Override
         public boolean cancel( boolean mayInterruptIfRunning ) {
             if( !super.cancel(mayInterruptIfRunning) ) {
                 return false;
             }
             endData.compareAndSet( null, Data.done(CANCELLED) );
+            cancelledWithInterrupt = mayInterruptIfRunning;
 
-            final List<ListenerEntry> listeners;
+            final Set<ListenerEntry> listeners;
             synchronized (lock) {
-                cancelledWithInterrupt = mayInterruptIfRunning;
                 listeners = cancelListeners;
                 cancelListeners = null;
             }
-            // listeners first: a linked child whose consumer is our emitter must be cancelled with our flag
-            // before our interrupt wakes that consumer, which would otherwise cancel the child without interrupt
+            // before interrupting: our emitter may be a linked child's consumer, and waking it first cancels the child without interrupt
             for( var entry : listeners ) {
                 notifyListener( entry.listener(), mayInterruptIfRunning );
             }
@@ -278,11 +309,17 @@ public interface AsyncGeneratorFlow {
             return true;
         }
 
-        private static void notifyListener( Consumer<Boolean> listener, boolean mayInterruptIfRunning ) {
+        @Override
+        public void close() {
+            super.close();
+            releaseParentLink();
+        }
+
+        private static void notifyListener( CancellationToken.Listener listener, boolean mayInterruptIfRunning ) {
             try {
-                listener.accept( mayInterruptIfRunning );
+                listener.cancelled( mayInterruptIfRunning );
             }
-            catch( Throwable ex ) {
+            catch( RuntimeException ex ) {
                 log.log( System.Logger.Level.WARNING, "cancellation listener failed", ex );
             }
         }
@@ -295,9 +332,8 @@ public interface AsyncGeneratorFlow {
             return true;
         }
 
-        private CancellationToken.Registration onCancel( Consumer<Boolean> listener ) {
+        private CancellationToken.Registration onCancel( CancellationToken.Listener listener ) {
             requireNonNull(listener, "listener cannot be null");
-            final boolean mayInterruptIfRunning;
             synchronized (lock) {
                 if( cancelListeners != null ) {
                     final var entry = new ListenerEntry( listener );
@@ -310,9 +346,8 @@ public interface AsyncGeneratorFlow {
                         }
                     };
                 }
-                mayInterruptIfRunning = cancelledWithInterrupt;
             }
-            notifyListener( listener, mayInterruptIfRunning );
+            notifyListener( listener, cancelledWithInterrupt );
             return () -> {};
         }
 
@@ -345,7 +380,7 @@ public interface AsyncGeneratorFlow {
                             if( !isCancelled() ) {
                                 throw ex;
                             }
-                            if( Boolean.TRUE.equals(cancelledWithInterrupt) || !emitterInterruptedByCancel ) {
+                            if( cancelledWithInterrupt || !emitterInterruptedByCancel ) {
                                 Thread.currentThread().interrupt();
                             }
                             else {
@@ -356,7 +391,7 @@ public interface AsyncGeneratorFlow {
                     finally {
                         synchronized (lock) {
                             emitterInDispatchSync = false;
-                            if( emitterInterruptedByCancel && !Boolean.TRUE.equals(cancelledWithInterrupt) ) {
+                            if( emitterInterruptedByCancel && !cancelledWithInterrupt ) {
                                 emitterInterruptedByCancel = false;
                                 Thread.interrupted();
                             }
@@ -381,19 +416,28 @@ public interface AsyncGeneratorFlow {
                     emitterThread = Thread.currentThread();
                 }
             }
+            final var enclosing = runningEmitter.get();
+            runningEmitter.set( this );
             try {
                 if( !cancelledBeforeStart ) {
                     emitter.run();
                 }
             }
             finally {
+                if( enclosing != null ) {
+                    runningEmitter.set( enclosing );
+                }
+                else {
+                    runningEmitter.remove();
+                }
+                final boolean ownInterrupt;
                 synchronized (lock) {
                     emitterThread = null;
-                    // an interrupt from elsewhere must survive
-                    if( emitterInterruptedByCancel ) {
-                        emitterInterruptedByCancel = false;
-                        Thread.interrupted();
-                    }
+                    ownInterrupt = emitterInterruptedByCancel;
+                    emitterInterruptedByCancel = false;
+                }
+                if( ownInterrupt ) {
+                    releaseOwnInterrupt();
                 }
             }
         }

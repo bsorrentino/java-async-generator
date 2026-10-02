@@ -110,7 +110,7 @@ var generator = AsyncGeneratorFlow.builder()
 -   Cancelled before the emitter starts, the emitter never runs.
 -   On the consumer side, `next()` returns `Data.done(CANCELLED)` without waiting, and `resultValue()` is `CANCELLED`; a stream whose end was already consumed keeps its result. A consumer interrupted from elsewhere while waiting in `next()` keeps its interrupt and cancels the generator.
 
-Producers that dispatch from callbacks (`AsyncGeneratorFlow.create(processor)`) get the same token from `generator.cancellationToken()`. To cancel nested generators along with their parent, link them when building: `builder().cancelledBy(parent.cancellationToken())` cancels the child along with the parent, including when the parent is already cancelled. `onCancel(listener)` registers any other cleanup.
+Producers that dispatch from callbacks (`AsyncGeneratorFlow.create(processor)`) get the same token from `generator.cancellationToken()`. To cancel nested generators with their parent, build them with `builder().cancelledBy(parent.cancellationToken())`; a parent that is already cancelled cancels the child immediately. `onCancel(listener)` registers any other cleanup.
 
 ## Summary
 

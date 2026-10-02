@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
+import java.util.concurrent.locks.LockSupport;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.bsc.async.AsyncGenerator.Cancellable.CANCELLED;
@@ -33,6 +33,8 @@ public class AsyncGeneratorFlowCancellationTest {
     private static final long NEVER_HAPPENS_MILLIS = 300;
     private static final int RACE_ATTEMPTS = 200;
     private static final int NESTED_RACE_ATTEMPTS = 1000;
+    private static final int LEAK_ATTEMPTS = 10;
+    private static final int OWN_INTERRUPT_ATTEMPTS = 50;
 
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
@@ -47,13 +49,14 @@ public class AsyncGeneratorFlowCancellationTest {
      */
     static final class NonClearingSingleThreadExecutor implements Executor, AutoCloseable {
         private static final Runnable STOP = () -> {};
+        private static final long IDLE_PARK_NANOS = 100_000;
         private final LinkedBlockingQueue<Runnable> tasks = new LinkedBlockingQueue<>();
-        // polls instead of take(): a blocking wait would consume the very interrupt the test looks for
+        // polls and parks instead of take(): an interruptible wait would consume the very interrupt the test looks for
         private final Thread worker = new Thread(() -> {
             while (true) {
                 final Runnable task = tasks.poll();
                 if (task == null) {
-                    Thread.onSpinWait();
+                    LockSupport.parkNanos(IDLE_PARK_NANOS);
                     continue;
                 }
                 if (task == STOP) {
@@ -133,8 +136,12 @@ public class AsyncGeneratorFlowCancellationTest {
     }
 
     private static void awaitBlocked(AtomicReference<Thread> thread) {
+        final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(WAIT_SECONDS);
         while (thread.get() == null
                 || (thread.get().getState() != Thread.State.WAITING && thread.get().getState() != Thread.State.TIMED_WAITING)) {
+            if (System.nanoTime() > deadline) {
+                fail("thread never blocked: " + thread.get());
+            }
             Thread.onSpinWait();
         }
     }
@@ -375,7 +382,7 @@ public class AsyncGeneratorFlowCancellationTest {
     @Test
     public void anInterruptSentByCancelDoesNotLeakIntoTheExecutorsNextTask() throws Exception {
         try (var nonClearing = new NonClearingSingleThreadExecutor()) {
-            for (int attempt = 0; attempt < RACE_ATTEMPTS / 20; attempt++) {
+            for (int attempt = 0; attempt < LEAK_ATTEMPTS; attempt++) {
                 var started = new CountDownLatch(1);
                 var generator = AsyncGeneratorFlow.builder()
                         .executor(nonClearing)
@@ -555,6 +562,110 @@ public class AsyncGeneratorFlowCancellationTest {
     }
 
     @Test
+    public void aParentEmitterConsumingALinkedChildStillSeesItsOwnInterrupt() throws Exception {
+        for (int attempt = 0; attempt < OWN_INTERRUPT_ATTEMPTS; attempt++) {
+            var childStarted = new CountDownLatch(1);
+            var parentInterruptedAfterChild = new CountDownLatch(1);
+            var parent = AsyncGeneratorFlow.builder()
+                    .executor(executor)
+                    .<String>build((dispatcher, cancellation) -> {
+                        var child = AsyncGeneratorFlow.builder()
+                                .executor(executor)
+                                .cancelledBy(cancellation)
+                                .<String>build(childDispatcher -> {
+                                    childStarted.countDown();
+                                    try {
+                                        new CountDownLatch(1).await();
+                                    } catch (InterruptedException ignored) {
+                                    }
+                                });
+                        child.next();
+                        try {
+                            Thread.sleep(TimeUnit.SECONDS.toMillis(30));
+                        } catch (InterruptedException e) {
+                            parentInterruptedAfterChild.countDown();
+                        }
+                    });
+
+            assertTrue(childStarted.await(WAIT_SECONDS, TimeUnit.SECONDS));
+            parent.cancel(true);
+
+            assertTrue(parentInterruptedAfterChild.await(WAIT_SECONDS, TimeUnit.SECONDS), "attempt " + attempt);
+        }
+    }
+
+    @Test
+    public void aParentEmitterRunningALinkedChildInlineStillSeesItsOwnInterrupt() throws Exception {
+        for (boolean childRestoresInterrupt : new boolean[]{false, true}) {
+            for (int attempt = 0; attempt < OWN_INTERRUPT_ATTEMPTS; attempt++) {
+                var childStarted = new CountDownLatch(1);
+                var parentInterruptedAfterChild = new CountDownLatch(1);
+                var parent = AsyncGeneratorFlow.builder()
+                        .executor(executor)
+                        .<String>build((dispatcher, cancellation) -> {
+                            AsyncGeneratorFlow.builder()
+                                    .executor(Runnable::run)
+                                    .cancelledBy(cancellation)
+                                    .<String>build(childDispatcher -> {
+                                        childStarted.countDown();
+                                        try {
+                                            new CountDownLatch(1).await();
+                                        } catch (InterruptedException e) {
+                                            if (childRestoresInterrupt) {
+                                                Thread.currentThread().interrupt();
+                                            }
+                                        }
+                                    });
+                            try {
+                                Thread.sleep(TimeUnit.SECONDS.toMillis(30));
+                            } catch (InterruptedException e) {
+                                parentInterruptedAfterChild.countDown();
+                            }
+                        });
+
+                assertTrue(childStarted.await(WAIT_SECONDS, TimeUnit.SECONDS));
+                parent.cancel(true);
+
+                assertTrue(parentInterruptedAfterChild.await(WAIT_SECONDS, TimeUnit.SECONDS),
+                        "childRestoresInterrupt=" + childRestoresInterrupt + " attempt " + attempt);
+            }
+        }
+    }
+
+    @Test
+    public void anInterruptHandedToTheParentDoesNotLeakIntoTheExecutorsNextTask() throws Exception {
+        try (var nonClearing = new NonClearingSingleThreadExecutor()) {
+            for (int attempt = 0; attempt < LEAK_ATTEMPTS; attempt++) {
+                var childStarted = new CountDownLatch(1);
+                var parent = AsyncGeneratorFlow.builder()
+                        .executor(nonClearing)
+                        .<String>build((dispatcher, cancellation) -> {
+                            AsyncGeneratorFlow.builder()
+                                    .executor(Runnable::run)
+                                    .cancelledBy(cancellation)
+                                    .<String>build(childDispatcher -> {
+                                        childStarted.countDown();
+                                        while (!Thread.currentThread().isInterrupted()) {
+                                            Thread.onSpinWait();
+                                        }
+                                    });
+                            while (!Thread.currentThread().isInterrupted()) {
+                                Thread.onSpinWait();
+                            }
+                        });
+
+                assertTrue(childStarted.await(WAIT_SECONDS, TimeUnit.SECONDS));
+                parent.cancel(true);
+
+                var nextTaskInterrupted = CompletableFuture
+                        .supplyAsync(() -> Thread.currentThread().isInterrupted(), nonClearing)
+                        .get(WAIT_SECONDS, TimeUnit.SECONDS);
+                assertFalse(nextTaskInterrupted, "attempt " + attempt);
+            }
+        }
+    }
+
+    @Test
     public void cancellationListeners() {
         var generator = AsyncGeneratorFlow.builder()
                 .executor(executor)
@@ -562,7 +673,7 @@ public class AsyncGeneratorFlowCancellationTest {
         var token = generator.cancellationToken();
         var calls = new CopyOnWriteArrayList<String>();
         var registeredCalls = new AtomicInteger();
-        Consumer<Boolean> sharedListener = mayInterrupt -> calls.add("shared:" + mayInterrupt);
+        AsyncGeneratorFlow.CancellationToken.Listener sharedListener =mayInterrupt -> calls.add("shared:" + mayInterrupt);
 
         token.onCancel(mayInterrupt -> registeredCalls.incrementAndGet());
         token.onCancel(mayInterrupt -> { throw new IllegalStateException("listener failure"); });
