@@ -476,6 +476,57 @@ public class AsyncGeneratorFlowCancellationTest {
     }
 
     @Test
+    public void cancellingACompletedParentLeavesItsLinkedGeneratorsRunning() throws Exception {
+        var parent = AsyncGeneratorFlow.builder()
+                .executor(Runnable::run)
+                .<String>build(dispatcher -> dispatcher.dispatchAsync(AsyncGenerator.Data.done("END")));
+        assertEquals("END", parent.next().resultValue());
+        var childStarted = new CountDownLatch(1);
+        var childRelease = new CountDownLatch(1);
+        var linkedBefore = AsyncGeneratorFlow.builder()
+                .executor(executor)
+                .cancelledBy(parent.cancellationToken())
+                .<String>build(dispatcher -> {
+                    childStarted.countDown();
+                    try {
+                        childRelease.await();
+                    } catch (InterruptedException ignored) {
+                    }
+                });
+        assertTrue(childStarted.await(WAIT_SECONDS, TimeUnit.SECONDS));
+
+        assertTrue(parent.cancel(true));
+        var lateListenerCalled = new AtomicBoolean();
+        parent.cancellationToken().onCancel(mayInterrupt -> lateListenerCalled.set(true));
+        var linkedAfter = AsyncGeneratorFlow.builder()
+                .executor(executor)
+                .cancelledBy(parent.cancellationToken())
+                .<String>build(dispatcher -> dispatcher.dispatchAsync(AsyncGenerator.Data.done("END")));
+
+        assertFalse(linkedBefore.isCancelled());
+        assertFalse(linkedAfter.isCancelled());
+        assertFalse(lateListenerCalled.get());
+        assertEquals("END", parent.resultValue().orElseThrow());
+        childRelease.countDown();
+    }
+
+    @Test
+    public void aParentCancelledBeforeItCompletesStillCancelsLateLinks() {
+        var parent = AsyncGeneratorFlow.builder()
+                .executor(Runnable::run)
+                .<String>build((dispatcher, cancellation) -> {});
+        parent.cancel(false);
+        assertEquals(CANCELLED, parent.next().resultValue());
+
+        var child = AsyncGeneratorFlow.builder()
+                .executor(executor)
+                .cancelledBy(parent.cancellationToken())
+                .<String>build(dispatcher -> {});
+
+        assertTrue(child.isCancelled());
+    }
+
+    @Test
     public void aChildConsumedToItsEndIsNoLongerLinkedToItsParent() {
         var parent = AsyncGeneratorFlow.builder()
                 .executor(executor)

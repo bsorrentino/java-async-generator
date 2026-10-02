@@ -174,6 +174,7 @@ public interface AsyncGeneratorFlow {
             }
         };
         private volatile boolean cancelledWithInterrupt;
+        private volatile boolean completed;
 
         private final Object lock = new Object();
         // guarded by lock
@@ -183,6 +184,7 @@ public interface AsyncGeneratorFlow {
         private boolean emitterInDispatchSync;
         private boolean emitterInterruptedByCancel;
         private Set<ListenerEntry> cancelListeners = new LinkedHashSet<>();
+        private boolean listenersDroppedOnCompletion;
 
         public Generator(Receiver<E> receiver ) {
             this.receiver = requireNonNull(receiver, "receiver cannot be null");
@@ -197,6 +199,9 @@ public interface AsyncGeneratorFlow {
         }
 
         private Data<E> end( Data<E> data ) {
+            if( data.resultValue() != CANCELLED ) {
+                completed = true;
+            }
             endData.compareAndSet( null, data );
             releaseParentLink();
             return endData.get();
@@ -285,7 +290,15 @@ public interface AsyncGeneratorFlow {
             if( !super.cancel(mayInterruptIfRunning) ) {
                 return false;
             }
-            endData.compareAndSet( null, Data.done(CANCELLED) );
+            if( !endData.compareAndSet( null, Data.done(CANCELLED) ) && completed ) {
+                // a stream that already ended has nothing left to stop: linked generators started from it live on
+                synchronized (lock) {
+                    cancelListeners = null;
+                    listenersDroppedOnCompletion = true;
+                }
+                releaseParentLink();
+                return true;
+            }
             cancelledWithInterrupt = mayInterruptIfRunning;
 
             final Set<ListenerEntry> listeners;
@@ -299,10 +312,10 @@ public interface AsyncGeneratorFlow {
             }
             synchronized (lock) {
                 if( consumerThread != null ) {
-                    consumerInterruptedByCancel = interruptUnlessAlreadyInterrupted( consumerThread );
+                    consumerInterruptedByCancel |= interruptUnlessAlreadyInterrupted( consumerThread );
                 }
                 if( emitterThread != null && (mayInterruptIfRunning || emitterInDispatchSync) ) {
-                    emitterInterruptedByCancel = interruptUnlessAlreadyInterrupted( emitterThread );
+                    emitterInterruptedByCancel |= interruptUnlessAlreadyInterrupted( emitterThread );
                 }
             }
             releaseParentLink();
@@ -345,6 +358,9 @@ public interface AsyncGeneratorFlow {
                             }
                         }
                     };
+                }
+                if( listenersDroppedOnCompletion ) {
+                    return () -> {};
                 }
             }
             notifyListener( listener, cancelledWithInterrupt );
