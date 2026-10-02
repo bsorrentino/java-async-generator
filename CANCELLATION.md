@@ -87,6 +87,31 @@ if (cancellableGenerator.isCancelled()) {
 }
 ```
 
+## AsyncGeneratorFlow (v5)
+
+An `AsyncGeneratorFlow` generator is fed by an emitter running on its own thread, so cancelling the consumer side also has to reach the producer. The emitter receives the generator's `CancellationToken` and checks it between units of work:
+
+```java
+var generator = AsyncGeneratorFlow.builder()
+        .executor(executor)
+        .<String>build((dispatcher, cancellation) -> {
+            for (var item : items) {
+                if (cancellation.isCancelled()) {
+                    return;
+                }
+                dispatcher.dispatchAsync(AsyncGenerator.Data.of(completedFuture(process(item))));
+            }
+            dispatcher.dispatchAsync(AsyncGenerator.Data.done("END"));
+        });
+```
+
+-   `cancel(false)`: the emitter stops at its next check; data it dispatches afterwards is discarded, and an emitter blocked in `dispatchSync` on a bounded queue is released.
+-   `cancel(true)`: also interrupts the emitter thread, so an emitter blocked in I/O or waiting ends promptly.
+-   Cancelled before the emitter starts, the emitter never runs.
+-   On the consumer side, `next()` returns `Data.done(CANCELLED)` without waiting, and `resultValue()` is `CANCELLED`; a stream whose end was already consumed keeps its result. A consumer interrupted from elsewhere while waiting in `next()` keeps its interrupt and cancels the generator.
+
+Producers that dispatch from callbacks (`AsyncGeneratorFlow.create(processor)`) get the same token from `generator.cancellationToken()`. To cancel nested generators along with their parent, link them when building: `builder().cancelledBy(parent.cancellationToken())` cancels the child along with the parent, including when the parent is already cancelled. `onCancel(listener)` registers any other cleanup.
+
 ## Summary
 
 In summary, `cancel(false)` provides a non-disruptive way to signal termination, while `cancel(true)` offers a more immediate stop by leveraging thread interruption, which is most effective with `forEachAsync`.
