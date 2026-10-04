@@ -5,7 +5,6 @@ import org.bsc.async.AsyncGeneratorQueue;
 
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Flow;
 import java.util.function.Supplier;
 
@@ -110,7 +109,7 @@ public class GeneratorSubscriber<T> implements AsyncGenerator.Cancellable<T>, Fl
     }
 
     @Override
-    public final Executor executor() {
+    public final java.util.concurrent.Executor executor() {
         return delegate.executor();
     }
 

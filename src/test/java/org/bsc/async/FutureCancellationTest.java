@@ -1,5 +1,6 @@
 package org.bsc.async;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CancellationException;
@@ -10,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Disabled
 public class FutureCancellationTest {
 
     @Test

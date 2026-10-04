@@ -1,12 +1,11 @@
 package org.bsc.async;
 
+import org.bsc.async.executor.CancellableExecutor;
 import org.bsc.async.internal.UnmodifiableDeque;
 
-import java.lang.ref.Cleaner;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
@@ -74,6 +73,7 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         return Optional.empty();
     }
 
+
     /**
      * Abstract base class for AsyncGenerator implementations.
      * <p>
@@ -96,13 +96,9 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      */
     abstract class Base<E> implements AsyncGenerator<E>, AutoCloseable {
 
-        private static final Cleaner CLEANER = Cleaner.create();
-        private static final AtomicLong ID_GENERATOR = new AtomicLong(0);
-
         private final AtomicBoolean closed = new AtomicBoolean(false);
-        private Cleaner.Cleanable cleanable;
 
-        ExecutorService executorService;
+        final CancellableExecutor executor = CancellableExecutor.newSingleThreadExecutor("AsyncGenerator");
 
         /**
          * Creates a new Base instance and registers it with the Cleaner for automatic cleanup.
@@ -112,14 +108,8 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         }
 
         @Override
-        public Executor executor() {
-
-            if( executorService == null ) {
-                executorService = Executors.newSingleThreadExecutor(runnable ->
-                        new Thread(runnable, "AsyncGenerator[%d]".formatted( ID_GENERATOR.getAndIncrement())));
-                this.cleanable = CLEANER.register(this, new CleanupAction(executorService, closed));
-            }
-            return executorService;
+        public java.util.concurrent.Executor executor() {
+            return executor;
         }
 
         /**
@@ -134,9 +124,7 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         @Override
         public void close() {
             if (closed.compareAndSet(false, true)) {
-                if( cleanable!= null ) {
-                    cleanable.clean();
-                }
+                executor.close();
             }
         }
 
@@ -149,31 +137,13 @@ public interface AsyncGenerator<E> extends Iterable<E> {
             return closed.get();
         }
 
-        /**
-         * Internal cleanup action for the Cleaner mechanism.
-         * <p>
-         * This class holds references to the ExecutorService and closed flag without
-         * capturing the outer Base instance, avoiding circular references that would
-         * prevent garbage collection.
-         */
-        private record CleanupAction(ExecutorService executor, AtomicBoolean closed) implements Runnable {
-
-            @Override
-                    public void run() {
-                        if (closed.compareAndSet(false, true)) {
-                            executor.shutdown();
-                        }
-                    }
-                }
     }
 
     abstract class BaseCancellable<E> extends Base<E> implements Cancellable<E> {
 
-        private final AtomicBoolean cancelled = new AtomicBoolean(false);
-
         @Override
         public boolean isCancelled() {
-            return cancelled.get();
+            return executor.isCancelled();
         }
 
         /**
@@ -188,13 +158,8 @@ public interface AsyncGenerator<E> extends Iterable<E> {
          */
         @Override
         public boolean cancel(boolean mayInterruptIfRunning) {
-            if (cancelled.compareAndSet(false, true)) {
+            if (executor.cancel(mayInterruptIfRunning)) {
                 close();
-                if (mayInterruptIfRunning && executorService != null) {
-                    if (!executorService.isTerminated()) {
-                        executorService.shutdownNow();
-                    }
-                }
                 return true;
             }
             return false;
@@ -221,7 +186,7 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         }
 
         @Override
-        public Executor executor() {
+        public java.util.concurrent.Executor executor() {
             return delegate.executor();
         }
 
@@ -289,7 +254,7 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         }
 
         @Override
-        public final Executor executor() {
+        public final java.util.concurrent.Executor executor() {
             if (generatorStack.isEmpty()) {
                 throw new IllegalStateException("no generator found!");
             }
@@ -491,7 +456,7 @@ public interface AsyncGenerator<E> extends Iterable<E> {
      */
     Data<E> next();
 
-    Executor executor();
+    java.util.concurrent.Executor executor();
 
     /**
      * Maps the elements of this generator to a new asynchronous generator.
@@ -742,7 +707,7 @@ class Mapper<E, U> extends AsyncGenerator.BaseCancellable<U> implements AsyncGen
     }
 
     @Override
-    public final Executor executor() {
+    public final java.util.concurrent.Executor executor() {
         return delegate.executor();
     }
 
@@ -800,7 +765,7 @@ class FlatMapper<E, U> extends AsyncGenerator.BaseCancellable<U> implements Asyn
     }
 
     @Override
-    public final Executor executor() {
+    public final java.util.concurrent.Executor executor() {
         return delegate.executor();
     }
 

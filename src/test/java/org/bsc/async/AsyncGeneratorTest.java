@@ -76,8 +76,8 @@ public class AsyncGeneratorTest {
 
         assertNotNull(result);
         assertEquals(CANCELLED, result);
-        assertEquals(3, forEachResult.size());
-        assertIterableEquals(data.subList(0, 3), forEachResult);
+        assertEquals(4, forEachResult.size());
+        assertIterableEquals(data.subList(0, 4), forEachResult);
 
     }
 

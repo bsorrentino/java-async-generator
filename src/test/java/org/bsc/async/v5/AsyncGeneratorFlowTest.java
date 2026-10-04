@@ -107,7 +107,7 @@ public class AsyncGeneratorFlowTest {
         final String[] data = { "e1", "e2", "e3", "e4", "e5"};
 
         try( final var it = AsyncGeneratorFlow.builder()
-                                .executor(commonPool())
+                                //.executor(commonPool())
                                 .processor( new BlockingQueueProcessor<>())
                                 .<String>build( dispatcher -> {
             try {
@@ -149,8 +149,8 @@ public class AsyncGeneratorFlowTest {
         final var executor = Executors.newFixedThreadPool(10);
 
         try( final var it = AsyncGeneratorFlow.builder()
-                .executor(executor)
-                .processor( new BlockingQueueProcessor<>())
+                //.executor(executor)
+                .processor( new BlockingQueueProcessor<>(executor))
                 .<String>build( dispatcher -> {
             try {
                 for( String value: data ) {
@@ -203,7 +203,7 @@ public class AsyncGeneratorFlowTest {
 
         final Supplier<AsyncGeneratorFlow.Generator<String>> generator = () ->
                 AsyncGeneratorFlow.builder()
-                        .executor(Runnable::run)
+                        .processor( new BlockingQueueProcessor<>(Runnable::run))
                         .build( dispatcher -> {
 
                     try {

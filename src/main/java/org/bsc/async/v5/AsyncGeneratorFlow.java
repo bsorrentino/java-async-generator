@@ -17,21 +17,23 @@ public interface AsyncGeneratorFlow {
     interface Dispatcher<E> {
         void dispatchSync( Data<E> data ) throws InterruptedException;
         void dispatchAsync( Data<E> data );
+        boolean isCancelled();
     }
 
     interface Receiver<E> {
         Data<E> waitSync() throws InterruptedException;
         Optional<Data<E>> waitAsync();
-
+        boolean isCancelled();
     }
 
-    interface Processor<E> extends Dispatcher<E>, Receiver<E> {
+    interface Processor<E> extends Dispatcher<E>, Receiver<E>, IsCancellable {
+        void setDispatcherExecutor( Executor executor );
+        Executor dispatcherExecutor();
     }
 
     class Builder {
         private Processor<?> processor;
         private Executor executor;
-
         public <E> Builder processor( Processor<E> processor) {
             this.processor = processor;
             return this;
@@ -40,29 +42,35 @@ public interface AsyncGeneratorFlow {
             this.executor = executor;
             return this;
         }
-
         @SuppressWarnings("unchecked")
         public <E> Generator<E> build( Consumer<Dispatcher<E>> emitter ) {
             final var result = this.<E>build();
 
-            final Runnable emitterTask = () -> emitter.accept((Dispatcher<E>) processor);
+            final Runnable emitterTask = () -> {
+                if( !result.isCancelled() ) {
+                    emitter.accept((Dispatcher<E>) processor);
+                }
+            };
 
-            if( executor != null ) {
-                CompletableFuture.runAsync( emitterTask, executor );
-            }
-            else {
-                CompletableFuture.runAsync( emitterTask );
-            }
+            CompletableFuture.runAsync( emitterTask, processor.dispatcherExecutor() );
 
             return result;
         }
 
         @SuppressWarnings("unchecked")
         public <E> Generator<E> build() {
+            if( executor != null ) {
+                if( processor != null ) {
+                    processor.setDispatcherExecutor(executor);
+                }
+                else {
+                    processor = new BlockingQueueProcessor<>(executor);
+                }
+            }
             if( processor == null ) {
                 processor = new BlockingQueueProcessor<>();
             }
-            return new AsyncGeneratorFlow.Generator<>( (Receiver<E>)processor );
+            return new AsyncGeneratorFlow.Generator<>( (Receiver<E>)processor, processor );
         }
     }
 
@@ -88,9 +96,11 @@ public interface AsyncGeneratorFlow {
         private volatile Thread executorThread = null;
         private volatile Data<E> endData = null;
         private final Receiver<E> receiver;
+        private final IsCancellable dispatcherExecutor;
 
-        public Generator(Receiver<E> receiver ) {
+        public Generator(Receiver<E> receiver, IsCancellable dispatcherExecutor) {
             this.receiver = requireNonNull(receiver, "receiver cannot be null");
+            this.dispatcherExecutor = requireNonNull(dispatcherExecutor, "dispatcherExecutor cannot be null");
         }
 
         public Receiver<E> receiver() {
@@ -108,6 +118,9 @@ public interface AsyncGeneratorFlow {
          */
         @Override
         public Data<E> next() {
+            if( isCancelled() ) {
+                endData = Data.done(CANCELLED);
+            }
             if( isEnded() ) {
                 return endData;
             }
@@ -138,13 +151,8 @@ public interface AsyncGeneratorFlow {
 
         @Override
         public boolean cancel( boolean mayInterruptIfRunning ) {
-            if( super.cancel(mayInterruptIfRunning) ) {
-                if( executorThread != null ) {
-                    executorThread.interrupt();
-                }
-                return true;
-            }
-            return false;
+            dispatcherExecutor.cancel(mayInterruptIfRunning);
+            return super.cancel(mayInterruptIfRunning);
         }
 
         @Override
