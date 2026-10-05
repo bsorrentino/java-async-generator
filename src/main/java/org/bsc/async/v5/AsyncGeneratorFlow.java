@@ -1,5 +1,7 @@
 package org.bsc.async.v5;
 
+import org.bsc.async.executor.CancellableExecutor;
+
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -17,23 +19,25 @@ public interface AsyncGeneratorFlow {
     interface Dispatcher<E> {
         void dispatchSync( Data<E> data ) throws InterruptedException;
         void dispatchAsync( Data<E> data );
-        boolean isCancelled();
+
+        default boolean isCancelled() {
+            return false;
+        }
     }
 
     interface Receiver<E> {
         Data<E> waitSync() throws InterruptedException;
         Optional<Data<E>> waitAsync();
-        boolean isCancelled();
+
     }
 
-    interface Processor<E> extends Dispatcher<E>, Receiver<E>, IsCancellable {
-        void setDispatcherExecutor( Executor executor );
-        Executor dispatcherExecutor();
+    interface Processor<E> extends Dispatcher<E>, Receiver<E> {
     }
 
     class Builder {
         private Processor<?> processor;
         private Executor executor;
+
         public <E> Builder processor( Processor<E> processor) {
             this.processor = processor;
             return this;
@@ -42,35 +46,27 @@ public interface AsyncGeneratorFlow {
             this.executor = executor;
             return this;
         }
+
+        /**
+         * After a cancel, {@code dispatchAsync} drops silently and {@code dispatchSync} throws {@link InterruptedException}.
+         */
         @SuppressWarnings("unchecked")
         public <E> Generator<E> build( Consumer<Dispatcher<E>> emitter ) {
             final var result = this.<E>build();
+            final var dispatcher = new GeneratorDispatcher<>((Dispatcher<E>) processor, result);
 
-            final Runnable emitterTask = () -> {
-                if( !result.isCancelled() ) {
-                    emitter.accept((Dispatcher<E>) processor);
-                }
-            };
-
-            CompletableFuture.runAsync( emitterTask, processor.dispatcherExecutor() );
+            CompletableFuture.runAsync( () -> emitter.accept(dispatcher), result.cancellableExecutor );
 
             return result;
         }
 
         @SuppressWarnings("unchecked")
         public <E> Generator<E> build() {
-            if( executor != null ) {
-                if( processor != null ) {
-                    processor.setDispatcherExecutor(executor);
-                }
-                else {
-                    processor = new BlockingQueueProcessor<>(executor);
-                }
-            }
             if( processor == null ) {
                 processor = new BlockingQueueProcessor<>();
             }
-            return new AsyncGeneratorFlow.Generator<>( (Receiver<E>)processor, processor );
+            final var cancellableExecutor = CancellableExecutor.of( executor != null ? executor : Generator.DEFAULT_EXECUTOR );
+            return new AsyncGeneratorFlow.Generator<>( (Receiver<E>)processor, cancellableExecutor );
         }
     }
 
@@ -93,14 +89,20 @@ public interface AsyncGeneratorFlow {
      */
     class Generator<E> extends BaseCancellable<E> implements HasResultValue {
 
+        static final Executor DEFAULT_EXECUTOR = CompletableFuture::runAsync;
+
         private volatile Thread executorThread = null;
         private volatile Data<E> endData = null;
         private final Receiver<E> receiver;
-        private final IsCancellable dispatcherExecutor;
+        final CancellableExecutor cancellableExecutor;
 
-        public Generator(Receiver<E> receiver, IsCancellable dispatcherExecutor) {
+        public Generator(Receiver<E> receiver ) {
+            this(receiver, CancellableExecutor.of(DEFAULT_EXECUTOR));
+        }
+
+        Generator(Receiver<E> receiver, CancellableExecutor cancellableExecutor) {
             this.receiver = requireNonNull(receiver, "receiver cannot be null");
-            this.dispatcherExecutor = requireNonNull(dispatcherExecutor, "dispatcherExecutor cannot be null");
+            this.cancellableExecutor = requireNonNull(cancellableExecutor, "cancellableExecutor cannot be null");
         }
 
         public Receiver<E> receiver() {
@@ -118,7 +120,7 @@ public interface AsyncGeneratorFlow {
          */
         @Override
         public Data<E> next() {
-            if( isCancelled() ) {
+            if( !isEnded() && isCancelled() ) {
                 endData = Data.done(CANCELLED);
             }
             if( isEnded() ) {
@@ -132,7 +134,7 @@ public interface AsyncGeneratorFlow {
             try {
                 Data<E> value = null;
                 while( true ) {
-                    value = receiver.waitSync();
+                    value = cancellableExecutor.callUntilCancelled(receiver::waitSync);
 
                     if (value.isDone() ) {
                         endData = value;
@@ -141,6 +143,10 @@ public interface AsyncGeneratorFlow {
                 }
                 return value;
             } catch (InterruptedException e) {
+                if( !isCancelled() ) {
+                    cancel(false);
+                    Thread.currentThread().interrupt();
+                }
                 endData = Data.done(CANCELLED);
                 return endData;
             }
@@ -149,10 +155,18 @@ public interface AsyncGeneratorFlow {
             }
         }
 
+        /**
+         * Once the last element has been returned, a cancel keeps the result.
+         */
         @Override
         public boolean cancel( boolean mayInterruptIfRunning ) {
-            dispatcherExecutor.cancel(mayInterruptIfRunning);
-            return super.cancel(mayInterruptIfRunning);
+            if( !super.cancel(mayInterruptIfRunning) ) {
+                return false;
+            }
+            if( endData == null || !endData.isDone() ) {
+                cancellableExecutor.cancel(mayInterruptIfRunning);
+            }
+            return true;
         }
 
         @Override
@@ -160,6 +174,5 @@ public interface AsyncGeneratorFlow {
             return ofNullable( endData ).map( Data::resultValue );
         }
     }
-
 
 }
