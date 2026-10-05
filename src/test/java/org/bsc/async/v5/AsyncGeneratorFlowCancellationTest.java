@@ -11,13 +11,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
@@ -33,6 +36,9 @@ public class AsyncGeneratorFlowCancellationTest {
     private static final long GC_POLL_MILLIS = 50;
     private static final int RACE_ATTEMPTS = 200;
     private static final int LEAK_ATTEMPTS = 10;
+    private static final long SLOW_LISTENER_MILLIS = 200;
+    private static final int NESTED_RACE_ATTEMPTS = 1000;
+    private static final int OWN_INTERRUPT_ATTEMPTS = 50;
 
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
@@ -551,4 +557,421 @@ public class AsyncGeneratorFlowCancellationTest {
         }
     }
 
+    @Test
+    public void cancellingTheParentCancelsTheChildWithTheSameInterruptFlag() throws Exception {
+        var parent = AsyncGeneratorFlow.builder()
+                .executor(executor)
+                .<String>build(dispatcher -> {});
+        var childInterrupted = new CountDownLatch(1);
+        var childStarted = new CountDownLatch(1);
+
+        var child = AsyncGeneratorFlow.builder()
+                .executor(executor)
+                .cancelledBy(parent)
+                .<String>build(dispatcher -> {
+                    childStarted.countDown();
+                    try {
+                        new CountDownLatch(1).await();
+                    } catch (InterruptedException e) {
+                        childInterrupted.countDown();
+                    }
+                });
+
+        assertTrue(childStarted.await(WAIT_SECONDS, TimeUnit.SECONDS));
+        parent.cancel(true);
+
+        assertTrue(child.isCancelled());
+        assertTrue(childInterrupted.await(WAIT_SECONDS, TimeUnit.SECONDS));
+    }
+
+    @Test
+    public void cancellingTheParentWithoutInterruptDoesNotInterruptTheChild() throws Exception {
+        var parent = AsyncGeneratorFlow.builder()
+                .executor(executor)
+                .<String>build(dispatcher -> {});
+        var childInterrupted = new CountDownLatch(1);
+        var childStarted = new CountDownLatch(1);
+
+        var child = AsyncGeneratorFlow.builder()
+                .executor(executor)
+                .cancelledBy(parent)
+                .<String>build(dispatcher -> {
+                    childStarted.countDown();
+                    try {
+                        new CountDownLatch(1).await();
+                    } catch (InterruptedException e) {
+                        childInterrupted.countDown();
+                    }
+                });
+
+        assertTrue(childStarted.await(WAIT_SECONDS, TimeUnit.SECONDS));
+        parent.cancel(false);
+
+        assertTrue(child.isCancelled());
+        assertFalse(childInterrupted.await(NEVER_HAPPENS_MILLIS, TimeUnit.MILLISECONDS));
+    }
+
+    @Test
+    public void aChildOfAnAlreadyCancelledParentNeverRunsItsEmitter() {
+        var parent = AsyncGeneratorFlow.builder()
+                .executor(Runnable::run)
+                .<String>build(dispatcher -> {});
+        parent.cancel(false);
+        var emitterRan = new AtomicBoolean();
+
+        var child = AsyncGeneratorFlow.builder()
+                .executor(Runnable::run)
+                .cancelledBy(parent)
+                .<String>build(dispatcher -> emitterRan.set(true));
+
+        assertTrue(child.isCancelled());
+        assertFalse(emitterRan.get());
+    }
+
+    @Test
+    public void cancellingACompletedParentLeavesItsLinkedGeneratorsRunning() throws Exception {
+        var parent = AsyncGeneratorFlow.builder()
+                .executor(Runnable::run)
+                .<String>build(dispatcher -> dispatcher.dispatchAsync(AsyncGenerator.Data.done("END")));
+        assertEquals("END", parent.next().resultValue());
+        var childStarted = new CountDownLatch(1);
+        var childRelease = new CountDownLatch(1);
+        var linkedBefore = AsyncGeneratorFlow.builder()
+                .executor(executor)
+                .cancelledBy(parent)
+                .<String>build(dispatcher -> {
+                    childStarted.countDown();
+                    try {
+                        childRelease.await();
+                    } catch (InterruptedException ignored) {
+                    }
+                });
+        assertTrue(childStarted.await(WAIT_SECONDS, TimeUnit.SECONDS));
+
+        assertTrue(parent.cancel(true));
+        var lateListenerCalled = new AtomicBoolean();
+        parent.onCancel(mayInterrupt -> lateListenerCalled.set(true));
+        var linkedAfter = AsyncGeneratorFlow.builder()
+                .executor(executor)
+                .cancelledBy(parent)
+                .<String>build(dispatcher -> dispatcher.dispatchAsync(AsyncGenerator.Data.done("END")));
+
+        assertFalse(linkedBefore.isCancelled());
+        assertFalse(linkedAfter.isCancelled());
+        assertFalse(lateListenerCalled.get());
+        assertEquals("END", parent.resultValue().orElseThrow());
+        childRelease.countDown();
+    }
+
+    @Test
+    public void aParentCancelledBeforeItCompletesStillCancelsLateLinks() {
+        var parent = AsyncGeneratorFlow.builder()
+                .executor(Runnable::run)
+                .<String>build(dispatcher -> {});
+        parent.cancel(false);
+        assertEquals(CANCELLED, parent.next().resultValue());
+
+        var child = AsyncGeneratorFlow.builder()
+                .executor(executor)
+                .cancelledBy(parent)
+                .<String>build(dispatcher -> {});
+
+        assertTrue(child.isCancelled());
+    }
+
+    @Test
+    public void aChildConsumedToItsEndIsNoLongerLinkedToItsParent() {
+        var parent = AsyncGeneratorFlow.builder()
+                .executor(executor)
+                .<String>build(dispatcher -> {});
+
+        var child = AsyncGeneratorFlow.builder()
+                .executor(Runnable::run)
+                .cancelledBy(parent)
+                .<String>build(dispatcher -> dispatcher.dispatchAsync(AsyncGenerator.Data.done("END")));
+        assertEquals("END", child.next().resultValue());
+
+        parent.cancel(true);
+
+        assertFalse(child.isCancelled());
+        assertEquals("END", child.resultValue().orElseThrow());
+    }
+
+    @Test
+    public void aChildWhoseEmitterFinishedButIsStillBeingConsumedIsCancelledWithItsParent() {
+        var parent = AsyncGeneratorFlow.builder()
+                .executor(executor)
+                .<String>build(dispatcher -> {});
+
+        var child = AsyncGeneratorFlow.builder()
+                .executor(Runnable::run)
+                .cancelledBy(parent)
+                .<String>build(dispatcher -> {
+                    dispatcher.dispatchAsync(AsyncGenerator.Data.of(completedFuture("e1")));
+                    dispatcher.dispatchAsync(AsyncGenerator.Data.done("END"));
+                });
+
+        parent.cancel(false);
+
+        assertTrue(child.isCancelled());
+        assertEquals(CANCELLED, child.next().resultValue());
+    }
+
+    @Test
+    public void cancellingAParentWhoseEmitterConsumesTheChildInterruptsTheChild() throws Exception {
+        for (int attempt = 0; attempt < NESTED_RACE_ATTEMPTS; attempt++) {
+            var childStarted = new CountDownLatch(1);
+            var childInterrupted = new CountDownLatch(1);
+            var parent = AsyncGeneratorFlow.builder()
+                    .executor(executor)
+                    .<String>build(dispatcher -> {
+                        var child = AsyncGeneratorFlow.builder()
+                                .executor(executor)
+                                .cancelledBy(dispatcher)
+                                .<String>build(childDispatcher -> {
+                                    childStarted.countDown();
+                                    try {
+                                        new CountDownLatch(1).await();
+                                    } catch (InterruptedException e) {
+                                        childInterrupted.countDown();
+                                    }
+                                });
+                        child.next();
+                    });
+
+            assertTrue(childStarted.await(WAIT_SECONDS, TimeUnit.SECONDS));
+            parent.cancel(true);
+
+            assertTrue(childInterrupted.await(WAIT_SECONDS, TimeUnit.SECONDS), "attempt " + attempt);
+        }
+    }
+
+    @Test
+    public void aProcessorModeChildConsumedToItsEndIsNoLongerLinkedToItsParent() {
+        var parent = AsyncGeneratorFlow.builder()
+                .executor(executor)
+                .<String>build(dispatcher -> {});
+        var processor = new BlockingQueueProcessor<String>();
+
+        var child = AsyncGeneratorFlow.builder()
+                .processor(processor)
+                .cancelledBy(parent)
+                .<String>build();
+        processor.dispatchAsync(AsyncGenerator.Data.done("END"));
+        assertEquals("END", child.next().resultValue());
+
+        parent.cancel(true);
+
+        assertFalse(child.isCancelled());
+    }
+
+    @Test
+    public void aParentEmitterConsumingALinkedChildStillSeesItsOwnInterrupt() throws Exception {
+        for (int attempt = 0; attempt < OWN_INTERRUPT_ATTEMPTS; attempt++) {
+            var childStarted = new CountDownLatch(1);
+            var parentInterruptedAfterChild = new CountDownLatch(1);
+            var parent = AsyncGeneratorFlow.builder()
+                    .executor(executor)
+                    .<String>build(dispatcher -> {
+                        var child = AsyncGeneratorFlow.builder()
+                                .executor(executor)
+                                .cancelledBy(dispatcher)
+                                .<String>build(childDispatcher -> {
+                                    childStarted.countDown();
+                                    try {
+                                        new CountDownLatch(1).await();
+                                    } catch (InterruptedException ignored) {
+                                    }
+                                });
+                        child.next();
+                        try {
+                            Thread.sleep(TimeUnit.SECONDS.toMillis(30));
+                        } catch (InterruptedException e) {
+                            parentInterruptedAfterChild.countDown();
+                        }
+                    });
+
+            assertTrue(childStarted.await(WAIT_SECONDS, TimeUnit.SECONDS));
+            parent.cancel(true);
+
+            assertTrue(parentInterruptedAfterChild.await(WAIT_SECONDS, TimeUnit.SECONDS), "attempt " + attempt);
+        }
+    }
+
+    @Test
+    public void aParentEmitterRunningALinkedChildInlineStillSeesItsOwnInterrupt() throws Exception {
+        for (boolean childRestoresInterrupt : new boolean[]{false, true}) {
+            for (int attempt = 0; attempt < OWN_INTERRUPT_ATTEMPTS; attempt++) {
+                var childStarted = new CountDownLatch(1);
+                var parentInterruptedAfterChild = new CountDownLatch(1);
+                var parent = AsyncGeneratorFlow.builder()
+                        .executor(executor)
+                        .<String>build(dispatcher -> {
+                            AsyncGeneratorFlow.builder()
+                                    .executor(Runnable::run)
+                                    .cancelledBy(dispatcher)
+                                    .<String>build(childDispatcher -> {
+                                        childStarted.countDown();
+                                        try {
+                                            new CountDownLatch(1).await();
+                                        } catch (InterruptedException e) {
+                                            if (childRestoresInterrupt) {
+                                                Thread.currentThread().interrupt();
+                                            }
+                                        }
+                                    });
+                            try {
+                                Thread.sleep(TimeUnit.SECONDS.toMillis(30));
+                            } catch (InterruptedException e) {
+                                parentInterruptedAfterChild.countDown();
+                            }
+                        });
+
+                assertTrue(childStarted.await(WAIT_SECONDS, TimeUnit.SECONDS));
+                parent.cancel(true);
+
+                assertTrue(parentInterruptedAfterChild.await(WAIT_SECONDS, TimeUnit.SECONDS),
+                        "childRestoresInterrupt=" + childRestoresInterrupt + " attempt " + attempt);
+            }
+        }
+    }
+
+    @Test
+    public void aParentEmitterKeepsItsInterruptWhenAnInlineChildEndsBeforeItsCancelArrives() throws Exception {
+        var childStarted = new CountDownLatch(1);
+        var parentInterruptedAfterChild = new CountDownLatch(1);
+        var parent = AsyncGeneratorFlow.builder()
+                .executor(executor)
+                .<String>build(dispatcher -> {
+                    dispatcher.onCancel(mayInterrupt -> {
+                        try {
+                            Thread.sleep(SLOW_LISTENER_MILLIS);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                    });
+                    AsyncGeneratorFlow.builder()
+                            .executor(Runnable::run)
+                            .cancelledBy(dispatcher)
+                            .<String>build(childDispatcher -> {
+                                childStarted.countDown();
+                                try {
+                                    new CountDownLatch(1).await();
+                                } catch (InterruptedException ignored) {
+                                }
+                            });
+                    try {
+                        Thread.sleep(TimeUnit.SECONDS.toMillis(30));
+                    } catch (InterruptedException e) {
+                        parentInterruptedAfterChild.countDown();
+                    }
+                });
+
+        assertTrue(childStarted.await(WAIT_SECONDS, TimeUnit.SECONDS));
+        parent.cancel(true);
+
+        assertTrue(parentInterruptedAfterChild.await(WAIT_SECONDS, TimeUnit.SECONDS));
+    }
+
+    @Test
+    public void aChildReleasesItsParentLinkWhenClosedOrRejected() {
+        var parent = new CountingToken();
+
+        AsyncGeneratorFlow.builder()
+                .cancelledBy(parent)
+                .<String>build()
+                .close();
+        assertThrows(RejectedExecutionException.class, () -> AsyncGeneratorFlow.builder()
+                .executor(command -> { throw new RejectedExecutionException(); })
+                .cancelledBy(parent)
+                .<String>build(dispatcher -> {}));
+
+        assertEquals(2, parent.registered.get());
+        assertEquals(0, parent.open.get());
+    }
+
+    static final class CountingToken implements AsyncGeneratorFlow.CancellationToken {
+        final AtomicInteger registered = new AtomicInteger();
+        final AtomicInteger open = new AtomicInteger();
+
+        @Override
+        public boolean isCancelled() {
+            return false;
+        }
+
+        @Override
+        public Registration onCancel(Listener listener) {
+            registered.incrementAndGet();
+            open.incrementAndGet();
+            return open::decrementAndGet;
+        }
+    }
+
+    @Test
+    public void anInterruptHandedToTheParentDoesNotLeakIntoTheExecutorsNextTask() throws Exception {
+        try (var nonClearing = new NonClearingSingleThreadExecutor()) {
+            for (int attempt = 0; attempt < LEAK_ATTEMPTS; attempt++) {
+                var childStarted = new CountDownLatch(1);
+                var parent = AsyncGeneratorFlow.builder()
+                        .executor(nonClearing)
+                        .<String>build(dispatcher -> {
+                            AsyncGeneratorFlow.builder()
+                                    .executor(Runnable::run)
+                                    .cancelledBy(dispatcher)
+                                    .<String>build(childDispatcher -> {
+                                        childStarted.countDown();
+                                        while (!Thread.currentThread().isInterrupted()) {
+                                            Thread.onSpinWait();
+                                        }
+                                    });
+                            while (!Thread.currentThread().isInterrupted()) {
+                                Thread.onSpinWait();
+                            }
+                        });
+
+                assertTrue(childStarted.await(WAIT_SECONDS, TimeUnit.SECONDS));
+                parent.cancel(true);
+
+                var nextTaskInterrupted = CompletableFuture
+                        .supplyAsync(() -> Thread.currentThread().isInterrupted(), nonClearing)
+                        .get(WAIT_SECONDS, TimeUnit.SECONDS);
+                assertFalse(nextTaskInterrupted, "attempt " + attempt);
+            }
+        }
+    }
+
+    @Test
+    public void linkingToADispatcherNotTiedToAGeneratorFails() {
+        var processor = new BlockingQueueProcessor<String>();
+
+        assertThrows(UnsupportedOperationException.class, () -> AsyncGeneratorFlow.builder()
+                .cancelledBy(processor)
+                .<String>build());
+    }
+
+    @Test
+    public void cancellationListeners() {
+        var generator = AsyncGeneratorFlow.builder()
+                .executor(executor)
+                .<String>build(dispatcher -> {});
+        var calls = new CopyOnWriteArrayList<String>();
+        var registeredCalls = new AtomicInteger();
+        AsyncGeneratorFlow.CancellationToken.Listener sharedListener = mayInterrupt -> calls.add("shared:" + mayInterrupt);
+
+        generator.onCancel(mayInterrupt -> registeredCalls.incrementAndGet());
+        generator.onCancel(mayInterrupt -> { throw new IllegalStateException("listener failure"); });
+        var firstShared = generator.onCancel(sharedListener);
+        generator.onCancel(sharedListener);
+        firstShared.close();
+        firstShared.close();
+        generator.onCancel(mayInterrupt -> calls.add("removed")).close();
+
+        assertTrue(generator.cancel(true));
+        assertFalse(generator.cancel(true));
+        generator.onCancel(mayInterrupt -> calls.add("late:" + mayInterrupt));
+        assertDoesNotThrow(() -> generator.onCancel(mayInterrupt -> { throw new IllegalStateException("late failure"); }));
+
+        assertEquals(1, registeredCalls.get());
+        assertEquals(List.of("shared:true", "late:true"), calls);
+    }
 }

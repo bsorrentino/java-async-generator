@@ -35,4 +35,9 @@ final class GeneratorDispatcher<E> implements AsyncGeneratorFlow.Dispatcher<E> {
     public boolean isCancelled() {
         return generator.isCancelled();
     }
+
+    @Override
+    public Registration onCancel(Listener listener) {
+        return generator.onCancel(listener);
+    }
 }
