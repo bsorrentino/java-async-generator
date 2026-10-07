@@ -99,9 +99,66 @@ public class AsyncGeneratorFlowCancellationTest {
     }
 
     static final class UninterruptibleProcessor<E> implements AsyncGeneratorFlow.Processor<E> {
+
+        class DispatcherImpl implements AsyncGeneratorFlow.Dispatcher<E> {
+            @Override
+            public void dispatchAsync(AsyncGenerator.Data<E> data) {
+
+                delegate.dispatcher().dispatchAsync(data);
+            }
+
+            @Override
+            public void dispatchSync(AsyncGenerator.Data<E> data) {
+                blocked.countDown();
+                boolean interrupted = false;
+                while (true) {
+                    try {
+                        release.await();
+                        break;
+                    } catch (InterruptedException e) {
+                        log.info( "interrupted while waiting to release processor, will continue waiting");
+                        interrupted = true;
+                    }
+                }
+                if (interrupted) {
+                    Thread.currentThread().interrupt();
+                }
+                delegate.dispatcher().dispatchAsync(data);
+            }
+
+            @Override
+            public boolean isCancelled() {
+                return delegate.dispatcher().isCancelled();
+            }
+
+            @Override
+            public Executor executor() {
+                return delegate.dispatcher().executor();
+            }
+
+            @Override
+            public boolean cancel(boolean mayInterruptIfRunning) {
+                return delegate.dispatcher().cancel(mayInterruptIfRunning);
+            }
+        }
+
+        class ReceiverImpl implements AsyncGeneratorFlow.Receiver<E> {
+            @Override
+            public AsyncGenerator.Data<E> waitSync() throws InterruptedException {
+                return delegate.receiver().waitSync();
+            }
+
+            @Override
+            public Optional<AsyncGenerator.Data<E>> waitAsync() {
+                return delegate.receiver().waitAsync();
+            }
+        }
         private final BlockingQueueProcessor<E> delegate;
         final CountDownLatch blocked = new CountDownLatch(1);
         final CountDownLatch release = new CountDownLatch(1);
+
+        DispatcherImpl dispatcher = new DispatcherImpl();
+        final ReceiverImpl receiver = new ReceiverImpl();
 
         public UninterruptibleProcessor( Executor executor ) {
             delegate = new BlockingQueueProcessor<>( executor);
@@ -111,47 +168,13 @@ public class AsyncGeneratorFlowCancellationTest {
         }
 
         @Override
-        public void dispatchSync(AsyncGenerator.Data<E> data) {
-            blocked.countDown();
-            boolean interrupted = false;
-            while (true) {
-                try {
-                    release.await();
-                    break;
-                } catch (InterruptedException e) {
-                    log.info( "interrupted while waiting to release processor, will continue waiting");
-                    interrupted = true;
-                }
-            }
-            if (interrupted) {
-                Thread.currentThread().interrupt();
-            }
-            delegate.dispatchAsync(data);
+        public AsyncGeneratorFlow.Dispatcher<E> dispatcher() {
+            return dispatcher;
         }
 
         @Override
-        public void dispatchAsync(AsyncGenerator.Data<E> data) {
-            delegate.dispatchAsync(data);
-        }
-
-        @Override
-        public boolean isCancelled() {
-            return delegate.isCancelled();
-        }
-
-        @Override
-        public AsyncGenerator.Data<E> waitSync() throws InterruptedException {
-            return delegate.waitSync();
-        }
-
-        @Override
-        public Optional<AsyncGenerator.Data<E>> waitAsync() {
-            return delegate.waitAsync();
-        }
-
-        @Override
-        public Executor dispatcherExecutor() {
-            return delegate.dispatcherExecutor();
+        public AsyncGeneratorFlow.Receiver<E> receiver() {
+            return new ReceiverImpl();
         }
 
         @Override
@@ -159,10 +182,6 @@ public class AsyncGeneratorFlowCancellationTest {
             delegate.setDispatcherExecutor(executor);
         }
 
-        @Override
-        public boolean cancel(boolean mayInterruptIfRunning) {
-            return delegate.cancel(mayInterruptIfRunning);
-        }
     }
 
     private static void awaitBlocked(AtomicReference<Thread> thread) {
