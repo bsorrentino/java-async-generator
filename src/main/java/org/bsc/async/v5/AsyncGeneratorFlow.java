@@ -14,21 +14,22 @@ import static org.bsc.async.AsyncGenerator.*;
  */
 public interface AsyncGeneratorFlow {
 
-    interface Dispatcher<E> {
+    interface Dispatcher<E> extends  IsCancellable {
         void dispatchSync( Data<E> data ) throws InterruptedException;
         void dispatchAsync( Data<E> data );
         boolean isCancelled();
+        Executor executor();
     }
 
     interface Receiver<E> {
         Data<E> waitSync() throws InterruptedException;
         Optional<Data<E>> waitAsync();
-        boolean isCancelled();
     }
 
-    interface Processor<E> extends Dispatcher<E>, Receiver<E>, IsCancellable {
+    interface Processor<E>  {
+        Dispatcher<E> dispatcher();
+        Receiver<E> receiver();
         void setDispatcherExecutor( Executor executor );
-        Executor dispatcherExecutor();
     }
 
     class Builder {
@@ -46,13 +47,15 @@ public interface AsyncGeneratorFlow {
         public <E> Generator<E> build( Consumer<Dispatcher<E>> emitter ) {
             final var result = this.<E>build();
 
+            final var p = (Processor<E>) processor;
+
             final Runnable emitterTask = () -> {
                 if( !result.isCancelled() ) {
-                    emitter.accept((Dispatcher<E>) processor);
+                    emitter.accept( p.dispatcher() );
                 }
             };
 
-            CompletableFuture.runAsync( emitterTask, processor.dispatcherExecutor() );
+            CompletableFuture.runAsync( emitterTask, p.dispatcher().executor() );
 
             return result;
         }
@@ -70,7 +73,9 @@ public interface AsyncGeneratorFlow {
             if( processor == null ) {
                 processor = new BlockingQueueProcessor<>();
             }
-            return new AsyncGeneratorFlow.Generator<>( (Receiver<E>)processor, processor );
+
+            final var p = (Processor<E>) processor;
+            return new AsyncGeneratorFlow.Generator<>( p.receiver(), p.dispatcher() );
         }
     }
 
