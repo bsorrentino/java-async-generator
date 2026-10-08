@@ -638,6 +638,15 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         };
     }
 
+    static <E> AsyncGenerator<E> error( Throwable exception ) {
+        return new Base<>() {
+            @Override
+            public Data<E> next() {
+                return Data.error(exception);
+            }
+        };
+    }
+
     /**
      * Collects asynchronous elements from an iterator.
      *

@@ -3,6 +3,7 @@ package org.bsc.async.v5;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static java.util.Objects.requireNonNull;
@@ -14,9 +15,46 @@ import static org.bsc.async.AsyncGenerator.*;
  */
 public interface AsyncGeneratorFlow {
 
-    interface Dispatcher<E> {
+    interface IsCancellableEx extends IsCancellable{
+
+        @FunctionalInterface
+        interface Listener {
+            void cancelled(boolean mayInterruptIfRunning);
+        }
+
+        interface Registration extends AutoCloseable {
+            static Registration noop() {
+                return () -> {};
+            }
+
+            @Override
+            void close();
+        }
+
+        /**
+         * Calls the listener right away if already cancelled.
+         */
+        Registration onCancel(Listener listener);
+    }
+
+    interface Dispatcher<E> extends IsCancellableEx {
         void dispatchSync( Data<E> data ) throws InterruptedException;
         void dispatchAsync( Data<E> data );
+
+        @Override
+        default Registration onCancel(Listener listener) {
+            throw new UnsupportedOperationException("operation not supported outside of Generator");
+        }
+
+        @Override
+        default boolean isCancelled() {
+            return false;
+        }
+
+        @Override
+        default boolean cancel(boolean mayInterruptIfRunning) {
+            throw new UnsupportedOperationException("operation not supported outside of Generator");
+        }
     }
 
     interface Receiver<E> {
@@ -25,12 +63,15 @@ public interface AsyncGeneratorFlow {
 
     }
 
-    interface Processor<E> extends Dispatcher<E>, Receiver<E> {
+    interface Processor<E>  {
+        Dispatcher<E> dispatcher();
+        Receiver<E> receiver();
     }
 
     class Builder {
         private Processor<?> processor;
         private Executor executor;
+        private IsCancellableEx parent;
 
         public <E> Builder processor( Processor<E> processor) {
             this.processor = processor;
@@ -40,18 +81,26 @@ public interface AsyncGeneratorFlow {
             this.executor = executor;
             return this;
         }
+        public Builder cancelledBy( IsCancellableEx parent ) {
+            this.parent = requireNonNull(parent, "parent cannot be null");
+            return this;
+        }
 
-        @SuppressWarnings("unchecked")
+        /**
+         * After a cancel, {@code dispatchAsync} drops silently and {@code dispatchSync} throws {@link InterruptedException}.
+         */
         public <E> Generator<E> build( Consumer<Dispatcher<E>> emitter ) {
+
             final var result = this.<E>build();
 
-            final Runnable emitterTask = () -> emitter.accept((Dispatcher<E>) processor);
-
-            if( executor != null ) {
-                CompletableFuture.runAsync( emitterTask, executor );
+            try {
+                CompletableFuture.runAsync(
+                        () -> emitter.accept(result.cancellableDispatcher),
+                        result.cancellableDispatcher.executor() );
             }
-            else {
-                CompletableFuture.runAsync( emitterTask );
+            catch( RuntimeException e ) {
+                result.unlinkFromParent();
+                throw e;
             }
 
             return result;
@@ -62,7 +111,15 @@ public interface AsyncGeneratorFlow {
             if( processor == null ) {
                 processor = new BlockingQueueProcessor<>();
             }
-            return new AsyncGeneratorFlow.Generator<>( (Receiver<E>)processor );
+            final var dispatcher = (Dispatcher<E>)processor.dispatcher();
+            final var cancellableDispatcher = new CancellableDispatcher<>(dispatcher, executor);
+
+            final var result = new AsyncGeneratorFlow.Generator<>( (Receiver<E>)processor.receiver(), cancellableDispatcher );
+
+            if( parent != null ) {
+                result.linkToParent(parent);
+            }
+            return result;
         }
     }
 
@@ -83,14 +140,17 @@ public interface AsyncGeneratorFlow {
      *
      * @param <E> the type of elements in the queue
      */
-    class Generator<E> extends BaseCancellable<E> implements HasResultValue {
+    class Generator<E> extends BaseCancellable<E> implements HasResultValue, IsCancellableEx {
 
         private volatile Thread executorThread = null;
         private volatile Data<E> endData = null;
         private final Receiver<E> receiver;
+        final CancellableDispatcher<E> cancellableDispatcher;
+        private final AtomicReference<Registration> parentRegistration = new AtomicReference<>();
 
-        public Generator(Receiver<E> receiver ) {
+        Generator(Receiver<E> receiver, CancellableDispatcher<E> cancellableDispatcher) {
             this.receiver = requireNonNull(receiver, "receiver cannot be null");
+            this.cancellableDispatcher = requireNonNull(cancellableDispatcher, "cancellableDispatcher cannot be null");
         }
 
         public Receiver<E> receiver() {
@@ -108,43 +168,90 @@ public interface AsyncGeneratorFlow {
          */
         @Override
         public Data<E> next() {
+            if( !isEnded() && isCancelled() ) {
+                return endCancelled();
+            }
             if( isEnded() ) {
                 return endData;
             }
             if(executorThread!=null) {
-                endData = Data.error(new IllegalStateException("illegal concurrent next() invocation"));
-                return endData;
+                return end(Data.error(new IllegalStateException("illegal concurrent next() invocation")));
             }
             executorThread = Thread.currentThread();
             try {
                 Data<E> value = null;
                 while( true ) {
-                    value = receiver.waitSync();
+                    value = cancellableDispatcher.executor().callUntilCancelled(receiver::waitSync);
 
                     if (value.isDone() ) {
-                        endData = value;
+                        return complete(value);
                     }
                     break;
                 }
                 return value;
             } catch (InterruptedException e) {
-                endData = Data.done(CANCELLED);
-                return endData;
+                if( !isCancelled() ) {
+                    cancel(false);
+                    Thread.currentThread().interrupt();
+                }
+                return endCancelled();
             }
             finally {
                 executorThread = null;
             }
         }
 
+        private Data<E> complete(Data<E> data) {
+            cancellableDispatcher.complete();
+            return end(data);
+        }
+
+        private Data<E> endCancelled() {
+            return end(Data.done(CANCELLED));
+        }
+
+        private Data<E> end(Data<E> data) {
+            endData = data;
+            unlinkFromParent();
+            return data;
+        }
+
+        /**
+         * Once the last element has been returned, a cancel keeps the result and does not reach the generators linked
+         * with {@link Builder#cancelledBy}.
+         */
         @Override
         public boolean cancel( boolean mayInterruptIfRunning ) {
-            if( super.cancel(mayInterruptIfRunning) ) {
-                if( executorThread != null ) {
-                    executorThread.interrupt();
-                }
-                return true;
+            if( !super.cancel(mayInterruptIfRunning) ) {
+                return false;
             }
-            return false;
+            unlinkFromParent();
+
+            return cancellableDispatcher.cancel(mayInterruptIfRunning);
+
+        }
+
+        @Override
+        public Registration onCancel(Listener listener) {
+            return cancellableDispatcher.onCancel(listener);
+
+        }
+
+        void linkToParent(IsCancellableEx parent) {
+            parentRegistration.set(parent.onCancel(this::cancel));
+        }
+
+        void unlinkFromParent() {
+            final var registration = parentRegistration.getAndSet(null);
+            if( registration != null ) {
+                registration.close();
+            }
+        }
+
+        @Override
+        public void close() {
+            unlinkFromParent();
+            super.close();
         }
 
         @Override
@@ -152,6 +259,5 @@ public interface AsyncGeneratorFlow {
             return ofNullable( endData ).map( Data::resultValue );
         }
     }
-
 
 }

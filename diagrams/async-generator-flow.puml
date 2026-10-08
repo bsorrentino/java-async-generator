@@ -1,0 +1,577 @@
+' AsyncGeneratorFlow: class diagrams based on the current Java source.
+' Four independent views, matching async-generator-flow.drawio.
+' Render locally: plantuml -tpng -o async-generator-flow-plantuml async-generator-flow.puml
+' Vector output:  plantuml -tsvg -o async-generator-flow-plantuml async-generator-flow.puml
+' Each named @startuml block produces a separate image.
+' Scope: supporting production types, inherited lifecycle and payload contracts.
+' Selected members; tests, legacy queue API, adapters and map/reduce helpers omitted.
+
+@startuml async-generator-flow-processing
+' Self-contained view: no network includes or external themes.
+top to bottom direction
+set namespaceSeparator none
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 0
+skinparam classAttributeIconSize 0
+skinparam nodesep 65
+skinparam ranksep 85
+skinparam ArrowColor #5E6B7D
+skinparam classBorderColor #5E6B7D
+skinparam classFontColor #253448
+skinparam classAttributeFontColor #253448
+skinparam titleFontColor #253448
+skinparam noteBackgroundColor #FFFBEA
+skinparam noteBorderColor #AA8648
+hide circle
+hide empty members
+title 1. Construction and processing
+caption AsyncGeneratorFlow and its nested processing types, with the default processor and cancellation wrapper.\nCancellation and payload: view 3; inheritance: view 2.
+
+' Source: src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java
+interface "AsyncGeneratorFlow" as flow #e8f1fc {
+  + {static} builder(): Builder
+  + {static} <E> create(Consumer<Dispatcher<E>>): Generator<E>
+  + {static} <E> create(Processor<E>): Generator<E>
+}
+
+' Source: src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java
+class "AsyncGeneratorFlow.Builder" as builder #edf6ee {
+  - processor: Processor<?>
+  - executor: Executor
+  - parent: IsCancellableEx
+  --
+  + <E> processor(Processor<E>): Builder
+  + executor(Executor): Builder
+  + cancelledBy(IsCancellableEx): Builder
+  + <E> build(): Generator<E>
+  + <E> build(Consumer<Dispatcher<E>>): Generator<E>
+}
+
+' Source: src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java
+class "AsyncGeneratorFlow.Generator<E>" as generator #edf6ee {
+  ~ {static} DEFAULT_EXECUTOR: Executor
+  - receiver: Receiver<E>
+  ~ cancellableDispatcher: CancellableDispatcher<E>
+  - endData: Data<E> [0..1]
+  - parentRegistration: AtomicReference<Registration>
+  --
+  + next(): Data<E>
+  + receiver(): Receiver<E>
+  + cancel(boolean): boolean
+  + onCancel(Listener): Registration
+  + resultValue(): Optional<Object>
+  + close(): void
+  .. Notes ..
+  {field} <size:11>Extends AsyncGenerator.BaseCancellable<E> (view 2).</size>
+}
+
+' Source: src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java
+interface "AsyncGeneratorFlow.Processor<E>" as processor #e8f1fc {
+  + dispatcher(): Dispatcher<E>
+  + receiver(): Receiver<E>
+}
+
+' Source: src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java
+interface "AsyncGeneratorFlow.Dispatcher<E>" as dispatcher #e8f1fc {
+  + dispatchSync(Data<E>): void throws InterruptedException
+  + dispatchAsync(Data<E>): void
+  .. Notes ..
+  {field} <size:11>Extends IsCancellableEx. Default cancellation is unsupported.</size>
+}
+
+' Source: src/main/java/org/bsc/async/v5/BlockingQueueProcessor.java
+class "BlockingQueueProcessor<E>" as queue #edf6ee {
+  - queue: BlockingQueue<Data<E>>
+  - dispatcher: DispatchImpl
+  - receiver: ReceiverImpl
+  --
+  + BlockingQueueProcessor()
+  + BlockingQueueProcessor(BlockingQueue<Data<E>>)
+  + queue(): BlockingQueue<Data<E>>
+  + dispatcher(): Dispatcher<E>
+  + receiver(): Receiver<E>
+  .. Notes ..
+  {field} <size:11>Default queue: LinkedBlockingQueue<Data<E>>.</size>
+}
+
+' Source: src/main/java/org/bsc/async/v5/CancellableDispatcher.java
+class "CancellableDispatcher<E>" as cdisp #edf6ee {
+  - delegate: Dispatcher<E>
+  - executor: CancellableExecutor
+  --
+  + dispatchSync(Data<E>): void throws InterruptedException
+  + dispatchAsync(Data<E>): void
+  + executor(): CancellableExecutor
+  ~ complete(): void
+  .. Notes ..
+  {field} <size:11>Package-private cancellation decorator; see view 3.</size>
+}
+
+' Source: src/main/java/org/bsc/async/v5/BlockingQueueProcessor.java
+class "BlockingQueueProcessor<E>.DispatchImpl" as dispatchimpl #edf6ee {
+  + dispatchSync(Data<E>): void  → queue.put(data)
+  + dispatchAsync(Data<E>): void  → queue.add(data)
+  .. Notes ..
+  {field} <size:11>Non-static inner class; shares the processor queue.</size>
+}
+
+' Source: src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java
+interface "AsyncGeneratorFlow.Receiver<E>" as receiver #e8f1fc {
+  + waitSync(): Data<E> throws InterruptedException
+  + waitAsync(): Optional<Data<E>>
+}
+
+' Source: src/main/java/org/bsc/async/v5/BlockingQueueProcessor.java
+class "BlockingQueueProcessor<E>.ReceiverImpl" as receiverimpl #edf6ee {
+  + waitSync(): Data<E>  → queue.take()
+  + waitAsync(): Optional<Data<E>>  → queue.poll()
+  .. Notes ..
+  {field} <size:11>Non-static inner class; shares the processor queue.</size>
+}
+
+flow ..> builder : «creates»
+builder ..> generator : «creates»
+builder ..> queue : «creates default»
+builder ..> cdisp : «creates»
+builder --> "0..1" processor : processor
+generator --> "1" receiver : receiver
+generator --> "1" cdisp : cancellableDispatcher
+cdisp ..|> dispatcher
+queue ..|> processor
+queue *-- "1" dispatchimpl : dispatcher
+queue *-- "1" receiverimpl : receiver
+dispatchimpl ..|> dispatcher
+receiverimpl ..|> receiver
+cdisp --> "1" dispatcher : delegate
+processor ..> dispatcher : returns
+processor ..> receiver : returns
+
+legend left
+  Solid hollow triangle: extends | Dashed hollow triangle: implements
+  Open arrow: reference | Dashed open arrow: dependency | Filled diamond: owned instance
+  + public | - private | # protected | ~ package | Underline: static
+  Qualified names identify nested Java types. Record accessors are implicit.
+  Collection, atomic, future and thread types are shown in member signatures.
+endlegend
+@enduml
+
+@startuml async-generator-flow-hierarchy
+' Self-contained view: no network includes or external themes.
+top to bottom direction
+set namespaceSeparator none
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 0
+skinparam classAttributeIconSize 0
+skinparam nodesep 65
+skinparam ranksep 85
+skinparam ArrowColor #5E6B7D
+skinparam classBorderColor #5E6B7D
+skinparam classFontColor #253448
+skinparam classAttributeFontColor #253448
+skinparam titleFontColor #253448
+skinparam noteBackgroundColor #FFFBEA
+skinparam noteBorderColor #AA8648
+hide circle
+hide empty members
+title 2. Generator hierarchy and lifecycle
+caption Inherited contracts and resource lifecycle. Names prefixed AsyncGenerator are nested in that interface. Data and\nembedded-generator payload records are expanded in view 3.
+
+interface "Iterable<E>" as iterable <<JDK>> #f2f3f5 {
+  + iterator(): Iterator<E>
+}
+
+' Source: src/main/java/org/bsc/async/AsyncGenerator.java
+interface "AsyncGenerator<E>" as ag #e8f1fc {
+  + next(): Data<E>
+  + executor(): Executor
+  + iterator(): Iterator<E>
+  + forEachAsync(Consumer<E>): CompletableFuture<Object>
+  + stream(): Stream<E>
+  .. Notes ..
+  {field} <size:11>Other map/reduce and factory methods omitted.</size>
+}
+
+' Source: src/main/java/org/bsc/async/AsyncGenerator.java
+interface "AsyncGenerator.IsCancellable" as isc #e8f1fc {
+  + {static} CANCELLED: Object
+  --
+  + isCancelled(): boolean
+  + cancel(boolean): boolean
+}
+
+' Source: src/main/java/org/bsc/async/AsyncGenerator.java
+abstract class "AsyncGenerator.Base<E>" as base #f1ecfa {
+  - {static} CLEANER: Cleaner
+  - {static} ID_GENERATOR: AtomicLong
+  - closed: AtomicBoolean
+  - cleanable: Cleaner.Cleanable [0..1]
+  ~ executorService: ExecutorService [0..1]
+  --
+  # Base()
+  + executor(): Executor
+  + close(): void
+  + isClosed(): boolean
+}
+
+' Source: src/main/java/org/bsc/async/AsyncGenerator.java
+interface "AsyncGenerator.Cancellable<E>" as cancellable #e8f1fc {
+  .. Notes ..
+  {field} <size:11>Combines AsyncGenerator<E> and IsCancellable.</size>
+}
+
+interface "AutoCloseable" as autoclose <<JDK>> #f2f3f5 {
+  + close(): void throws Exception
+}
+
+' Source: src/main/java/org/bsc/async/AsyncGenerator.java
+abstract class "AsyncGenerator.BaseCancellable<E>" as bc #f1ecfa {
+  - cancelled: AtomicBoolean
+  --
+  + isCancelled(): boolean
+  + cancel(boolean): boolean
+}
+
+' Source: src/main/java/org/bsc/async/AsyncGenerator.java
+interface "AsyncGenerator.HasResultValue" as has #e8f1fc {
+  + resultValue(): Optional<Object>
+}
+
+' Source: src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java
+class "AsyncGeneratorFlow.Generator<E>" as generator #edf6ee {
+  + next(): Data<E>
+  + cancel(boolean): boolean
+  + resultValue(): Optional<Object>
+  + close(): void
+  .. Notes ..
+  {field} <size:11>Also implements IsCancellableEx (view 3).</size>
+}
+
+' Source: src/main/java/org/bsc/async/AsyncGenerator.java
+class "AsyncGenerator.Base.CleanupAction" as cleanup <<record>> #fff3dc {
+  - executor: ExecutorService
+  - closed: AtomicBoolean
+  --
+  + run(): void
+  .. Notes ..
+  {field} <size:11>Private nested record; implements Runnable.</size>
+}
+
+interface "Runnable" as runnable <<JDK>> #f2f3f5 {
+  + run(): void
+}
+
+ag --|> iterable
+base ..|> ag
+base ..|> autoclose
+cancellable --|> ag
+cancellable --|> isc
+bc --|> base
+bc ..|> cancellable
+generator --|> bc
+generator ..|> has
+base ..> cleanup : «creates; Cleaner.register»
+cleanup ..|> runnable
+
+legend left
+  Solid hollow triangle: extends | Dashed hollow triangle: implements
+  Open arrow: reference | Dashed open arrow: dependency | Filled diamond: owned instance
+  + public | - private | # protected | ~ package | Underline: static
+  Qualified names identify nested Java types. Record accessors are implicit.
+  Collection, atomic, future and thread types are shown in member signatures.
+endlegend
+@enduml
+
+@startuml async-generator-flow-cancellation
+' Self-contained view: no network includes or external themes.
+top to bottom direction
+set namespaceSeparator none
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 0
+skinparam classAttributeIconSize 0
+skinparam nodesep 65
+skinparam ranksep 85
+skinparam ArrowColor #5E6B7D
+skinparam classBorderColor #5E6B7D
+skinparam classFontColor #253448
+skinparam classAttributeFontColor #253448
+skinparam titleFontColor #253448
+skinparam noteBackgroundColor #FFFBEA
+skinparam noteBorderColor #AA8648
+hide circle
+hide empty members
+title 3. Cancellation and payload contracts
+caption Listener registration, parent cancellation links, and Data<E> payload variants. Optional values are shown with\n0..1; registration callbacks can be detached by close().
+
+' Source: src/main/java/org/bsc/async/AsyncGenerator.java
+interface "AsyncGenerator.IsCancellable" as isc #e8f1fc {
+  + isCancelled(): boolean
+  + cancel(boolean): boolean
+}
+
+' Source: src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java
+interface "AsyncGeneratorFlow.IsCancellableEx" as ex #e8f1fc {
+  + onCancel(Listener): Registration
+  .. Notes ..
+  {field} <size:11>Extends IsCancellable; already-cancelled sources notify immediately.</size>
+}
+
+' Source: src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java
+interface "IsCancellableEx.Listener" as listener #e8f1fc {
+  + cancelled(boolean mayInterruptIfRunning): void
+  .. Notes ..
+  {field} <size:11>Nested @FunctionalInterface.</size>
+}
+
+' Source: src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java
+class "AsyncGeneratorFlow.Generator<E>" as generator #edf6ee {
+  - executorThread: Thread [0..1] {volatile}
+  - endData: Data<E> [0..1] {volatile}
+  - parentRegistration: AtomicReference<Registration>
+  --
+  + onCancel(Listener): Registration
+  + cancel(boolean): boolean
+  ~ linkToParent(IsCancellableEx): void
+  ~ unlinkFromParent(): void
+  - complete(Data<E>): Data<E>
+  - end(Data<E>): Data<E>
+}
+
+' Source: src/main/java/org/bsc/async/v5/CancellableDispatcher.java
+class "CancellableDispatcher<E>" as cdisp #edf6ee {
+  - listenersLock: Object
+  - listeners: Set<Listener> [0..1]
+  - completed: boolean
+  - cancelledWithInterrupt: boolean
+  - delegate: Dispatcher<E>
+  - executor: CancellableExecutor
+  --
+  + onCancel(Listener): Registration
+  + cancel(boolean): boolean
+  + isCancelled(): boolean
+  ~ complete(): void
+  ~ isCompleted(): boolean
+  - {static} notifyListener(Listener, boolean): void
+  .. Notes ..
+  {field} <size:11>Declares Dispatcher<E> and IsCancellableEx; package-private class.</size>
+}
+
+' Source: src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java
+interface "IsCancellableEx.Registration" as registration #e8f1fc {
+  + {static} noop(): Registration
+  + close(): void
+  .. Notes ..
+  {field} <size:11>Nested interface; close() removes the listener entry.</size>
+}
+
+interface "AutoCloseable" as autoclose <<JDK>> #f2f3f5 {
+  + close(): void throws Exception
+}
+
+' Source: src/main/java/org/bsc/async/AsyncGenerator.java
+class "AsyncGenerator.Data<E>" as data <<record>> #fff3dc {
+  - future: CompletableFuture<E> [0..1]
+  - embed: AsyncGenerator.Embed<E> [0..1]
+  - resultValue: Object [0..1]
+  --
+  + isDone(): boolean
+  + isError(): boolean
+  + {static} <E> of(E): Data<E>
+  + {static} <E> of(CompletableFuture<E>): Data<E>
+  + {static} <E> done(): Data<E>
+  + {static} <E> done(Object resultValue): Data<E>
+  + {static} error(Throwable): Data<E>
+  + {static} <E> composeWith(AsyncGenerator<E>, EmbedCompletionHandler): Data<E>
+  .. Notes ..
+  {field} <size:11>Done ⇔ future == null && embed == null.</size>
+}
+
+' Source: src/main/java/org/bsc/async/AsyncGenerator.java
+class "AsyncGenerator.Embed<E>" as embed <<record>> #fff3dc {
+  - generator: AsyncGenerator<E>
+  - onCompletion: EmbedCompletionHandler [0..1]
+  --
+  + resultValue(): Optional<Object>
+  .. Notes ..
+  {field} <size:11>Implements AsyncGenerator.HasResultValue (view 2).</size>
+}
+
+' Source: src/main/java/org/bsc/async/AsyncGenerator.java
+interface "AsyncGenerator.EmbedCompletionHandler" as handler #e8f1fc {
+  + accept(Object): void throws Exception
+  .. Notes ..
+  {field} <size:11>Nested @FunctionalInterface.</size>
+}
+
+' Source: src/main/java/org/bsc/async/AsyncGenerator.java
+interface "AsyncGenerator<E>" as ag #e8f1fc {
+  + next(): Data<E>
+  + executor(): Executor
+}
+
+' Source: src/main/java/org/bsc/async/AsyncGenerator.java
+interface "AsyncGenerator.HasResultValue" as has #e8f1fc {
+  + resultValue(): Optional<Object>
+}
+
+ex --|> isc
+ex ..> listener : listener parameter
+ex ..> registration : returns
+generator ..|> ex
+cdisp ..|> ex
+cdisp --> "0..*" listener : listeners
+cdisp ..> registration : «creates» removal callback
+generator --> "1" cdisp : cancellableDispatcher
+generator --> "0..1" registration : parentRegistration
+generator ..> ex : parent 0..1: onCancel(this::cancel)
+registration --|> autoclose
+generator --> "0..1" data : endData
+data --> "0..1" embed : embed
+embed --> "0..1" handler : onCompletion
+embed --> "1" ag : generator
+embed ..|> has
+
+interface "AsyncGeneratorFlow.Dispatcher<E>" as dispatcher #E8F1FC {
+  + dispatchSync(Data<E>): void throws InterruptedException
+  + dispatchAsync(Data<E>): void
+}
+dispatcher --|> ex
+cdisp ..|> dispatcher
+
+legend left
+  Solid hollow triangle: extends | Dashed hollow triangle: implements
+  Open arrow: reference | Dashed open arrow: dependency | Filled diamond: owned instance
+  + public | - private | # protected | ~ package | Underline: static
+  Qualified names identify nested Java types. Record accessors are implicit.
+  Collection, atomic, future and thread types are shown in member signatures.
+endlegend
+@enduml
+
+@startuml async-generator-flow-executor
+' Self-contained view: no network includes or external themes.
+top to bottom direction
+set namespaceSeparator none
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 0
+skinparam classAttributeIconSize 0
+skinparam nodesep 65
+skinparam ranksep 85
+skinparam ArrowColor #5E6B7D
+skinparam classBorderColor #5E6B7D
+skinparam classFontColor #253448
+skinparam classAttributeFontColor #253448
+skinparam titleFontColor #253448
+skinparam noteBackgroundColor #FFFBEA
+skinparam noteBorderColor #AA8648
+hide circle
+hide empty members
+title 4. Cancellable executor internals
+caption The dispatcher wraps a borrowed Executor. Running tasks and blocking calls are tracked separately; cancelling wakes\nblocked calls regardless of mayInterruptIfRunning.
+
+' Source: src/main/java/org/bsc/async/AsyncGenerator.java
+interface "AsyncGenerator.IsCancellable" as isc #e8f1fc {
+  + isCancelled(): boolean
+  + cancel(boolean): boolean
+}
+
+interface "Executor" as executor <<JDK>> #f2f3f5 {
+  + execute(Runnable): void
+}
+
+' Source: src/main/java/org/bsc/async/executor/CancellableExecutor.java
+class "CancellableExecutor" as ce #edf6ee {
+  - {static} CURRENT_RUN: ThreadLocal<Run>
+  - delegate: Executor
+  - cancelled: AtomicBoolean
+  - lock: Object
+  - runs: Set<Run>
+  - waiters: Set<Waiter>
+  --
+  + {static} of(Executor): CancellableExecutor
+  - CancellableExecutor(Executor)
+  + execute(Runnable): void
+  + <T> callUntilCancelled(BlockingCall<T>): T
+  + isCancelled(): boolean
+  + cancel(boolean): boolean
+  - run(Runnable): void
+  - {static} clearInterruptUnlessStillRequested(): void
+  - {static} interruptRequestedOnCurrentThread(): boolean
+  .. Notes ..
+  {field} <size:11>callUntilCancelled throws InterruptedException. Borrowed executor is</size>
+  {field} <size:11>never shut down.</size>
+}
+
+' Source: src/main/java/org/bsc/async/v5/CancellableDispatcher.java
+class "CancellableDispatcher<E>" as cd #edf6ee {
+  - executor: CancellableExecutor
+  --
+  + executor(): CancellableExecutor
+  + dispatchSync(Data<E>): void
+  + cancel(boolean): boolean
+  .. Notes ..
+  {field} <size:11>dispatchSync and Generator.next use callUntilCancelled.</size>
+}
+
+' Source: src/main/java/org/bsc/async/executor/CancellableExecutor.java
+interface "CancellableExecutor.BlockingCall<T>" as call #e8f1fc {
+  + call(): T throws InterruptedException
+  .. Notes ..
+  {field} <size:11>Nested public @FunctionalInterface.</size>
+}
+
+' Source: src/main/java/org/bsc/async/executor/CancellableExecutor.java
+class "CancellableExecutor.Run" as run #edf6ee {
+  ~ thread: Thread
+  ~ interruptedAtStart: boolean
+  ~ outer: Run [0..1]
+  ~ interruptRequested: boolean {volatile}
+  --
+  ~ Run(Run outer)
+  .. Notes ..
+  {field} <size:11>Private static final nested class.</size>
+}
+
+' Source: src/main/java/org/bsc/async/executor/CancellableExecutor.java
+class "CancellableExecutor.Waiter" as waiter #edf6ee {
+  ~ thread: Thread
+  ~ interruptedByCancel: boolean
+  .. Notes ..
+  {field} <size:11>Private static final nested class.</size>
+}
+
+ce ..|> isc
+ce ..|> executor
+ce --> "1" executor : delegate
+cd --> "1" ce : executor
+ce ..> call : call parameter
+ce *-- "0..*" run : runs
+ce *-- "0..*" waiter : waiters
+ce --> run : CURRENT_RUN 0..1 per thread
+run --> "0..1" run : outer
+
+note bottom of ce
+  cancel(false) interrupts registered blocking waiters.
+  cancel(true) also interrupts tracked running tasks.
+  Nested runs preserve outstanding interrupt requests.
+  The borrowed executor is never shut down.
+end note
+
+legend left
+  Solid hollow triangle: extends | Dashed hollow triangle: implements
+  Open arrow: reference | Dashed open arrow: dependency | Filled diamond: owned instance
+  + public | - private | # protected | ~ package | Underline: static
+  Qualified names identify nested Java types. Record accessors are implicit.
+  Collection, atomic, future and thread types are shown in member signatures.
+endlegend
+@enduml
