@@ -11,7 +11,7 @@ import static java.util.Optional.ofNullable;
 
 public class BlockingQueueProcessor<E> implements AsyncGeneratorFlow.Processor<E> {
 
-    class DispatchImpl implements AsyncGeneratorFlow.Dispatcher<E> {
+    class DispatcherImpl implements AsyncGeneratorFlow.Dispatcher<E> {
 
         @Override
         public void dispatchSync(AsyncGenerator.Data<E> data) throws InterruptedException {
@@ -38,7 +38,7 @@ public class BlockingQueueProcessor<E> implements AsyncGeneratorFlow.Processor<E
     }
 
     private final  BlockingQueue<AsyncGenerator.Data<E>> queue;
-    private final DispatchImpl dispatcher = new DispatchImpl();
+    private final DispatcherImpl dispatcher = new DispatcherImpl();
     private final ReceiverImpl receiver = new ReceiverImpl();
 
     public BlockingQueueProcessor(BlockingQueue<AsyncGenerator.Data<E>> queue) {
