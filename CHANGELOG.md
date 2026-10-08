@@ -2,6 +2,89 @@
 
 
 
+<!-- "name: v5.1.0" is a release tag -->
+
+## [v5.1.0](https://github.com/bsorrentino/java-async-generator/releases/tag/v5.1.0) (2026-10-08)
+
+### Features
+
+ *  add CancellableDispatcher class for enhanced cancellation support ([1e8cf6abbb01622](https://github.com/bsorrentino/java-async-generator/commit/1e8cf6abbb01622fba0bc0dda5d95cc11c5486cc))
+
+ *  **BlockingQueueProcessor**  implement Dispatcher and Receiver interfaces for async data handling ([627d6b622c5ceb6](https://github.com/bsorrentino/java-async-generator/commit/627d6b622c5ceb61779e8cacbb7d601f54355c01))
+
+ *  **AsyncGeneratorFlow**  cancel a generator with its parent ([c73e6450cefbb0f](https://github.com/bsorrentino/java-async-generator/commit/c73e6450cefbb0f35bab1692ffd031c2b354e559))
+
+ *  **AsyncGeneratorFlow**  add both Dispatcher and Receiver Executor concept through introduction of CancellableExecutor that hold a java.util.concurrent.Executor reference. ([f702da5e3cffb06](https://github.com/bsorrentino/java-async-generator/commit/f702da5e3cffb06a0123a704d627a9316c3ee791))
+     > Now when request a cancel both the dispatcher and receiver will be interrupted.
+
+ *  **AsyncGenerator**  add generator that emit an error ([b7e6dad8fe3704e](https://github.com/bsorrentino/java-async-generator/commit/b7e6dad8fe3704e6e42f73c0923915838308d55e))
+
+
+### Bug Fixes
+
+ -  **logging**  set java.lang.Runtime logging level to INFO ([3beb39d827938b3](https://github.com/bsorrentino/java-async-generator/commit/3beb39d827938b3a211e29946aed59170c186894))
+
+ -  **AsyncGeneratorFlow**  cancellation issues in #9 ([7968d8f646c5107](https://github.com/bsorrentino/java-async-generator/commit/7968d8f646c51071f16f46c63c80ebe1aa34e626))
+
+
+### Refactor
+
+ -  **AsyncGeneratorFlow**  remove static DEFAULT_EXECUTOR from Generator class and move to CancellableDispatcher ([e2d93faf5a41c23](https://github.com/bsorrentino/java-async-generator/commit/e2d93faf5a41c231c550cbc072c80999b83bad76))
+
+ -  **BlockingQueueProcessor**  rename DispatchImpl to DispatcherImpl for consistency ([ca10897f18873eb](https://github.com/bsorrentino/java-async-generator/commit/ca10897f18873eb7e41d4aafabf37ddc47b42cda))
+
+ -  **AsyncGeneratorFlow**  replace CancellableExecutor with CancellableDispatcher in Generator class ([e6b82f29a5824ad](https://github.com/bsorrentino/java-async-generator/commit/e6b82f29a5824ad55a515884bd813a6d990dfa7f))
+
+ -  remove GeneratorDispatcher class (substituted by CancellableDispatcher) ([3bf51fa35aac2b0](https://github.com/bsorrentino/java-async-generator/commit/3bf51fa35aac2b073e21fc65255adab0db610a47))
+
+ -  **AsyncGeneratorFlow**  extend IsCancellableEx interface to inherit from IsCancellable ([3f26bc26ea6150c](https://github.com/bsorrentino/java-async-generator/commit/3f26bc26ea6150c751ef334527ed0c060c3ec1c9))
+
+ -  **AsyncGeneratorFlow**  rename CancellationToken to IsCancellableEx and update references ([d7e374a3747662b](https://github.com/bsorrentino/java-async-generator/commit/d7e374a3747662b815159b8208c10c0f061a8e57))
+
+ -  **AsyncGeneratorFlow**  update Processor interface to expose dispatcher and receiver methods ([b48be73046fa5ef](https://github.com/bsorrentino/java-async-generator/commit/b48be73046fa5eff4f2f7421b01d03f5eb4b9e6f))
+
+
+### Test
+
+ -  **AsyncGeneratorFlowCancellationTest**  correct instantiation of AsyncGeneratorFlow in test ([94652f84a045e14](https://github.com/bsorrentino/java-async-generator/commit/94652f84a045e144c8bea163be0408c87ec7185d))
+
+ -  **AsyncGeneratorFlowCancellationTest**  implement cancel method in test class ([b45a506a78a580e](https://github.com/bsorrentino/java-async-generator/commit/b45a506a78a580ea7429c023c488f3d1a3f1e975))
+
+ -  **AsyncGeneratorFlowCancellationTest**  update CountingToken to use IsCancellableEx interface ([1b6b099b3b6bb0a](https://github.com/bsorrentino/java-async-generator/commit/1b6b099b3b6bb0ad985531178a0d047cd0531075))
+
+ -  **AsyncGeneratorFlowCancellationTest**  update UninterruptibleProcessor to use Dispatcher for async data handling ([bc5197ba4be0fce](https://github.com/bsorrentino/java-async-generator/commit/bc5197ba4be0fce39722084431516691e4e4737b))
+
+ -  **AsyncGeneratorFlow**  add tests for async generator with embedded cancellation ([e671faf3957e7c6](https://github.com/bsorrentino/java-async-generator/commit/e671faf3957e7c6f91a957ed7e2963427ecf6529))
+
+ -  **CancellableExecutor**  add parameterized tests for executor behavior ([1a1e3159dae5785](https://github.com/bsorrentino/java-async-generator/commit/1a1e3159dae578517625c9475492c6fffe42ef6e))
+
+
+### Documentation
+
+ -  add class diagrams for AsyncGeneratorFlow and its components ([d6c852da500a1be](https://github.com/bsorrentino/java-async-generator/commit/d6c852da500a1beef9bc621cd023566647541ae0))
+
+ -  add class diagrams for AsyncGeneratorFlow and its components ([a3ac3d25a3acbd9](https://github.com/bsorrentino/java-async-generator/commit/a3ac3d25a3acbd9eb5c9251e175a21bde3beddf3))
+
+ -  update changelog ([298b26732aa0108](https://github.com/bsorrentino/java-async-generator/commit/298b26732aa0108f299c1f1f70eb2c31585b0124))
+
+
+### ALM
+
+ -  bump to next version 5.1.0 ([b8c6c94e82eb650](https://github.com/bsorrentino/java-async-generator/commit/b8c6c94e82eb6507e4e1ad56308f9dbd32ea71f4))
+
+ -  add junit-jupiter-params dependency for parameterized tests ([d0cb2f9a6fdcd35](https://github.com/bsorrentino/java-async-generator/commit/d0cb2f9a6fdcd357f8f0e7ba7f351a5ae349b902))
+
+ -  bump to next dev version 5.0-SNAPSHOT ([b10c04922f2bc3e](https://github.com/bsorrentino/java-async-generator/commit/b10c04922f2bc3eab6a057636454b445f16d9e69))
+
+
+### Continuous Integration
+
+ -  update GitHub Actions to use latest available versions ([fbf877bccd3886f](https://github.com/bsorrentino/java-async-generator/commit/fbf877bccd3886fb86ba3537dea1934a88af28f4))
+
+
+
+
+
 <!-- "name: v5.0.0" is a release tag -->
 
 ## [v5.0.0](https://github.com/bsorrentino/java-async-generator/releases/tag/v5.0.0) (2026-06-08)
