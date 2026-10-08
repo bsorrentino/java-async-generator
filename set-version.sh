@@ -11,15 +11,15 @@ else
     echo "Argument provided by user: $ver"
 fi
 
-mvn versions:set -DnewVersion=$ver
+./mvnw versions:set -DnewVersion=$ver
 
 # Prompt user to confirm version change
 read -p "Commit version change? (Y/n): " -n 1 -r confirm
 echo  # Move to new line
 if [[ $confirm =~ ^[Yy]$ ]] || [[ -z $confirm ]]; then
     echo "Committing version change..."
-    mvn versions:commit
+    ./mvnw versions:commit
 else
     echo "Reverting version change..."
-    mvn versions:revert
+    ./mvnw versions:revert
 fi

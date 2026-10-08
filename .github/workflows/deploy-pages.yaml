@@ -27,7 +27,7 @@ jobs:
           java-package: jdk
       - name: Deploy site to Github pages
         run: |
-          mvn -B  javadoc:javadoc --file pom.xml -s settings-template.xml
+          ./mvnw -B javadoc:javadoc --file pom.xml -s settings-template.xml
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
         with:

@@ -203,7 +203,7 @@
                     </plugin>
                     <!--
                     =====================================================================================================
-                    mvn -Prelease source:jar javadoc:jar install central-publishing:publish -Dgpg.passphrase=thephrase
+                    ./mvnw -Prelease clean source:jar javadoc:jar install central-publishing:publish -Dgpg.passphrase=thephrase
                     =====================================================================================================
                     -->
                     <plugin>

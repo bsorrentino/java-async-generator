@@ -5,8 +5,8 @@
   "scripts": {
     "gpg:export-key": "gpg -a --export-secret-keys \"bartolomeo.sorrentino@gmail.com\" | base64 > gpg.base64",
     "gpg:send-public-key": "gpg --keyserver hkp://keys.openpgp.org --send-keys $GPG_KEY",
-    "changelog:tag": "mvn git-changelog-maven-plugin:git-changelog -N -DtoRef=refs/tags/v$npm_package_version",
-    "changelog:release": "mvn git-changelog-maven-plugin:git-changelog -N -DtoRef=refs/heads/release/$npm_package_version"
+    "changelog:tag": "./mvnw git-changelog-maven-plugin:git-changelog -N -DtoRef=refs/tags/v$npm_package_version",
+    "changelog:release": "./mvnw git-changelog-maven-plugin:git-changelog -N -DtoRef=refs/heads/release/$npm_package_version"
 
   },
   "keywords": [],
