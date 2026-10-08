@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Timeout;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -105,42 +104,47 @@ public class AsyncGeneratorFlowCancellationTest {
      * abstract method fails to compile here.
      */
     static final class UninterruptibleProcessor<E> implements AsyncGeneratorFlow.Processor<E> {
+
+        class DispatcherImpl implements AsyncGeneratorFlow.Dispatcher<E> {
+            @Override
+            public void dispatchSync(AsyncGenerator.Data<E> data) {
+                blocked.countDown();
+                boolean interrupted = false;
+                while (true) {
+                    try {
+                        release.await();
+                        break;
+                    } catch (InterruptedException e) {
+                        interrupted = true;
+                    }
+                }
+                if (interrupted) {
+                    Thread.currentThread().interrupt();
+                }
+                delegate.dispatcher().dispatchAsync(data);
+            }
+
+            @Override
+            public void dispatchAsync(AsyncGenerator.Data<E> data) {
+                delegate.dispatcher().dispatchAsync(data);
+            }
+        }
+
         private final BlockingQueueProcessor<E> delegate = new BlockingQueueProcessor<>();
         final CountDownLatch blocked = new CountDownLatch(1);
         final CountDownLatch release = new CountDownLatch(1);
+        final DispatcherImpl dispatcher = new DispatcherImpl();
 
         @Override
-        public void dispatchSync(AsyncGenerator.Data<E> data) {
-            blocked.countDown();
-            boolean interrupted = false;
-            while (true) {
-                try {
-                    release.await();
-                    break;
-                } catch (InterruptedException e) {
-                    interrupted = true;
-                }
-            }
-            if (interrupted) {
-                Thread.currentThread().interrupt();
-            }
-            delegate.dispatchAsync(data);
+        public AsyncGeneratorFlow.Dispatcher<E> dispatcher() {
+            return dispatcher;
         }
 
         @Override
-        public void dispatchAsync(AsyncGenerator.Data<E> data) {
-            delegate.dispatchAsync(data);
+        public AsyncGeneratorFlow.Receiver<E> receiver() {
+            return delegate.receiver();
         }
 
-        @Override
-        public AsyncGenerator.Data<E> waitSync() throws InterruptedException {
-            return delegate.waitSync();
-        }
-
-        @Override
-        public Optional<AsyncGenerator.Data<E>> waitAsync() {
-            return delegate.waitAsync();
-        }
     }
 
     private static void awaitBlocked(AtomicReference<Thread> thread) {
@@ -421,16 +425,18 @@ public class AsyncGeneratorFlowCancellationTest {
     @Test
     public void aProcessorSharedByTwoGeneratorsIsNotCancelledWithOne() {
         var processor = new BlockingQueueProcessor<String>();
-        var cancelled = AsyncGeneratorFlow.builder()
+
+        try( var cancelled = AsyncGeneratorFlow.builder()
                 .executor(executor)
                 .processor(processor)
                 .<String>build();
-        var other = new AsyncGeneratorFlow.Generator<>(processor);
+            var other = new AsyncGeneratorFlow.Generator<>(processor.receiver())) {
 
-        cancelled.cancel(true);
-        processor.dispatchAsync(AsyncGenerator.Data.done("END"));
+            cancelled.cancel(true);
+            processor.dispatcher().dispatchAsync(AsyncGenerator.Data.done("END"));
 
-        assertEquals("END", other.next().resultValue());
+            assertEquals("END", other.next().resultValue());
+        }
     }
 
     @Test
@@ -757,7 +763,7 @@ public class AsyncGeneratorFlowCancellationTest {
                 .processor(processor)
                 .cancelledBy(parent)
                 .<String>build();
-        processor.dispatchAsync(AsyncGenerator.Data.done("END"));
+        processor.dispatcher().dispatchAsync(AsyncGenerator.Data.done("END"));
         assertEquals("END", child.next().resultValue());
 
         parent.cancel(true);
@@ -945,7 +951,7 @@ public class AsyncGeneratorFlowCancellationTest {
         var processor = new BlockingQueueProcessor<String>();
 
         assertThrows(UnsupportedOperationException.class, () -> AsyncGeneratorFlow.builder()
-                .cancelledBy(processor)
+                .cancelledBy(processor.dispatcher())
                 .<String>build());
     }
 
