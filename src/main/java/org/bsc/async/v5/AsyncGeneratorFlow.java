@@ -142,8 +142,6 @@ public interface AsyncGeneratorFlow {
      */
     class Generator<E> extends BaseCancellable<E> implements HasResultValue, IsCancellableEx {
 
-        static final Executor DEFAULT_EXECUTOR = CompletableFuture::runAsync;
-
         private volatile Thread executorThread = null;
         private volatile Data<E> endData = null;
         private final Receiver<E> receiver;

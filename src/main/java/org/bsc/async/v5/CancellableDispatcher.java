@@ -5,16 +5,17 @@ import org.bsc.async.executor.CancellableExecutor;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
-import static org.bsc.async.v5.AsyncGeneratorFlow.Generator.DEFAULT_EXECUTOR;
 
 class CancellableDispatcher<E> implements AsyncGeneratorFlow.Dispatcher<E>, AsyncGeneratorFlow.IsCancellableEx {
     private static final Logger log = Logger.getLogger(CancellableDispatcher.class.getName());
+    private static final Executor DEFAULT_EXECUTOR = CompletableFuture::runAsync;
 
     private final Object listenersLock = new Object();
     private Set<Listener> listeners = new LinkedHashSet<>();
