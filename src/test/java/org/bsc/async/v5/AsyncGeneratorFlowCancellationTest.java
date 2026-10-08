@@ -906,6 +906,11 @@ public class AsyncGeneratorFlowCancellationTest {
         }
 
         @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            return false;
+        }
+
+        @Override
         public Registration onCancel(Listener listener) {
             registered.incrementAndGet();
             open.incrementAndGet();
