@@ -430,7 +430,8 @@ public class AsyncGeneratorFlowCancellationTest {
                 .executor(executor)
                 .processor(processor)
                 .<String>build();
-            var other = new AsyncGeneratorFlow.Generator<>(processor.receiver())) {
+
+             var other = AsyncGeneratorFlow.create(processor)) {
 
             cancelled.cancel(true);
             processor.dispatcher().dispatchAsync(AsyncGenerator.Data.done("END"));
