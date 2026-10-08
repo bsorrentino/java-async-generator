@@ -62,7 +62,9 @@ public interface AsyncGeneratorFlow {
 
     }
 
-    interface Processor<E> extends Dispatcher<E>, Receiver<E> {
+    interface Processor<E>  {
+        Dispatcher<E> dispatcher();
+        Receiver<E> receiver();
     }
 
     class Builder {
@@ -89,7 +91,7 @@ public interface AsyncGeneratorFlow {
         @SuppressWarnings("unchecked")
         public <E> Generator<E> build( Consumer<Dispatcher<E>> emitter ) {
             final var result = this.<E>build();
-            final var dispatcher = new GeneratorDispatcher<>((Dispatcher<E>) processor, result);
+            final var dispatcher = new GeneratorDispatcher<>((Dispatcher<E>)processor.dispatcher(), result);
 
             try {
                 CompletableFuture.runAsync( () -> emitter.accept(dispatcher), result.cancellableExecutor );
@@ -108,7 +110,7 @@ public interface AsyncGeneratorFlow {
                 processor = new BlockingQueueProcessor<>();
             }
             final var cancellableExecutor = CancellableExecutor.of( executor != null ? executor : Generator.DEFAULT_EXECUTOR );
-            final var result = new AsyncGeneratorFlow.Generator<>( (Receiver<E>)processor, cancellableExecutor );
+            final var result = new AsyncGeneratorFlow.Generator<>( (Receiver<E>)processor.receiver(), cancellableExecutor );
             if( parent != null ) {
                 result.linkToParent(parent);
             }
