@@ -25,6 +25,27 @@ Idea is to create an iterator-like interface that emit elements as [CompletableF
 </dependency>
 ```
 
+## Building
+
+Use the included Maven Wrapper, pinned to Maven 3.9.16, with JDK 17 or newer:
+
+```bash
+./mvnw --version
+./mvnw -B clean verify
+```
+
+On Windows, use `mvnw.cmd` instead of `./mvnw`. The wrapper downloads Maven
+on first use. GitHub workflows also use the wrapper to keep the Maven version consistent.
+
+To publish a signed release with your Central credentials and GPG key configured:
+
+```bash
+./mvnw -B -Prelease clean source:jar javadoc:jar deploy
+```
+
+Use `./mvnw` for releases to avoid the Maven 3.10 staging metadata incompatibility
+with the current Central Publishing Plugin. Include `clean` to remove previous staging files.
+
 ## Samples
 
 ### Create an Async Generator to make multiple API calls
