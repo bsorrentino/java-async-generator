@@ -1,0 +1,292 @@
+classDiagram
+    direction TB
+
+    %% Current AsyncGeneratorFlow implementation and supporting production types.
+    %% Selected members; legacy queue API, reactive adapters and map/reduce helpers omitted.
+    %% Qualified labels identify nested Java types. JDK types appear in signatures.
+    %% Dashed hollow triangle: implements; solid hollow triangle: extends.
+
+    class Flow["AsyncGeneratorFlow"] {
+        <<interface>>
+        +builder() Builder$
+        +create(Consumer~Dispatcher~ emitter) Generator~E~$
+        +create(Processor~E~ processor) Generator~E~$
+    }
+    class Builder["AsyncGeneratorFlow.Builder"] {
+        -Processor processor
+        -Executor executor
+        -IsCancellableEx parent
+        +processor(Processor processor) Builder
+        +executor(Executor executor) Builder
+        +cancelledBy(IsCancellableEx parent) Builder
+        +build() Generator~E~
+        +build(Consumer~Dispatcher~ emitter) Generator~E~
+    }
+    class Generator["AsyncGeneratorFlow.Generator<E>"] {
+        ~Executor DEFAULT_EXECUTOR$
+        -Thread executorThread
+        -Data~E~ endData
+        -Receiver~E~ receiver
+        ~CancellableDispatcher~E~ cancellableDispatcher
+        -AtomicReference~Registration~ parentRegistration
+        +receiver() Receiver~E~
+        +next() Data~E~
+        +cancel(boolean mayInterruptIfRunning) boolean
+        +onCancel(Listener listener) Registration
+        +resultValue() Optional~Object~
+        +close() void
+        ~linkToParent(IsCancellableEx parent) void
+        ~unlinkFromParent() void
+        -complete(Data~E~ data) Data~E~
+        -end(Data~E~ data) Data~E~
+    }
+    class Processor["AsyncGeneratorFlow.Processor<E>"] {
+        <<interface>>
+        +dispatcher() Dispatcher~E~
+        +receiver() Receiver~E~
+    }
+    class Dispatcher["AsyncGeneratorFlow.Dispatcher<E>"] {
+        <<interface>>
+        +dispatchSync(Data~E~ data) void
+        +dispatchAsync(Data~E~ data) void
+    }
+    class Receiver["AsyncGeneratorFlow.Receiver<E>"] {
+        <<interface>>
+        +waitSync() Data~E~
+        +waitAsync() Optional~Data~
+    }
+    class QueueProcessor["BlockingQueueProcessor<E>"] {
+        -BlockingQueue~Data~ queue
+        -DispatcherImpl dispatcher
+        -ReceiverImpl receiver
+        +BlockingQueueProcessor()
+        +BlockingQueueProcessor(BlockingQueue~Data~ queue)
+        +queue() BlockingQueue~Data~
+        +dispatcher() Dispatcher~E~
+        +receiver() Receiver~E~
+    }
+    class DispatcherImpl["BlockingQueueProcessor<E>.DispatcherImpl"] {
+        +dispatchSync(Data~E~ data) void
+        +dispatchAsync(Data~E~ data) void
+    }
+    class ReceiverImpl["BlockingQueueProcessor<E>.ReceiverImpl"] {
+        +waitSync() Data~E~
+        +waitAsync() Optional~Data~
+    }
+    class CancellableDispatcher["CancellableDispatcher<E>"] {
+        -Object listenersLock
+        -Set~Listener~ listeners
+        -CancellableExecutor executor
+        -boolean completed
+        -boolean cancelledWithInterrupt
+        -Dispatcher~E~ delegate
+        +executor() CancellableExecutor
+        +dispatchSync(Data~E~ data) void
+        +dispatchAsync(Data~E~ data) void
+        +onCancel(Listener listener) Registration
+        +cancel(boolean mayInterruptIfRunning) boolean
+        +isCancelled() boolean
+        ~complete() void
+        ~isCompleted() boolean
+    }
+
+    class AsyncGenerator["AsyncGenerator<E>"] {
+        <<interface>>
+        +next() Data~E~
+        +executor() Executor
+        +iterator() Iterator~E~
+        +forEachAsync(Consumer~E~ consumer) CompletableFuture~Object~
+        +stream() Stream~E~
+    }
+    class Iterable["Iterable<E>"] {
+        <<interface>>
+        +iterator() Iterator~E~
+    }
+    class AutoCloseable {
+        <<interface>>
+        +close() void
+    }
+    class Base["AsyncGenerator.Base<E>"] {
+        <<abstract>>
+        -Cleaner CLEANER$
+        -AtomicLong ID_GENERATOR$
+        -AtomicBoolean closed
+        -Cleaner.Cleanable cleanable
+        ~ExecutorService executorService
+        +executor() Executor
+        +close() void
+        +isClosed() boolean
+    }
+    class CleanupAction["AsyncGenerator.Base.CleanupAction"] {
+        <<record>>
+        -ExecutorService executor
+        -AtomicBoolean closed
+        +run() void
+    }
+    class Runnable {
+        <<interface>>
+        +run() void
+    }
+    class BaseCancellable["AsyncGenerator.BaseCancellable<E>"] {
+        <<abstract>>
+        -AtomicBoolean cancelled
+        +isCancelled() boolean
+        +cancel(boolean mayInterruptIfRunning) boolean
+    }
+    class Cancellable["AsyncGenerator.Cancellable<E>"] {
+        <<interface>>
+    }
+    class IsCancellable["AsyncGenerator.IsCancellable"] {
+        <<interface>>
+        +Object CANCELLED$
+        +isCancelled() boolean
+        +cancel(boolean mayInterruptIfRunning) boolean
+    }
+    class HasResultValue["AsyncGenerator.HasResultValue"] {
+        <<interface>>
+        +resultValue() Optional~Object~
+    }
+
+    class IsCancellableEx["AsyncGeneratorFlow.IsCancellableEx"] {
+        <<interface>>
+        +onCancel(Listener listener) Registration
+    }
+    class Listener["AsyncGeneratorFlow.IsCancellableEx.Listener"] {
+        <<interface>>
+        +cancelled(boolean mayInterruptIfRunning) void
+    }
+    class Registration["AsyncGeneratorFlow.IsCancellableEx.Registration"] {
+        <<interface>>
+        +noop() Registration$
+        +close() void
+    }
+    class Data["AsyncGenerator.Data<E>"] {
+        <<record>>
+        -CompletableFuture~E~ future
+        -Embed~E~ embed
+        -Object resultValue
+        +isDone() boolean
+        +isError() boolean
+        +of(E data) Data~E~$
+        +of(CompletableFuture~E~ future) Data~E~$
+        +done() Data~E~$
+        +done(Object resultValue) Data~E~$
+        +error(Throwable exception) Data~E~$
+        +composeWith(AsyncGenerator generator, EmbedCompletionHandler onCompletion) Data~E~$
+    }
+    class Embed["AsyncGenerator.Embed<E>"] {
+        <<record>>
+        -AsyncGenerator~E~ generator
+        -EmbedCompletionHandler onCompletion
+        +resultValue() Optional~Object~
+    }
+    class EmbedCompletionHandler["AsyncGenerator.EmbedCompletionHandler"] {
+        <<interface>>
+        +accept(Object value) void
+    }
+
+    class Executor {
+        <<interface>>
+        +execute(Runnable command) void
+    }
+    class CancellableExecutor {
+        -ThreadLocal~Run~ CURRENT_RUN$
+        -Executor delegate
+        -AtomicBoolean cancelled
+        -Object lock
+        -Set~Run~ runs
+        -Set~Waiter~ waiters
+        +of(Executor executor) CancellableExecutor$
+        +execute(Runnable command) void
+        +callUntilCancelled(BlockingCall~T~ call) T
+        +isCancelled() boolean
+        +cancel(boolean mayInterruptIfRunning) boolean
+    }
+    class BlockingCall["CancellableExecutor.BlockingCall<T>"] {
+        <<interface>>
+        +call() T
+    }
+    class Run["CancellableExecutor.Run"] {
+        ~Thread thread
+        ~boolean interruptedAtStart
+        ~Run outer
+        ~boolean interruptRequested
+    }
+    class Waiter["CancellableExecutor.Waiter"] {
+        ~Thread thread
+        ~boolean interruptedByCancel
+    }
+
+    %% Construction and processing.
+    Flow ..> Builder : creates
+    Flow ..> Generator : creates
+    Builder --> "0..1" Processor : processor
+    Builder --> "0..1" Executor : executor
+    Builder --> "0..1" IsCancellableEx : parent
+    Builder ..> QueueProcessor : creates default
+    Builder ..> CancellableDispatcher : creates
+    Builder ..> Generator : creates
+    Generator --> "1" Receiver : receiver
+    Generator --> "1" CancellableDispatcher : cancellableDispatcher
+    Processor ..> Dispatcher : returns
+    Processor ..> Receiver : returns
+    QueueProcessor ..|> Processor
+    QueueProcessor *-- "1" DispatcherImpl : dispatcher
+    QueueProcessor *-- "1" ReceiverImpl : receiver
+    DispatcherImpl ..|> Dispatcher
+    ReceiverImpl ..|> Receiver
+    CancellableDispatcher ..|> Dispatcher
+    CancellableDispatcher ..|> IsCancellableEx
+    CancellableDispatcher --> "1" Dispatcher : delegate
+    Dispatcher ..> Data : dispatches
+    Receiver ..> Data : receives
+
+    %% Generator hierarchy and lifecycle.
+    AsyncGenerator --|> Iterable
+    Base ..|> AsyncGenerator
+    Base ..|> AutoCloseable
+    Base ..> CleanupAction : registers with Cleaner
+    CleanupAction ..|> Runnable
+    Cancellable --|> AsyncGenerator
+    Cancellable --|> IsCancellable
+    BaseCancellable --|> Base
+    BaseCancellable ..|> Cancellable
+    Generator --|> BaseCancellable
+    Generator ..|> HasResultValue
+    AsyncGenerator ..> Data : next
+
+    %% Cancellation registration and terminal payload.
+    IsCancellableEx --|> IsCancellable
+    Dispatcher --|> IsCancellableEx
+    Generator ..|> IsCancellableEx
+    IsCancellableEx ..> Listener : callback parameter
+    IsCancellableEx ..> Registration : returns
+    Registration --|> AutoCloseable
+    CancellableDispatcher --> "0..*" Listener : listeners
+    CancellableDispatcher ..> Registration : creates removal callback
+    Generator --> "0..1" Registration : parentRegistration
+    Generator ..> IsCancellableEx : subscribes to parent cancellation
+    Generator --> "0..1" Data : endData
+    Data --> "0..1" Embed : embed
+    Embed --> "1" AsyncGenerator : generator
+    Embed --> "0..1" EmbedCompletionHandler : onCompletion
+    Embed ..|> HasResultValue
+
+    %% Executor tracking and interrupt propagation.
+    CancellableDispatcher --> "1" CancellableExecutor : executor
+    CancellableExecutor ..|> Executor
+    CancellableExecutor ..|> IsCancellable
+    CancellableExecutor --> "1" Executor : borrowed delegate
+    CancellableExecutor ..> BlockingCall : invokes
+    CancellableExecutor *-- "0..*" Run : runs
+    CancellableExecutor *-- "0..*" Waiter : waiters
+    CancellableExecutor --> "0..1" Run : CURRENT_RUN per thread
+    Run --> "0..1" Run : outer
+
+    note for QueueProcessor "DispatcherImpl and ReceiverImpl share one BlockingQueue of Data elements."
+    note for Dispatcher "dispatchSync may throw InterruptedException. Default cancellation operations are unsupported."
+    note for Receiver "waitSync may throw InterruptedException; waitAsync polls without blocking."
+    note for Data "Done when both future and embed are null. Record accessors are implicit."
+    note for CancellableDispatcher "Package-private decorator. Completion releases listeners without notifying cancellation."
+    note for CancellableExecutor "Borrowed executor is never shut down. Any cancel wakes blocking waiters; cancel(true) also interrupts running tasks."
+    note for BlockingCall "call may throw InterruptedException."

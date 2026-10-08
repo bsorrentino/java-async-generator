@@ -148,14 +148,19 @@ public class AsyncGeneratorFlowTest {
 
         final var executor = Executors.newFixedThreadPool(10);
 
+        final var countUntilCancel = 7;
+
+        final var countDownForCancel = new CountDownLatch(countUntilCancel);
+
         try( final var it = AsyncGeneratorFlow.builder()
                 .executor(executor)
                 .processor( new BlockingQueueProcessor<>())
                 .<String>build( dispatcher -> {
             try {
                 for( String value: data ) {
-                    Thread.sleep( 1000 );
+                    Thread.sleep( 100 );
                     dispatcher.dispatchAsync(AsyncGenerator.Data.of(completedFuture(value)));
+                    countDownForCancel.countDown();
                 }
                 dispatcher.dispatchAsync(AsyncGenerator.Data.done( "END"));
             }
@@ -169,23 +174,22 @@ public class AsyncGeneratorFlowTest {
 
             executor.execute(() -> {
                 try {
-                    Thread.sleep(3000);
+                    countDownForCancel.await();
                     it.cancel(true);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             });
 
-            var futureResult = it.forEachAsync(value -> {
+            final var result = it.forEachAsync(value -> {
                 System.out.println(value);
                 forEachResult.add(value);
-            });
-
-            var result = futureResult.get(10, TimeUnit.SECONDS);
+            })
+            .get(10, TimeUnit.SECONDS);
 
             assertNotNull(result);
             assertEquals(CANCELLED, result);
-            assertTrue(forEachResult.size() < data.size());
+            assertEquals(countUntilCancel, forEachResult.size());
 
         } finally {
             executor.shutdown();
@@ -277,6 +281,78 @@ public class AsyncGeneratorFlowTest {
                     List.of( "e1", "e2", "e3", "e4.1", "e4.2", "e4.3", "e4.4", "e4.5", "e5" ),
                     iterationResult);
             assertEquals(0, forEachResult.size());
+        }
+    }
+
+    @Test
+    public void asyncGeneratorWithResultStreamAndEmbedCancelTest() throws Exception {
+
+        final var embed = newEmbedAsyncGeneratorFlow("e4." );
+
+        List<Result<String>> data = List.of(
+                new Result<>( completedFuture("e1")),
+                new Result<>( completedFuture("e2")),
+                new Result<>( completedFuture("e3")),
+                embed,
+                new Result<>( completedFuture("e5"))
+        );
+
+        final var countDownForCancel = new CountDownLatch(2);
+
+        try( final var it = AsyncGeneratorFlow.builder()
+                .<String>build( $1 -> {
+                    try {
+                        for (final var value : data) {
+                            if( value.generator() != null ) {
+                                final var generator = value.generator().get();
+                                generator.stream().forEach( v -> {
+                                    try {
+                                        Thread.sleep(100);
+                                        $1.dispatchSync( AsyncGenerator.Data.of( completedFuture(v) ) );
+                                        countDownForCancel.countDown();
+                                    } catch (Throwable ex) {
+                                        $1.dispatchAsync( AsyncGenerator.Data.error(ex));
+                                    }
+                                });
+
+                            }
+                            else {
+                                $1.dispatchSync( AsyncGenerator.Data.of(value.publisher()));
+                            }
+                        }
+                        $1.dispatchSync(AsyncGenerator.Data.done("END"));
+                    } catch (Throwable ex) {
+                        $1.dispatchAsync(AsyncGenerator.Data.error(ex));
+                    }
+
+                })) {
+
+            CompletableFuture.runAsync(() -> {
+                try {
+                    countDownForCancel.await();
+                    it.cancel(true);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+            List<String> forEachResult = new ArrayList<>();
+            final var result = it.forEachAsync( v -> {
+                        System.out.printf( "'%s'%n", v);
+                        forEachResult.add(v);
+                    } )
+                    .whenComplete( (v,ex) -> {
+                        System.out.printf( "Finished forEach with value '%s'%n", v);
+                    })
+                    .join();
+
+            assertNotNull(result);
+            assertEquals(CANCELLED, result);
+            //assertEquals(9, iterationResult.size());
+            //assertIterableEquals(
+            //        List.of( "e1", "e2", "e3", "e4.1", "e4.2", "e4.3", "e4.4", "e4.5", "e5" ),
+            //        iterationResult);
+            assertIterableEquals(List.of( "e1", "e2", "e3", "e4.1", "e4.2" ), forEachResult);
         }
     }
 

@@ -1,0 +1,494 @@
+<mxfile host="Electron" agent="Codex" pages="4">
+  <diagram id="page-1" name="1 · Construction and processing">
+    <mxGraphModel dx="2100" dy="1630" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2100" pageHeight="1630" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="1 · Construction and processing" vertex="1" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Helvetica;fontSize=27;fontStyle=1;fontColor=#253448;spacing=0;">
+          <mxGeometry as="geometry" x="40" y="25" width="2020" height="40" />
+        </mxCell>
+        <mxCell id="subtitle" value="AsyncGeneratorFlow and its nested processing types, with the default processor and cancellation wrapper. Cancellation and payload: tab 3; inheritance: tab 2." vertex="1" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Helvetica;fontSize=15;fontStyle=0;fontColor=#253448;spacing=0;">
+          <mxGeometry as="geometry" x="40" y="75" width="2020" height="60" />
+        </mxCell>
+        <mxCell id="flow" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGeneratorFlow&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ static builder(): Builder&lt;br&gt;+ static &amp;lt;E&amp;gt; create(Consumer&amp;lt;Dispatcher&amp;lt;E&amp;gt;&amp;gt;): Generator&amp;lt;E&amp;gt;&lt;br&gt;+ static &amp;lt;E&amp;gt; create(Processor&amp;lt;E&amp;gt;): Generator&amp;lt;E&amp;gt;&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#e8f1fc;strokeColor=#5279a3;strokeWidth=1.5;overflow=hidden;" link="src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java">
+          <mxGeometry as="geometry" x="40" y="160" width="580" height="137" />
+        </mxCell>
+        <mxCell id="builder" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«class»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGeneratorFlow.Builder&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;− processor: Processor&amp;lt;?&amp;gt;&lt;br&gt;− executor: Executor&lt;br&gt;− parent: IsCancellableEx&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ &amp;lt;E&amp;gt; processor(Processor&amp;lt;E&amp;gt;): Builder&lt;br&gt;+ executor(Executor): Builder&lt;br&gt;+ cancelledBy(IsCancellableEx): Builder&lt;br&gt;+ &amp;lt;E&amp;gt; build(): Generator&amp;lt;E&amp;gt;&lt;br&gt;+ &amp;lt;E&amp;gt; build(Consumer&amp;lt;Dispatcher&amp;lt;E&amp;gt;&amp;gt;): Generator&amp;lt;E&amp;gt;&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#edf6ee;strokeColor=#598363;strokeWidth=1.5;overflow=hidden;" link="src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java">
+          <mxGeometry as="geometry" x="40" y="500" width="580" height="270" />
+        </mxCell>
+        <mxCell id="generator" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«class»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGeneratorFlow.Generator&amp;lt;E&amp;gt;&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;~ static DEFAULT_EXECUTOR: Executor&lt;br&gt;− receiver: Receiver&amp;lt;E&amp;gt;&lt;br&gt;~ cancellableDispatcher: CancellableDispatcher&amp;lt;E&amp;gt;&lt;br&gt;− endData: Data&amp;lt;E&amp;gt; [0..1]&lt;br&gt;− parentRegistration: AtomicReference&amp;lt;Registration&amp;gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ next(): Data&amp;lt;E&amp;gt;&lt;br&gt;+ receiver(): Receiver&amp;lt;E&amp;gt;&lt;br&gt;+ cancel(boolean): boolean&lt;br&gt;+ onCancel(Listener): Registration&lt;br&gt;+ resultValue(): Optional&amp;lt;Object&amp;gt;&lt;br&gt;+ close(): void&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Extends AsyncGenerator.BaseCancellable&amp;lt;E&amp;gt; (tab 2).&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#edf6ee;strokeColor=#598363;strokeWidth=1.5;overflow=hidden;" link="src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java">
+          <mxGeometry as="geometry" x="790" y="500" width="550" height="373" />
+        </mxCell>
+        <mxCell id="processor" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGeneratorFlow.Processor&amp;lt;E&amp;gt;&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ dispatcher(): Dispatcher&amp;lt;E&amp;gt;&lt;br&gt;+ receiver(): Receiver&amp;lt;E&amp;gt;&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#e8f1fc;strokeColor=#5279a3;strokeWidth=1.5;overflow=hidden;" link="src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java">
+          <mxGeometry as="geometry" x="1530" y="160" width="530" height="114" />
+        </mxCell>
+        <mxCell id="dispatcher" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGeneratorFlow.Dispatcher&amp;lt;E&amp;gt;&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ dispatchSync(Data&amp;lt;E&amp;gt;): void throws InterruptedException&lt;br&gt;+ dispatchAsync(Data&amp;lt;E&amp;gt;): void&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Extends IsCancellableEx. Default cancellation is unsupported.&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#e8f1fc;strokeColor=#5279a3;strokeWidth=1.5;overflow=hidden;" link="src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java">
+          <mxGeometry as="geometry" x="790" y="160" width="550" height="148" />
+        </mxCell>
+        <mxCell id="queue" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«class»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;BlockingQueueProcessor&amp;lt;E&amp;gt;&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;− queue: BlockingQueue&amp;lt;Data&amp;lt;E&amp;gt;&amp;gt;&lt;br&gt;− dispatcher: DispatchImpl&lt;br&gt;− receiver: ReceiverImpl&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ BlockingQueueProcessor()&lt;br&gt;+ BlockingQueueProcessor(BlockingQueue&amp;lt;Data&amp;lt;E&amp;gt;&amp;gt;)&lt;br&gt;+ queue(): BlockingQueue&amp;lt;Data&amp;lt;E&amp;gt;&amp;gt;&lt;br&gt;+ dispatcher(): Dispatcher&amp;lt;E&amp;gt;&lt;br&gt;+ receiver(): Receiver&amp;lt;E&amp;gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Default queue: LinkedBlockingQueue&amp;lt;Data&amp;lt;E&amp;gt;&amp;gt;.&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#edf6ee;strokeColor=#598363;strokeWidth=1.5;overflow=hidden;" link="src/main/java/org/bsc/async/v5/BlockingQueueProcessor.java">
+          <mxGeometry as="geometry" x="1530" y="500" width="530" height="304" />
+        </mxCell>
+        <mxCell id="cdisp" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«class»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;CancellableDispatcher&amp;lt;E&amp;gt;&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;− delegate: Dispatcher&amp;lt;E&amp;gt;&lt;br&gt;− executor: CancellableExecutor&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ dispatchSync(Data&amp;lt;E&amp;gt;): void throws InterruptedException&lt;br&gt;+ dispatchAsync(Data&amp;lt;E&amp;gt;): void&lt;br&gt;+ executor(): CancellableExecutor&lt;br&gt;~ complete(): void&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Package-private cancellation decorator; see tab 3.&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#edf6ee;strokeColor=#598363;strokeWidth=1.5;overflow=hidden;" link="src/main/java/org/bsc/async/v5/CancellableDispatcher.java">
+          <mxGeometry as="geometry" x="790" y="1090" width="550" height="258" />
+        </mxCell>
+        <mxCell id="dispatchimpl" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«class»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;BlockingQueueProcessor&amp;lt;E&amp;gt;.DispatchImpl&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ dispatchSync(Data&amp;lt;E&amp;gt;): void  → queue.put(data)&lt;br&gt;+ dispatchAsync(Data&amp;lt;E&amp;gt;): void  → queue.add(data)&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Non-static inner class; shares the processor queue.&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#edf6ee;strokeColor=#598363;strokeWidth=1.5;overflow=hidden;" link="src/main/java/org/bsc/async/v5/BlockingQueueProcessor.java">
+          <mxGeometry as="geometry" x="1530" y="1020" width="530" height="148" />
+        </mxCell>
+        <mxCell id="receiver" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGeneratorFlow.Receiver&amp;lt;E&amp;gt;&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ waitSync(): Data&amp;lt;E&amp;gt; throws InterruptedException&lt;br&gt;+ waitAsync(): Optional&amp;lt;Data&amp;lt;E&amp;gt;&amp;gt;&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#e8f1fc;strokeColor=#5279a3;strokeWidth=1.5;overflow=hidden;" link="src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java">
+          <mxGeometry as="geometry" x="40" y="1090" width="580" height="114" />
+        </mxCell>
+        <mxCell id="receiverimpl" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«class»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;BlockingQueueProcessor&amp;lt;E&amp;gt;.ReceiverImpl&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ waitSync(): Data&amp;lt;E&amp;gt;  → queue.take()&lt;br&gt;+ waitAsync(): Optional&amp;lt;Data&amp;lt;E&amp;gt;&amp;gt;  → queue.poll()&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Non-static inner class; shares the processor queue.&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#edf6ee;strokeColor=#598363;strokeWidth=1.5;overflow=hidden;" link="src/main/java/org/bsc/async/v5/BlockingQueueProcessor.java">
+          <mxGeometry as="geometry" x="1530" y="1280" width="530" height="148" />
+        </mxCell>
+        <mxCell id="e1" value="«creates»" edge="1" parent="1" source="flow" target="builder" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e2" value="«creates»" edge="1" parent="1" source="builder" target="generator" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;dashed=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e3" value="«creates default»" edge="1" parent="1" source="builder" target="queue" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;dashed=1;exitX=0.8;exitY=0;exitDx=0;exitDy=0;entryX=0.2;entryY=0;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="500" y="420" />
+              <mxPoint x="1636" y="420" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="«creates»" edge="1" parent="1" source="builder" target="cdisp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;dashed=1;exitX=1;exitY=0.9;exitDx=0;exitDy=0;entryX=0;entryY=0.2;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="700" y="835" />
+              <mxPoint x="700" y="1140" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="processor 0..1" edge="1" parent="1" source="builder" target="processor" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.7;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="690" y="380" />
+              <mxPoint x="1450" y="380" />
+              <mxPoint x="1450" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6" value="receiver 1" edge="1" parent="1" source="generator" target="receiver" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;exitX=0;exitY=0.85;exitDx=0;exitDy=0;entryX=1;entryY=0.3;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="710" y="870" />
+              <mxPoint x="710" y="1140" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" value="cancellableDispatcher 1" edge="1" parent="1" source="generator" target="cdisp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e8" value="" edge="1" parent="1" source="cdisp" target="dispatcher" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;dashed=1;exitX=1;exitY=0.15;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1410" y="1130" />
+              <mxPoint x="1410" y="270" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" value="" edge="1" parent="1" source="queue" target="processor" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;dashed=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e10" value="dispatcher 1" edge="1" parent="1" source="queue" target="dispatchimpl" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;startArrow=diamond;startFill=1;endArrow=none;exitX=0.7;exitY=1;exitDx=0;exitDy=0;entryX=0.7;entryY=0;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e11" value="receiver 1" edge="1" parent="1" source="queue" target="receiverimpl" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;startArrow=diamond;startFill=1;endArrow=none;exitX=1;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.4;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2080" y="740" />
+              <mxPoint x="2080" y="1340" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" value="" edge="1" parent="1" source="dispatchimpl" target="dispatcher" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;dashed=1;exitX=0;exitY=0.4;exitDx=0;exitDy=0;entryX=1;entryY=0.85;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1470" y="1080" />
+              <mxPoint x="1470" y="320" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e13" value="" edge="1" parent="1" source="receiverimpl" target="receiver" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;dashed=1;exitX=0.1;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1580" y="1490" />
+              <mxPoint x="330" y="1490" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legend" value="UML: solid hollow triangle = extends; dashed hollow triangle = implements; dashed open arrow = dependency; solid open arrow = reference; filled diamond = owned instance.&#xa;Visibility: + public, − private, ~ package. Nested Java types use qualified names. Selected members shown; generic collection/JDK details remain in signatures.&#xa;Other nested AsyncGeneratorFlow types: IsCancellableEx, IsCancellableEx.Listener, and IsCancellableEx.Registration are expanded in tab 3." vertex="1" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Helvetica;fontSize=13;fontStyle=0;fontColor=#253448;spacing=0;">
+          <mxGeometry as="geometry" x="40" y="1510" width="2020" height="90" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="page-2" name="2 · Generator hierarchy and lifecycle">
+    <mxGraphModel dx="2100" dy="1660" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2100" pageHeight="1660" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="2 · Generator hierarchy and lifecycle" vertex="1" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Helvetica;fontSize=27;fontStyle=1;fontColor=#253448;spacing=0;">
+          <mxGeometry as="geometry" x="40" y="25" width="2020" height="40" />
+        </mxCell>
+        <mxCell id="subtitle" value="Inherited contracts and resource lifecycle. Names prefixed AsyncGenerator are nested in that interface. Data and embedded-generator payload records are expanded in tab 3." vertex="1" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Helvetica;fontSize=15;fontStyle=0;fontColor=#253448;spacing=0;">
+          <mxGeometry as="geometry" x="40" y="75" width="2020" height="60" />
+        </mxCell>
+        <mxCell id="iterable" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«JDK interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;Iterable&amp;lt;E&amp;gt;&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ iterator(): Iterator&amp;lt;E&amp;gt;&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#f2f3f5;strokeColor=#7e8794;strokeWidth=1.5;overflow=hidden;">
+          <mxGeometry as="geometry" x="40" y="170" width="400" height="91" />
+        </mxCell>
+        <mxCell id="ag" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGenerator&amp;lt;E&amp;gt;&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ next(): Data&amp;lt;E&amp;gt;&lt;br&gt;+ executor(): Executor&lt;br&gt;+ iterator(): Iterator&amp;lt;E&amp;gt;&lt;br&gt;+ forEachAsync(Consumer&amp;lt;E&amp;gt;): CompletableFuture&amp;lt;Object&amp;gt;&lt;br&gt;+ stream(): Stream&amp;lt;E&amp;gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Other map/reduce and factory methods omitted.&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#e8f1fc;strokeColor=#5279a3;strokeWidth=1.5;overflow=hidden;" link="src/main/java/org/bsc/async/AsyncGenerator.java">
+          <mxGeometry as="geometry" x="600" y="170" width="630" height="217" />
+        </mxCell>
+        <mxCell id="isc" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGenerator.IsCancellable&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ static CANCELLED: Object&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ isCancelled(): boolean&lt;br&gt;+ cancel(boolean): boolean&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#e8f1fc;strokeColor=#5279a3;strokeWidth=1.5;overflow=hidden;" link="src/main/java/org/bsc/async/AsyncGenerator.java">
+          <mxGeometry as="geometry" x="1450" y="170" width="590" height="155" />
+        </mxCell>
+        <mxCell id="base" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«abstract»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGenerator.Base&amp;lt;E&amp;gt;&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;− static CLEANER: Cleaner&lt;br&gt;− static ID_GENERATOR: AtomicLong&lt;br&gt;− closed: AtomicBoolean&lt;br&gt;− cleanable: Cleaner.Cleanable [0..1]&lt;br&gt;~ executorService: ExecutorService [0..1]&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;# Base()&lt;br&gt;+ executor(): Executor&lt;br&gt;+ close(): void&lt;br&gt;+ isClosed(): boolean&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#f1ecfa;strokeColor=#80669c;strokeWidth=1.5;overflow=hidden;" link="src/main/java/org/bsc/async/AsyncGenerator.java">
+          <mxGeometry as="geometry" x="600" y="550" width="630" height="293" />
+        </mxCell>
+        <mxCell id="cancellable" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGenerator.Cancellable&amp;lt;E&amp;gt;&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Combines AsyncGenerator&amp;lt;E&amp;gt; and IsCancellable.&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#e8f1fc;strokeColor=#5279a3;strokeWidth=1.5;overflow=hidden;" link="src/main/java/org/bsc/async/AsyncGenerator.java">
+          <mxGeometry as="geometry" x="1450" y="550" width="590" height="102" />
+        </mxCell>
+        <mxCell id="autoclose" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«JDK interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AutoCloseable&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ close(): void throws Exception&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#f2f3f5;strokeColor=#7e8794;strokeWidth=1.5;overflow=hidden;">
+          <mxGeometry as="geometry" x="40" y="550" width="400" height="91" />
+        </mxCell>
+        <mxCell id="bc" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«abstract»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGenerator.BaseCancellable&amp;lt;E&amp;gt;&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;− cancelled: AtomicBoolean&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ isCancelled(): boolean&lt;br&gt;+ cancel(boolean): boolean&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#f1ecfa;strokeColor=#80669c;strokeWidth=1.5;overflow=hidden;" link="src/main/java/org/bsc/async/AsyncGenerator.java">
+          <mxGeometry as="geometry" x="600" y="1030" width="630" height="155" />
+        </mxCell>
+        <mxCell id="has" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGenerator.HasResultValue&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ resultValue(): Optional&amp;lt;Object&amp;gt;&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#e8f1fc;strokeColor=#5279a3;strokeWidth=1.5;overflow=hidden;" link="src/main/java/org/bsc/async/AsyncGenerator.java">
+          <mxGeometry as="geometry" x="1450" y="1030" width="590" height="91" />
+        </mxCell>
+        <mxCell id="generator" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«class»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGeneratorFlow.Generator&amp;lt;E&amp;gt;&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ next(): Data&amp;lt;E&amp;gt;&lt;br&gt;+ cancel(boolean): boolean&lt;br&gt;+ resultValue(): Optional&amp;lt;Object&amp;gt;&lt;br&gt;+ close(): void&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Also implements IsCancellableEx (tab 3).&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#edf6ee;strokeColor=#598363;strokeWidth=1.5;overflow=hidden;" link="src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java">
+          <mxGeometry as="geometry" x="600" y="1340" width="630" height="194" />
+        </mxCell>
+        <mxCell id="cleanup" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«record»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGenerator.Base.CleanupAction&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;− executor: ExecutorService&lt;br&gt;− closed: AtomicBoolean&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ run(): void&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Private nested record; implements Runnable.&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#fff3dc;strokeColor=#aa8648;strokeWidth=1.5;overflow=hidden;" link="src/main/java/org/bsc/async/AsyncGenerator.java">
+          <mxGeometry as="geometry" x="40" y="900" width="400" height="189" />
+        </mxCell>
+        <mxCell id="runnable" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«JDK interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;Runnable&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ run(): void&lt;/div&gt;" vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#f2f3f5;strokeColor=#7e8794;strokeWidth=1.5;overflow=hidden;">
+          <mxGeometry as="geometry" x="40" y="1240" width="400" height="91" />
+        </mxCell>
+        <mxCell id="e1" value="" edge="1" parent="1" source="ag" target="iterable" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;exitX=0;exitY=0.3;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e2" value="" edge="1" parent="1" source="base" target="ag" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;dashed=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e3" value="" edge="1" parent="1" source="base" target="autoclose" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;dashed=1;exitX=0;exitY=0.2;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e4" value="" edge="1" parent="1" source="cancellable" target="ag" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;exitX=0.2;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1380" y="480" />
+              <mxPoint x="1380" y="330" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="" edge="1" parent="1" source="cancellable" target="isc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e6" value="" edge="1" parent="1" source="bc" target="base" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e7" value="" edge="1" parent="1" source="bc" target="cancellable" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;dashed=1;exitX=1;exitY=0.4;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1370" y="1100" />
+              <mxPoint x="1370" y="930" />
+              <mxPoint x="1745" y="930" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" value="" edge="1" parent="1" source="generator" target="bc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e9" value="" edge="1" parent="1" source="generator" target="has" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;dashed=1;exitX=1;exitY=0.4;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1745" y="1435" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" value="«creates; Cleaner.register»" edge="1" parent="1" source="base" target="cleanup" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;dashed=1;exitX=0;exitY=0.85;exitDx=0;exitDy=0;entryX=1;entryY=0.2;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="520" y="855" />
+              <mxPoint x="520" y="935" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" value="" edge="1" parent="1" source="cleanup" target="runnable" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="legend" value="UML: solid hollow triangle = extends; dashed hollow triangle = implements; dashed open arrow = dependency; solid open arrow = reference; filled diamond = owned instance.&#xa;Visibility: + public, − private, ~ package. Nested Java types use qualified names. Selected members shown; generic collection/JDK details remain in signatures.&#xa;Payload records are expanded on the lower section of tab 3. Base owns a lazy consumption ExecutorService; the emitter executor is a separate CancellableExecutor (tab 4)." vertex="1" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Helvetica;fontSize=13;fontStyle=0;fontColor=#253448;spacing=0;">
+          <mxGeometry as="geometry" x="40" y="1550" width="2020" height="90" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="page-3" name="3 · Cancellation and payload contracts">
+    <mxGraphModel dx="2488" dy="1222" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2300" pageHeight="1750" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Helvetica;fontSize=27;fontStyle=1;fontColor=#253448;spacing=0;" value="3 · Cancellation and payload contracts" vertex="1">
+          <mxGeometry height="40" width="2220" x="40" y="25" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Helvetica;fontSize=15;fontStyle=0;fontColor=#253448;spacing=0;" value="Listener registration, parent cancellation links, and Data&lt;E&gt; payload variants. Optional values are shown with 0..1; registration callbacks can be detached by close()." vertex="1">
+          <mxGeometry height="60" width="2220" x="40" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="isc" link="src/main/java/org/bsc/async/AsyncGenerator.java" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#e8f1fc;strokeColor=#5279a3;strokeWidth=1.5;overflow=hidden;" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGenerator.IsCancellable&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ isCancelled(): boolean&lt;br&gt;+ cancel(boolean): boolean&lt;/div&gt;" vertex="1">
+          <mxGeometry height="114" width="290" x="190" y="174.5" as="geometry" />
+        </mxCell>
+        <mxCell id="ex" link="src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#e8f1fc;strokeColor=#5279a3;strokeWidth=1.5;overflow=hidden;" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGeneratorFlow.IsCancellableEx&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ onCancel(Listener): Registration&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Extends IsCancellable; already-cancelled sources notify immediately.&lt;/div&gt;" vertex="1">
+          <mxGeometry height="125" width="410" x="810" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="listener" link="src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#e8f1fc;strokeColor=#5279a3;strokeWidth=1.5;overflow=hidden;" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;IsCancellableEx.Listener&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ cancelled(boolean mayInterruptIfRunning): void&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Nested @FunctionalInterface.&lt;/div&gt;" vertex="1">
+          <mxGeometry height="125" width="340" x="1700" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="generator" link="src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#edf6ee;strokeColor=#598363;strokeWidth=1.5;overflow=hidden;" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«class»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGeneratorFlow.Generator&amp;lt;E&amp;gt;&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;− executorThread: Thread [0..1] {volatile}&lt;br&gt;− endData: Data&amp;lt;E&amp;gt; [0..1] {volatile}&lt;br&gt;− parentRegistration: AtomicReference&amp;lt;Registration&amp;gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ onCancel(Listener): Registration&lt;br&gt;+ cancel(boolean): boolean&lt;br&gt;~ linkToParent(IsCancellableEx): void&lt;br&gt;~ unlinkFromParent(): void&lt;br&gt;− complete(Data&amp;lt;E&amp;gt;): Data&amp;lt;E&amp;gt;&lt;br&gt;− end(Data&amp;lt;E&amp;gt;): Data&amp;lt;E&amp;gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="250" width="370" x="40" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="cdisp" link="src/main/java/org/bsc/async/v5/CancellableDispatcher.java" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#edf6ee;strokeColor=#598363;strokeWidth=1.5;overflow=hidden;" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«class»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;CancellableDispatcher&amp;lt;E&amp;gt;&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;− listenersLock: Object&lt;br&gt;− listeners: Set&amp;lt;Listener&amp;gt; [0..1]&lt;br&gt;− completed: boolean&lt;br&gt;− cancelledWithInterrupt: boolean&lt;br&gt;− delegate: Dispatcher&amp;lt;E&amp;gt;&lt;br&gt;− executor: CancellableExecutor&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ onCancel(Listener): Registration&lt;br&gt;+ cancel(boolean): boolean&lt;br&gt;+ isCancelled(): boolean&lt;br&gt;~ complete(): void&lt;br&gt;~ isCompleted(): boolean&lt;br&gt;− static notifyListener(Listener, boolean): void&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Declares Dispatcher&amp;lt;E&amp;gt; and IsCancellableEx; package-private class.&lt;/div&gt;" vertex="1">
+          <mxGeometry height="330" width="410" x="810" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="registration" link="src/main/java/org/bsc/async/v5/AsyncGeneratorFlow.java" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#e8f1fc;strokeColor=#5279a3;strokeWidth=1.5;overflow=hidden;" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;IsCancellableEx.Registration&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ static noop(): Registration&lt;br&gt;+ close(): void&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Nested interface; close() removes the listener entry.&lt;/div&gt;" vertex="1">
+          <mxGeometry height="148" width="310" x="1755" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="autoclose" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#f2f3f5;strokeColor=#7e8794;strokeWidth=1.5;overflow=hidden;" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«JDK interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AutoCloseable&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ close(): void throws Exception&lt;/div&gt;" vertex="1">
+          <mxGeometry height="91" width="240" x="1655" y="910" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="ex" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;exitX=0;exitY=0.4;exitDx=0;exitDy=0;entryX=1;entryY=0.4;entryDx=0;entryDy=0;" target="isc" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="ex" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;dashed=1;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" target="listener" value="listener parameter">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;dashed=1;exitX=1;exitY=0.8;exitDx=0;exitDy=0;entryX=0;entryY=0.2;entryDx=0;entryDy=0;" target="registration" value="returns">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1516" y="315" />
+              <mxPoint x="1516" y="590" />
+            </Array>
+            <mxPoint x="1176.0000000000005" y="270" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="generator" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;dashed=1;exitX=1;exitY=0.1;exitDx=0;exitDy=0;entryX=0;entryY=0.7;entryDx=0;entryDy=0;" target="ex" value="">
+          <mxGeometry relative="1" x="0.0007" as="geometry">
+            <Array as="points">
+              <mxPoint x="410" y="605" />
+              <mxPoint x="680" y="605" />
+              <mxPoint x="680" y="257.5" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="cdisp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;dashed=1;exitX=0.4;exitY=0;exitDx=0;exitDy=0;entryX=0.4;entryY=1;entryDx=0;entryDy=0;" target="ex" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="cdisp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;exitX=1;exitY=0.1;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="listener" value="listeners 0..*">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1220" y="610" />
+              <mxPoint x="1470" y="610" />
+              <mxPoint x="1470" y="440" />
+              <mxPoint x="1980" y="440" />
+              <mxPoint x="1980" y="295" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="cdisp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;dashed=1;exitX=0.996;exitY=0.448;exitDx=0;exitDy=0;entryX=0;entryY=0.6;entryDx=0;entryDy=0;exitPerimeter=0;" target="registration" value="«creates» removal callback">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1176.0000000000005" y="708.5" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="generator" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" target="cdisp" value="cancellableDispatcher 1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;exitX=0.8;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" target="registration" value="parentRegistration 0..1">
+          <mxGeometry relative="1" x="0.1886" as="geometry">
+            <Array as="points">
+              <mxPoint x="239" y="950" />
+              <mxPoint x="391" y="950" />
+              <mxPoint x="391" y="1100" />
+              <mxPoint x="1988.5" y="1100" />
+            </Array>
+            <mxPoint x="239" y="810" as="sourcePoint" />
+            <mxPoint x="2013" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="generator" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;dashed=1;exitX=0.4;exitY=0;exitDx=0;exitDy=0;entryX=0.2;entryY=1;entryDx=0;entryDy=0;" target="ex" value="parent 0..1: onCancel(this::cancel)">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="264" y="440" />
+              <mxPoint x="940" y="440" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="registration" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1776" y="910" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="data" link="src/main/java/org/bsc/async/AsyncGenerator.java" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#fff3dc;strokeColor=#aa8648;strokeWidth=1.5;overflow=hidden;" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«record»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGenerator.Data&amp;lt;E&amp;gt;&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;− future: CompletableFuture&amp;lt;E&amp;gt; [0..1]&lt;br&gt;− embed: AsyncGenerator.Embed&amp;lt;E&amp;gt; [0..1]&lt;br&gt;− resultValue: Object [0..1]&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ isDone(): boolean&lt;br&gt;+ isError(): boolean&lt;br&gt;+ static of(E | CompletableFuture&amp;lt;E&amp;gt;): Data&amp;lt;E&amp;gt;&lt;br&gt;+ static done([Object resultValue]): Data&amp;lt;E&amp;gt;&lt;br&gt;+ static error(Throwable): Data&amp;lt;E&amp;gt;&lt;br&gt;+ static composeWith(AsyncGenerator&amp;lt;E&amp;gt;,&lt;br&gt;    EmbedCompletionHandler): Data&amp;lt;E&amp;gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Factory overloads condensed. Done ⇔ future == null &amp;amp;&amp;amp; embed == null.&lt;/div&gt;" vertex="1">
+          <mxGeometry height="300" width="430" x="40" y="1220" as="geometry" />
+        </mxCell>
+        <mxCell id="embed" link="src/main/java/org/bsc/async/AsyncGenerator.java" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#fff3dc;strokeColor=#aa8648;strokeWidth=1.5;overflow=hidden;" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«record»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGenerator.Embed&amp;lt;E&amp;gt;&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;− generator: AsyncGenerator&amp;lt;E&amp;gt;&lt;br&gt;− onCompletion: EmbedCompletionHandler [0..1]&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ resultValue(): Optional&amp;lt;Object&amp;gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Implements AsyncGenerator.HasResultValue (tab 2).&lt;/div&gt;" vertex="1">
+          <mxGeometry height="189" width="340" x="940" y="1220" as="geometry" />
+        </mxCell>
+        <mxCell id="handler" link="src/main/java/org/bsc/async/AsyncGenerator.java" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#e8f1fc;strokeColor=#5279a3;strokeWidth=1.5;overflow=hidden;" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGenerator.EmbedCompletionHandler&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ accept(Object): void throws Exception&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Nested @FunctionalInterface.&lt;/div&gt;" vertex="1">
+          <mxGeometry height="125" width="380" x="1800" y="1229" as="geometry" />
+        </mxCell>
+        <mxCell id="ag" link="src/main/java/org/bsc/async/AsyncGenerator.java" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#e8f1fc;strokeColor=#5279a3;strokeWidth=1.5;overflow=hidden;" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGenerator&amp;lt;E&amp;gt;&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ next(): Data&amp;lt;E&amp;gt;&lt;br&gt;+ executor(): Executor&lt;/div&gt;" vertex="1">
+          <mxGeometry height="114" width="200" x="982" y="1550" as="geometry" />
+        </mxCell>
+        <mxCell id="has" link="src/main/java/org/bsc/async/AsyncGenerator.java" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#e8f1fc;strokeColor=#5279a3;strokeWidth=1.5;overflow=hidden;" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGenerator.HasResultValue&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ resultValue(): Optional&amp;lt;Object&amp;gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="91" width="310" x="1810" y="1440" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" value="endData 0..1">
+          <mxGeometry relative="1" x="0.1028" as="geometry">
+            <Array as="points">
+              <mxPoint x="219" y="1160" />
+              <mxPoint x="215.5" y="1160" />
+            </Array>
+            <mxPoint x="219" y="810" as="sourcePoint" />
+            <mxPoint x="215.5" y="1220" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e13" edge="1" parent="1" source="data" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;exitX=1;exitY=0.2;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" target="embed" value="embed 0..1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" edge="1" parent="1" source="embed" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.4;entryDx=0;entryDy=0;" target="handler" value="onCompletion 0..1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e15" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.3;entryY=0;entryDx=0;entryDy=0;" value="generator 1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1085" y="1409" as="sourcePoint" />
+            <mxPoint x="1085.0000000000005" y="1550" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e16" edge="1" parent="1" source="embed" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;dashed=1;exitX=1;exitY=0.9;exitDx=0;exitDy=0;entryX=0;entryY=0.2;entryDx=0;entryDy=0;" target="has" value="">
+          <mxGeometry relative="1" x="-0.6438" as="geometry">
+            <Array as="points">
+              <mxPoint x="1530" y="1408.2" />
+              <mxPoint x="1730" y="1408.2" />
+              <mxPoint x="1730" y="1458.2" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="page-4" name="4 · Cancellable executor internals">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="2100" pageHeight="1460" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Helvetica;fontSize=27;fontStyle=1;fontColor=#253448;spacing=0;" value="4 · Cancellable executor internals" vertex="1">
+          <mxGeometry height="40" width="2020" x="40" y="25" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Helvetica;fontSize=15;fontStyle=0;fontColor=#253448;spacing=0;" value="The dispatcher wraps a borrowed Executor. Running tasks and blocking calls are tracked separately; cancelling wakes blocked calls regardless of mayInterruptIfRunning." vertex="1">
+          <mxGeometry height="60" width="2020" x="40" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="isc" link="src/main/java/org/bsc/async/AsyncGenerator.java" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#e8f1fc;strokeColor=#5279a3;strokeWidth=1.5;overflow=hidden;" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;AsyncGenerator.IsCancellable&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ isCancelled(): boolean&lt;br&gt;+ cancel(boolean): boolean&lt;/div&gt;" vertex="1">
+          <mxGeometry height="114" width="280" x="40" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="executor" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#f2f3f5;strokeColor=#7e8794;strokeWidth=1.5;overflow=hidden;" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«JDK interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;Executor&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ execute(Runnable): void&lt;/div&gt;" vertex="1">
+          <mxGeometry height="91" width="210" x="1500" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="ce" link="src/main/java/org/bsc/async/executor/CancellableExecutor.java" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#edf6ee;strokeColor=#598363;strokeWidth=1.5;overflow=hidden;" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«class»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;CancellableExecutor&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;− static CURRENT_RUN: ThreadLocal&amp;lt;Run&amp;gt;&lt;br&gt;− delegate: Executor&lt;br&gt;− cancelled: AtomicBoolean&lt;br&gt;− lock: Object&lt;br&gt;− runs: Set&amp;lt;Run&amp;gt;&lt;br&gt;− waiters: Set&amp;lt;Waiter&amp;gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ static of(Executor): CancellableExecutor&lt;br&gt;− CancellableExecutor(Executor)&lt;br&gt;+ execute(Runnable): void&lt;br&gt;+ &amp;lt;T&amp;gt; callUntilCancelled(BlockingCall&amp;lt;T&amp;gt;): T&lt;br&gt;+ isCancelled(): boolean&lt;br&gt;+ cancel(boolean): boolean&lt;br&gt;− run(Runnable): void&lt;br&gt;− static clearInterruptUnlessStillRequested(): void&lt;br&gt;− static interruptRequestedOnCurrentThread(): boolean&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;callUntilCancelled throws InterruptedException. Borrowed executor is never shut down.&lt;/div&gt;" vertex="1">
+          <mxGeometry height="400" width="510" x="790" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="cd" link="src/main/java/org/bsc/async/v5/CancellableDispatcher.java" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#edf6ee;strokeColor=#598363;strokeWidth=1.5;overflow=hidden;" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«class»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;CancellableDispatcher&amp;lt;E&amp;gt;&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;− executor: CancellableExecutor&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ executor(): CancellableExecutor&lt;br&gt;+ dispatchSync(Data&amp;lt;E&amp;gt;): void&lt;br&gt;+ cancel(boolean): boolean&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;dispatchSync and Generator.next use callUntilCancelled.&lt;/div&gt;" vertex="1">
+          <mxGeometry height="212" width="330" x="40" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="call" link="src/main/java/org/bsc/async/executor/CancellableExecutor.java" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#e8f1fc;strokeColor=#5279a3;strokeWidth=1.5;overflow=hidden;" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«interface»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;CancellableExecutor.BlockingCall&amp;lt;T&amp;gt;&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ call(): T throws InterruptedException&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Nested public @FunctionalInterface.&lt;/div&gt;" vertex="1">
+          <mxGeometry height="125" width="340" x="1500" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="run" link="src/main/java/org/bsc/async/executor/CancellableExecutor.java" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#edf6ee;strokeColor=#598363;strokeWidth=1.5;overflow=hidden;" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«class»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;CancellableExecutor.Run&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;~ thread: Thread&lt;br&gt;~ interruptedAtStart: boolean&lt;br&gt;~ outer: Run [0..1]&lt;br&gt;~ interruptRequested: boolean {volatile}&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;~ Run(Run outer)&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Private static final nested class.&lt;/div&gt;" vertex="1">
+          <mxGeometry height="235" width="300" x="230" y="1050" as="geometry" />
+        </mxCell>
+        <mxCell id="waiter" link="src/main/java/org/bsc/async/executor/CancellableExecutor.java" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontFamily=Helvetica;fontSize=14;fillColor=#edf6ee;strokeColor=#598363;strokeWidth=1.5;overflow=hidden;" value="&lt;div style=&quot;text-align:center;font-size:13px;color:#596579&quot;&gt;«class»&lt;/div&gt;&lt;div style=&quot;text-align:center;font-size:17px&quot;&gt;&lt;b&gt;CancellableExecutor.Waiter&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;~ thread: Thread&lt;br&gt;~ interruptedByCancel: boolean&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;font-size:12px;color:#596579&quot;&gt;Private static final nested class.&lt;/div&gt;" vertex="1">
+          <mxGeometry height="148" width="270" x="1500" y="1040" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="ce" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;dashed=1;exitX=0.15;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="isc" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="878" y="410" />
+              <mxPoint x="320" y="410" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="ce" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=block;endFill=0;dashed=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.3;entryY=1;entryDx=0;entryDy=0;" target="executor" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1232" y="410" />
+              <mxPoint x="1668" y="410" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="ce" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;exitX=1;exitY=0.1;exitDx=0;exitDy=0;entryX=0.8;entryY=1;entryDx=0;entryDy=0;" target="executor" value="delegate 1">
+          <mxGeometry relative="1" x="0.0008" as="geometry">
+            <Array as="points">
+              <mxPoint x="1300" y="545" />
+              <mxPoint x="1430" y="545" />
+              <mxPoint x="1430" y="370" />
+              <mxPoint x="1668" y="370" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="cd" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.2;entryDx=0;entryDy=0;" target="ce" value="executor 1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="370" y="580" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="ce" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;dashed=1;exitX=1;exitY=0.4;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="call" value="call parameter">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="ce" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;startArrow=diamond;startFill=1;endArrow=none;exitX=0.2;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.3;entryDx=0;entryDy=0;" target="run" value="runs 0..*">
+          <mxGeometry relative="1" x="0.0638" as="geometry">
+            <Array as="points">
+              <mxPoint x="930" y="900" />
+              <mxPoint x="930" y="1140" />
+              <mxPoint x="530" y="1140" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="ce" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;startArrow=diamond;startFill=1;endArrow=none;exitX=0.8;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" target="waiter" value="waiters 0..*">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1262" y="1090" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="ce" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;exitX=0;exitY=0.8;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="run" value="CURRENT_RUN 0..1 per thread">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="680" y="855" />
+              <mxPoint x="320" y="855" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="run" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;jettySize=30;strokeColor=#5e6b7d;strokeWidth=1.4;fontFamily=Helvetica;fontSize=13;labelBackgroundColor=#ffffff;endSize=14;startSize=14;endArrow=open;endFill=0;exitX=0;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;innerLoopWaypoints=1;" target="run" value="outer 0..1">
+          <mxGeometry relative="1" x="0.1205" as="geometry">
+            <Array as="points">
+              <mxPoint x="230" y="1110.5" />
+              <mxPoint x="10" y="1110.5" />
+              <mxPoint x="10" y="1226.3" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="behavior" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Helvetica;fontSize=15;fontStyle=0;fontColor=#253448;spacing=0;" value="Cancellation behavior&#xa;• cancel(false): marks cancelled and interrupts registered blocking waiters.&#xa;• cancel(true): additionally requests interrupts for tracked running tasks.&#xa;• Nested runs keep an outer link to preserve outstanding interrupt requests.&#xa;• A Generator links to a parent via Listener and releases its Registration on end, cancel, or close." vertex="1">
+          <mxGeometry height="150" width="1270" x="790" y="1190" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Helvetica;fontSize=13;fontStyle=0;fontColor=#253448;spacing=0;" value="UML: solid hollow triangle = extends; dashed hollow triangle = implements; dashed open arrow = dependency; solid open arrow = reference; filled diamond = owned instance.&#xa;Visibility: + public, − private, ~ package. Nested Java types use qualified names. Selected members shown; generic collection/JDK details remain in signatures.&#xa;Scope: production types directly supporting AsyncGeneratorFlow, including nested implementation types and inherited lifecycle/data contracts. Tests, legacy AsyncGeneratorQueue, unrelated adapters, and map/reduce helpers are outside this view.&#xa;Source links on class boxes are relative to this file. Diagram generated from the current source tree." vertex="1">
+          <mxGeometry height="90" width="2020" x="40" y="1360" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
