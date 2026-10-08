@@ -896,7 +896,7 @@ public class AsyncGeneratorFlowCancellationTest {
         assertEquals(0, parent.open.get());
     }
 
-    static final class CountingToken implements AsyncGeneratorFlow.CancellationToken {
+    static final class CountingToken implements AsyncGeneratorFlow.IsCancellableEx {
         final AtomicInteger registered = new AtomicInteger();
         final AtomicInteger open = new AtomicInteger();
 
@@ -962,7 +962,7 @@ public class AsyncGeneratorFlowCancellationTest {
                 .<String>build(dispatcher -> {});
         var calls = new CopyOnWriteArrayList<String>();
         var registeredCalls = new AtomicInteger();
-        AsyncGeneratorFlow.CancellationToken.Listener sharedListener = mayInterrupt -> calls.add("shared:" + mayInterrupt);
+        AsyncGeneratorFlow.IsCancellableEx.Listener sharedListener = mayInterrupt -> calls.add("shared:" + mayInterrupt);
 
         generator.onCancel(mayInterrupt -> registeredCalls.incrementAndGet());
         generator.onCancel(mayInterrupt -> { throw new IllegalStateException("listener failure"); });
