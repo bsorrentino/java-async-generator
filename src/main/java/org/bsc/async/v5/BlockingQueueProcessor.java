@@ -9,33 +9,57 @@ import java.util.concurrent.LinkedBlockingQueue;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 
-public record BlockingQueueProcessor<E>(BlockingQueue<AsyncGenerator.Data<E>> queue) implements AsyncGeneratorFlow.Processor<E> {
+public class BlockingQueueProcessor<E> implements AsyncGeneratorFlow.Processor<E> {
 
-    public BlockingQueueProcessor {
-        requireNonNull(queue, "queue cannot be null");
+    class DispatchImpl implements AsyncGeneratorFlow.Dispatcher<E> {
+
+        @Override
+        public void dispatchSync(AsyncGenerator.Data<E> data) throws InterruptedException {
+            queue.put(data);
+        }
+
+        @Override
+        public void dispatchAsync(AsyncGenerator.Data<E> data) {
+            queue.add(data);
+        }
+    }
+
+    class ReceiverImpl implements AsyncGeneratorFlow.Receiver<E> {
+
+        @Override
+        public AsyncGenerator.Data<E> waitSync() throws InterruptedException {
+            return queue.take();
+        }
+
+        @Override
+        public Optional<AsyncGenerator.Data<E>> waitAsync() {
+            return ofNullable(queue.poll());
+        }
+    }
+
+    private final  BlockingQueue<AsyncGenerator.Data<E>> queue;
+    private final DispatchImpl dispatcher = new DispatchImpl();
+    private final ReceiverImpl receiver = new ReceiverImpl();
+
+    public BlockingQueueProcessor(BlockingQueue<AsyncGenerator.Data<E>> queue) {
+        this.queue = requireNonNull(queue, "queue cannot be null");
     }
 
     public BlockingQueueProcessor() {
         this( new LinkedBlockingQueue<AsyncGenerator.Data<E>>());
     }
 
-    @Override
-    public void dispatchSync(AsyncGenerator.Data<E> data) throws InterruptedException {
-        queue.put(data);
+    public final BlockingQueue<AsyncGenerator.Data<E>> queue() {
+        return queue;
     }
 
     @Override
-    public void dispatchAsync(AsyncGenerator.Data<E> data) {
-        queue.add(data);
+    public AsyncGeneratorFlow.Dispatcher<E> dispatcher() {
+        return dispatcher;
     }
 
     @Override
-    public AsyncGenerator.Data<E> waitSync() throws InterruptedException {
-        return queue.take();
-    }
-
-    @Override
-    public Optional<AsyncGenerator.Data<E>> waitAsync() {
-        return ofNullable(queue.poll());
+    public AsyncGeneratorFlow.Receiver<E> receiver() {
+        return receiver;
     }
 }
