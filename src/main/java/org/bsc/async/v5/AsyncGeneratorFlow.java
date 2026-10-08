@@ -21,7 +21,7 @@ import static org.bsc.async.AsyncGenerator.*;
  */
 public interface AsyncGeneratorFlow {
 
-    interface CancellationToken {
+    interface IsCancellableEx {
 
         @FunctionalInterface
         interface Listener {
@@ -41,7 +41,7 @@ public interface AsyncGeneratorFlow {
         Registration onCancel(Listener listener);
     }
 
-    interface Dispatcher<E> extends CancellationToken {
+    interface Dispatcher<E> extends IsCancellableEx {
         void dispatchSync( Data<E> data ) throws InterruptedException;
         void dispatchAsync( Data<E> data );
 
@@ -70,7 +70,7 @@ public interface AsyncGeneratorFlow {
     class Builder {
         private Processor<?> processor;
         private Executor executor;
-        private CancellationToken parent;
+        private IsCancellableEx parent;
 
         public <E> Builder processor( Processor<E> processor) {
             this.processor = processor;
@@ -80,7 +80,7 @@ public interface AsyncGeneratorFlow {
             this.executor = executor;
             return this;
         }
-        public Builder cancelledBy( CancellationToken parent ) {
+        public Builder cancelledBy( IsCancellableEx parent ) {
             this.parent = requireNonNull(parent, "parent cannot be null");
             return this;
         }
@@ -135,7 +135,7 @@ public interface AsyncGeneratorFlow {
      *
      * @param <E> the type of elements in the queue
      */
-    class Generator<E> extends BaseCancellable<E> implements HasResultValue, CancellationToken {
+    class Generator<E> extends BaseCancellable<E> implements HasResultValue, IsCancellableEx {
 
         private static final Logger log = Logger.getLogger(Generator.class.getName());
         static final Executor DEFAULT_EXECUTOR = CompletableFuture::runAsync;
@@ -288,7 +288,7 @@ public interface AsyncGeneratorFlow {
             }
         }
 
-        void linkToParent(CancellationToken parent) {
+        void linkToParent(IsCancellableEx parent) {
             parentRegistration.set(parent.onCancel(this::cancel));
         }
 
