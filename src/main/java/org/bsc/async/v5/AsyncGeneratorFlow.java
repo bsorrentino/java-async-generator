@@ -21,7 +21,7 @@ import static org.bsc.async.AsyncGenerator.*;
  */
 public interface AsyncGeneratorFlow {
 
-    interface IsCancellableEx {
+    interface IsCancellableEx extends IsCancellable{
 
         @FunctionalInterface
         interface Listener {
@@ -32,8 +32,6 @@ public interface AsyncGeneratorFlow {
             @Override
             void close();
         }
-
-        boolean isCancelled();
 
         /**
          * Calls the listener right away if already cancelled.
@@ -52,6 +50,11 @@ public interface AsyncGeneratorFlow {
 
         @Override
         default Registration onCancel(Listener listener) {
+            throw new UnsupportedOperationException("not a generator's dispatcher");
+        }
+
+        @Override
+        default boolean cancel(boolean mayInterruptIfRunning) {
             throw new UnsupportedOperationException("not a generator's dispatcher");
         }
     }
