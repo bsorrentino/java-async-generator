@@ -174,8 +174,12 @@ public interface AsyncGeneratorFlow {
             if( isEnded() ) {
                 return endData;
             }
+
             if(executorThread!=null) {
-                return end(Data.error(new IllegalStateException("illegal concurrent next() invocation")));
+                return end(Data.error(
+                        new IllegalStateException(
+                                "illegal concurrent next() invocation. executor thread[%s]"
+                                        .formatted(executorThread.getName()))));
             }
             executorThread = Thread.currentThread();
             try {
