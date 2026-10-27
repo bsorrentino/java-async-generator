@@ -1,5 +1,7 @@
 package org.bsc.async;
 
+import org.bsc.async.executor.DefaultExecutor;
+import org.bsc.async.v5.AsyncGeneratorFlow;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -15,7 +17,7 @@ public class FlowGeneratorTest {
     @Test
     public void flowGeneratorSubscriberTest() throws Exception {
 
-        final var executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(20);
+        final var executor = DefaultExecutor.builder().build();
 
         final var publisher = new SubmissionPublisher<String>();
 
@@ -38,73 +40,71 @@ public class FlowGeneratorTest {
         assertEquals( data.size(), result.size() );
         assertIterableEquals( data, result );
 
-        System.out.printf("Core pool size: %d%n", executor.getCorePoolSize());
-        System.out.printf("Largest pool size: %d%n",executor.getLargestPoolSize());
-        System.out.printf("Active threads: %d%n", executor.getActiveCount());
-        System.out.printf("Completed tasks: %d%n", executor.getCompletedTaskCount());
-
+        if( executor instanceof ThreadPoolExecutor tpe) {
+            System.out.printf("Core pool size: %d%n", tpe.getCorePoolSize());
+            System.out.printf("Largest pool size: %d%n",tpe.getLargestPoolSize());
+            System.out.printf("Active threads: %d%n", tpe.getActiveCount());
+            System.out.printf("Completed tasks: %d%n", tpe.getCompletedTaskCount());
+        }
     }
 
-    /*
+
     @Test
     public void flowGeneratorPublisherTest() throws Exception {
 
-        final var executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(20);
-
-        final var queue = new LinkedBlockingQueue<AsyncGenerator.Data<String>>();
-
         final var data = List.of( "e1", "e2", "e3", "e4", "e5" );
 
-        final var generator = AsyncGeneratorFlow.of( queue, q -> {
+        final var generator = AsyncGeneratorFlow.builder()
+                .<String>build( emitter -> {
 
-            for( String value: data ) {
-                queue.add(AsyncGenerator.Data.of(completedFuture(value)));
-            }
-        }, executor);
-
-        final var publisher = FlowGenerator.toPublisher( generator );
-
-        final var result = new ArrayList<String>();
-
-        publisher.subscribe(new java.util.concurrent.Flow.Subscriber<String>() {
-            @Override
-            public void onSubscribe(java.util.concurrent.Flow.Subscription subscription) {
-                subscription.request(Long.MAX_VALUE);
-            }
-
-            @Override
-            public void onNext(String item) {
-                result.add(item);
-            }
-
-            @Override
-            public void onError(Throwable throwable) {
-                System.out.println(throwable.getLocalizedMessage());
-            }
-
-            @Override
-            public void onComplete() {
-                System.out.println("Completed");
-            }
+                    for( String value: data ) {
+                        emitter.dispatchAsync(AsyncGenerator.Data.of(completedFuture(value)));
+                    }
+                    emitter.dispatchAsync(AsyncGenerator.Data.done(null));
         });
 
-        generator.toCompletableFuture().join();
+        final var future = new CompletableFuture<List<String>>();
+
+        FlowGenerator.toPublisher(generator)
+            .subscribe(new Flow.Subscriber<>() {
+
+                final List<String> result = new ArrayList<>();
+
+                @Override
+                public void onSubscribe(Flow.Subscription subscription) {
+                    subscription.request(Long.MAX_VALUE);
+                }
+
+                @Override
+                public void onNext(String item) {
+                    System.out.printf( "onNext: %s%n", item );
+                    result.add(item);
+                }
+
+                @Override
+                public void onError(Throwable throwable) {
+                    System.out.printf( "onError: %s%n", throwable );
+                    future.completeExceptionally(throwable);
+                }
+
+                @Override
+                public void onComplete() {
+                    System.out.printf( "onComplete%n" );
+                    future.complete(result);
+                }
+            });
+
+        final var result = future.get( 10, TimeUnit.SECONDS );
 
         assertEquals( data.size(), result.size() );
         assertIterableEquals( data, result );
 
-        System.out.println("Core pool size: " + executor.getCorePoolSize());
-        System.out.println("Largest pool size: " + executor.getLargestPoolSize());
-        System.out.println("Active threads: " + executor.getActiveCount());
-        System.out.println("Completed tasks: " + executor.getCompletedTaskCount());
-
     }
-    */
+
 
     @Test
     public void flowGeneratorSubscriberAndCancelTest() throws Exception {
-
-        final var executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(20);
+        final var executor = DefaultExecutor.builder().build();
 
         final var publisher = new SubmissionPublisher<String>();
 
@@ -124,12 +124,12 @@ public class FlowGeneratorTest {
                     Thread.sleep(1000);
                 }
             } catch( InterruptedException e ) {
-                throw new CompletionException(e);
+                System.err.printf( "interrupted on thread[%s]%n", Thread.currentThread().getName() );
             } finally{
                 publisher.close();
 
             }
-        }, executor );
+        }, generator.executor() );
 
         final var cancellingFuture = CompletableFuture.runAsync( () -> {
             try {
@@ -166,10 +166,12 @@ public class FlowGeneratorTest {
         assertEquals( 4, result.size() );
         assertIterableEquals( result,  List.of( "e1", "e2", "e3", "e4") );
 
-        System.out.printf("Core pool size: %d%n", executor.getCorePoolSize());
-        System.out.printf("Largest pool size: %d%n",executor.getLargestPoolSize());
-        System.out.printf("Active threads: %d%n", executor.getActiveCount());
-        System.out.printf("Completed tasks: %d%n", executor.getCompletedTaskCount());
+        if( executor instanceof ThreadPoolExecutor tpe) {
+            System.out.printf("Core pool size: %d%n", tpe.getCorePoolSize());
+            System.out.printf("Largest pool size: %d%n",tpe.getLargestPoolSize());
+            System.out.printf("Active threads: %d%n", tpe.getActiveCount());
+            System.out.printf("Completed tasks: %d%n", tpe.getCompletedTaskCount());
+        }
 
     }
 
