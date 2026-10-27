@@ -1,12 +1,12 @@
 package org.bsc.async;
 
+import org.bsc.async.executor.DefaultExecutor;
 import org.bsc.async.internal.UnmodifiableDeque;
 
 import java.lang.ref.Cleaner;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
@@ -97,12 +97,11 @@ public interface AsyncGenerator<E> extends Iterable<E> {
     abstract class Base<E> implements AsyncGenerator<E>, AutoCloseable {
 
         private static final Cleaner CLEANER = Cleaner.create();
-        private static final AtomicLong ID_GENERATOR = new AtomicLong(0);
 
         private final AtomicBoolean closed = new AtomicBoolean(false);
         private Cleaner.Cleanable cleanable;
 
-        ExecutorService executorService;
+        Executor executor;
 
         /**
          * Creates a new Base instance and registers it with the Cleaner for automatic cleanup.
@@ -114,12 +113,13 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         @Override
         public Executor executor() {
 
-            if( executorService == null ) {
-                executorService = Executors.newSingleThreadExecutor(runnable ->
-                        new Thread(runnable, "AsyncGenerator[%d]".formatted( ID_GENERATOR.getAndIncrement())));
-                this.cleanable = CLEANER.register(this, new CleanupAction(executorService, closed));
+            if( executor == null ) {
+                executor = DefaultExecutor.builder().name("AsyncGenerator").build();
+                if( executor instanceof ExecutorService executorService) {
+                    this.cleanable = CLEANER.register(this, new CleanupAction(executorService, closed));
+                }
             }
-            return executorService;
+            return executor;
         }
 
         /**
@@ -190,7 +190,7 @@ public interface AsyncGenerator<E> extends Iterable<E> {
         public boolean cancel(boolean mayInterruptIfRunning) {
             if (cancelled.compareAndSet(false, true)) {
                 close();
-                if (mayInterruptIfRunning && executorService != null) {
+                if (mayInterruptIfRunning && executor instanceof ExecutorService executorService) {
                     if (!executorService.isTerminated()) {
                         executorService.shutdownNow();
                     }

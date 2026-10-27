@@ -2,10 +2,10 @@ package org.bsc.async.v5;
 
 import org.bsc.async.AsyncGenerator;
 import org.bsc.async.executor.CancellableExecutor;
+import org.bsc.async.executor.DefaultExecutor;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,7 +15,6 @@ import static java.util.Objects.requireNonNullElse;
 
 class CancellableDispatcher<E> implements AsyncGeneratorFlow.Dispatcher<E>, AsyncGeneratorFlow.IsCancellableEx {
     private static final Logger log = Logger.getLogger(CancellableDispatcher.class.getName());
-    private static final Executor DEFAULT_EXECUTOR = CompletableFuture::runAsync;
 
     private final Object listenersLock = new Object();
     private Set<Listener> listeners = new LinkedHashSet<>();
@@ -28,7 +27,9 @@ class CancellableDispatcher<E> implements AsyncGeneratorFlow.Dispatcher<E>, Asyn
 
     public CancellableDispatcher(AsyncGeneratorFlow.Dispatcher<E> delegate, Executor executor) {
         this.delegate = requireNonNull(delegate, "delegate cannot be null");
-        this.executor = CancellableExecutor.of(requireNonNullElse(executor, DEFAULT_EXECUTOR));
+        this.executor = CancellableExecutor.of(requireNonNullElse(executor, DefaultExecutor.builder()
+                .name("CancellableDispatcher")
+                .build()));
     }
 
     void complete() {

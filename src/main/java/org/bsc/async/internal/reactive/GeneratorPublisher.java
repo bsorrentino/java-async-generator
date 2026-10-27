@@ -57,12 +57,12 @@ public class GeneratorPublisher<T> implements Flow.Publisher<T> {
         });
 
         delegate.forEachAsync(subscriber::onNext)
-                .thenAccept( value -> {
-                    subscriber.onComplete();
-                })
-                .exceptionally( ex -> {
-                    subscriber.onError(ex);
-                    return null;
+                .whenComplete( (value, ex) -> {
+                    if (ex != null) {
+                        subscriber.onError(ex);
+                    } else {
+                        subscriber.onComplete();
+                    }
                 });
     }
 
