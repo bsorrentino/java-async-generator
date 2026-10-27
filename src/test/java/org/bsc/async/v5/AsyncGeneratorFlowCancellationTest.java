@@ -1,6 +1,7 @@
 package org.bsc.async.v5;
 
 import org.bsc.async.AsyncGenerator;
+import org.bsc.async.executor.DefaultExecutor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -39,11 +40,16 @@ public class AsyncGeneratorFlowCancellationTest {
     private static final int NESTED_RACE_ATTEMPTS = 1000;
     private static final int OWN_INTERRUPT_ATTEMPTS = 50;
 
-    private final ExecutorService executor = Executors.newCachedThreadPool();
+    // private final ExecutorService executor = Executors.newCachedThreadPool();
+    private final Executor executor = DefaultExecutor.builder()
+                                        .name("AsyncGeneratorFlowCancellationTest")
+                                        .build();
 
     @AfterEach
     void shutdown() {
-        executor.shutdownNow();
+        if (executor instanceof ExecutorService executorService) {
+            executorService.shutdownNow();
+        }
     }
 
     /**
