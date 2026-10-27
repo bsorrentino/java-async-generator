@@ -2,6 +2,55 @@
 
 
 
+<!-- "name: v5.2.0" is a release tag -->
+
+## [v5.2.0](https://github.com/bsorrentino/java-async-generator/releases/tag/v5.2.0) (2026-10-27)
+
+### Features
+
+ *  **dispatcher**  replace default executor with DefaultExecutor for improved cancellability ([ba6a0b9e46429af](https://github.com/bsorrentino/java-async-generator/commit/ba6a0b9e46429afb6a3a2929d04bb92b0dfe77d6))
+
+ *  **async**  integrate DefaultExecutor for improved thread management in AsyncGenerator ([5e47abeecb43273](https://github.com/bsorrentino/java-async-generator/commit/5e47abeecb432735a6c5d96c1bbe627f2834cee6))
+
+ *  **executor**  add DefaultExecutor interface with Builder for custom thread pool creation ([d9a8ecd9c856b6b](https://github.com/bsorrentino/java-async-generator/commit/d9a8ecd9c856b6befce4d33fff27825f35dc42e0))
+
+
+### Bug Fixes
+
+ -  **build**  fix deploy issue related to mvn 3.10.x. ([ab3fce17a2b2cf1](https://github.com/bsorrentino/java-async-generator/commit/ab3fce17a2b2cf12b75835fdd4fd12f561a27bf7))
+     > - use maven wrapper to use working version
+
+
+### Refactor
+
+ -  **subscriber**  replace deprecated AsyncGeneratorQueue with AsyncGeneratorFlow ([d2787c3c79e00a2](https://github.com/bsorrentino/java-async-generator/commit/d2787c3c79e00a2ca11fa575d840072d0c15129d))
+
+ -  **publisher**  improve error handling in forEachAsync completion ([570e7fa6f476a25](https://github.com/bsorrentino/java-async-generator/commit/570e7fa6f476a251e0f33ba1caed2cad1b5186f6))
+
+ -  **flow**  replace LinkedBlockingQueue with BlockingQueueProcessor ([48b9b421aebe182](https://github.com/bsorrentino/java-async-generator/commit/48b9b421aebe182cd2e7b5e38b8d2447500f6de9))
+
+
+### Test
+
+ -  replace ThreadPoolExecutor with DefaultExecutor in FlowGeneratorTest ([aa453e218146cc4](https://github.com/bsorrentino/java-async-generator/commit/aa453e218146cc4489039cfcc2c47147efce4dbc))
+
+
+### Documentation
+
+ -  update changelog ([6a054240d12c7ca](https://github.com/bsorrentino/java-async-generator/commit/6a054240d12c7caf0c80819b5f7412295261ca05))
+
+
+### ALM
+
+ -  bump to next version 5.2.0 ([0600a7fb6a3a117](https://github.com/bsorrentino/java-async-generator/commit/0600a7fb6a3a1177dc361c2adeb441a6648dbdab))
+
+ -  bump to next dev version 5.1-SNAPSHOT ([d69bc60770986a0](https://github.com/bsorrentino/java-async-generator/commit/d69bc60770986a089f271acc241bfc521abce8d0))
+
+
+
+
+
+
 <!-- "name: v5.1.0" is a release tag -->
 
 ## [v5.1.0](https://github.com/bsorrentino/java-async-generator/releases/tag/v5.1.0) (2026-10-08)
