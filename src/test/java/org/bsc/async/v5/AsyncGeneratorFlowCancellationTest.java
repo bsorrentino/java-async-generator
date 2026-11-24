@@ -513,6 +513,20 @@ public class AsyncGeneratorFlowCancellationTest {
     }
 
     @Test
+    public void theDefaultEmitterThreadTerminatesAfterItsTaskCompletes() throws Exception {
+        var emitterThread = new CompletableFuture<Thread>();
+        try (var generator = AsyncGeneratorFlow.builder().<String>build(dispatcher -> {
+            emitterThread.complete(Thread.currentThread());
+            dispatcher.dispatchAsync(AsyncGenerator.Data.done("END"));
+        })) {
+            assertEquals("END", generator.toCompletableFuture().get(WAIT_SECONDS, TimeUnit.SECONDS));
+            var worker = emitterThread.get(WAIT_SECONDS, TimeUnit.SECONDS);
+            worker.join(TimeUnit.SECONDS.toMillis(2));
+            assertFalse(worker.isAlive(), "Default emitter worker remained alive after the emitter completed");
+        }
+    }
+
+    @Test
     public void theCallersExecutorOutlivesItsGenerators() throws Exception {
         var callersExecutor = Executors.newFixedThreadPool(1);
         try {
