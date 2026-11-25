@@ -118,6 +118,17 @@
             </plugins>
         </pluginManagement>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <release>21</release>
+                    <compilerArgs>
+                        <arg>--enable-preview</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -130,6 +141,7 @@
                             <value>src/test/resources/logging.properties</value>
                         </property>
                     </systemProperties>
+                    <argLine>--enable-preview</argLine>
                 </configuration>
             </plugin>
 
