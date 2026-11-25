@@ -35,21 +35,6 @@
         <url>https://github.com/bsorrentino/java-async-generator/issues</url>
     </issueManagement>
 
-<!--
-    <distributionManagement>
-        <repository>
-            <id>${release.repo.id}</id>
-            <name>central</name>
-            <url>${release.repo.url}</url>
-        </repository>
-        <snapshotRepository>
-            <id>${snapshot.repo.id}</id>
-            <name>snapshots</name>
-            <url>${snapshot.repo.url}</url>
-        </snapshotRepository>
-    </distributionManagement>
--->
-
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>17</maven.compiler.source>
@@ -227,19 +212,6 @@
                             </gpgArguments>
                         </configuration>
                     </plugin>
-                    <!--
-                    <plugin>
-                      <groupId>org.sonatype.plugins</groupId>
-                      <artifactId>nexus-staging-maven-plugin</artifactId>
-                      <version>1.7.0</version>
-                      <extensions>true</extensions>
-                      <configuration>
-                        <serverId>sonatype-central</serverId>
-                        <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                         <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                      </configuration>
-                    </plugin>
-                    -->
                 </plugins>
             </build>
         </profile>
