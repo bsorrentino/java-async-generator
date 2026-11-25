@@ -39,48 +39,47 @@ public class AsyncGeneratorTest {
 
     @Test
     public void asyncGeneratorForEachCancelTest() throws Exception {
-        final var countDownLatch = new CountDownLatch(3);
         final var data = List.of("e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8", "e9", "e10");
         final AsyncGenerator<String> it = AsyncGenerator.from(data.iterator());
-        final var cancellableIt = new AsyncGenerator.WithResult<>(it);
+        final var stepsBeforeInterruption = new CountDownLatch(3);
 
-        CompletableFuture.runAsync(() -> {
-            try {
-                countDownLatch.await();
-                System.out.printf("cancellation invoked on thread[%s]\n", Thread.currentThread().getName());
-                cancellableIt.cancel(true);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        try( final var cancellableIt = new AsyncGenerator.WithResult<>(it)) {
 
-        List<String> forEachResult = new ArrayList<>();
-        var futureResult = cancellableIt.forEachAsync(value -> {
-            try {
-                System.out.printf("adding element: %s on thread[%s]\n", value, Thread.currentThread().getName());
+            CompletableFuture.runAsync(() -> {
+                try {
+                    stepsBeforeInterruption.await();
+                    System.out.printf("cancellation invoked on thread[%s]\n", Thread.currentThread().getName());
+                    cancellableIt.cancel(true);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            });
 
-                forEachResult.add(value);
-                countDownLatch.countDown();
-                Thread.sleep(500);
+            List<String> forEachResult = new ArrayList<>();
+            var futureResult = cancellableIt.forEachAsync(value -> {
+                try {
+                    System.out.printf("adding element: %s on thread[%s]\n", value, Thread.currentThread().getName());
+                    stepsBeforeInterruption.countDown();
+                    Thread.sleep(500);
+                    forEachResult.add(value);
+                    System.out.printf("added element: %s\n", value);
+                } catch (InterruptedException e) {
+                    System.err.printf("interrupted on : %s\n", value);
+                    Thread.currentThread().interrupt();
+                    throw new CompletionException(e);
+                }
+            }).exceptionally(throwable -> {
+                assertInstanceOf(InterruptedException.class, throwable.getCause());
+                return CANCELLED;
+            });
 
-                System.out.printf("added element: %s\n", value);
-            } catch (InterruptedException e) {
-                System.err.printf("interrupted on : %s\n", value);
-                Thread.currentThread().interrupt();
-                throw new CompletionException(e);
-            }
-        }).exceptionally(throwable -> {
-            assertInstanceOf(InterruptedException.class, throwable.getCause());
-            return CANCELLED;
-        });
+            var result = futureResult.get(5, TimeUnit.SECONDS);
 
-        var result = futureResult.get(5, TimeUnit.SECONDS);
-
-        assertNotNull(result);
-        assertEquals(CANCELLED, result);
-        assertEquals(3, forEachResult.size());
-        assertIterableEquals(data.subList(0, 3), forEachResult);
-
+            assertNotNull(result);
+            assertEquals(CANCELLED, result);
+            assertEquals(3, forEachResult.size());
+            assertIterableEquals(data.subList(0, 3), forEachResult);
+        }
     }
 
     @Test
@@ -88,34 +87,36 @@ public class AsyncGeneratorTest {
 
         final var data = List.of("e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8", "e9", "e10");
         final AsyncGenerator<String> it = AsyncGenerator.from(data.iterator());
-        final var cancellableIt = new AsyncGenerator.WithResult<>(it);
+        final var stepsBeforeInterruption = new CountDownLatch(5);
+        try(final var cancellableIt = new AsyncGenerator.WithResult<>(it)) {
 
-        CompletableFuture.runAsync(() -> {
-            try {
-                Thread.sleep(1000);
-                System.out.printf("cancellation invoked on thread[%s]\n", Thread.currentThread().getName());
-                cancellableIt.cancel(true);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+            CompletableFuture.runAsync(() -> {
+                try {
+                    stepsBeforeInterruption.await();
+                    System.out.printf("cancellation invoked on thread[%s]\n", Thread.currentThread().getName());
+                    cancellableIt.cancel(true);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+            final var iteratorResult = new ArrayList<String>();
+
+            for (String value : cancellableIt) {
+                try {
+                    System.out.printf("adding element: %s on thread[%s]\n", value, Thread.currentThread().getName());
+                    stepsBeforeInterruption.countDown();
+                    Thread.sleep(500);
+                    iteratorResult.add(value);
+                    System.out.printf("added element: %s\n", value);
+                } catch (InterruptedException e) {
+                    System.err.printf("interrupted on : %s\n", value);
+                    Thread.currentThread().interrupt();
+                    throw new CompletionException(e);
+                }
             }
-        });
-
-        final var iteratorResult = new ArrayList<String>();
-
-        for (String value : cancellableIt) {
-            try {
-                System.out.printf("adding element: %s on thread[%s]\n", value, Thread.currentThread().getName());
-                Thread.sleep(500);
-                iteratorResult.add(value);
-                System.out.printf("added element: %s\n", value);
-            } catch (InterruptedException e) {
-                System.err.printf("interrupted on : %s\n", value);
-                Thread.currentThread().interrupt();
-                throw new CompletionException(e);
-            }
+            assertNotEquals(data.size(), iteratorResult.size());
         }
-        assertNotEquals(data.size(), iteratorResult.size());
-
     }
 
 
@@ -439,6 +440,8 @@ public class AsyncGeneratorTest {
     @Test
     public void asyncEmbedGeneratorWithResultCancelTest() throws Exception {
 
+        final var stepsBeforeInterruption = new CountDownLatch(10);
+
         final var it = new AsyncGenerator.WithEmbed<>(new NestedAsyncGenerator(), result -> {
             System.out.printf("generator done [%s]%n", result );
             assertNotNull(result);
@@ -447,7 +450,7 @@ public class AsyncGeneratorTest {
 
         CompletableFuture.runAsync(() -> {
             try {
-                Thread.sleep(2000);
+                stepsBeforeInterruption.await();
                 System.out.println("cancellation invoked");
                 var cancelled = it.cancel(false);
                 assertTrue(cancelled);
@@ -459,7 +462,7 @@ public class AsyncGeneratorTest {
         final var forEachResult = new ArrayList<String>();
         it.forEachAsync(value -> {
                     try {
-
+                        stepsBeforeInterruption.countDown();
                         Thread.sleep(200);
                         forEachResult.add(value);
 
