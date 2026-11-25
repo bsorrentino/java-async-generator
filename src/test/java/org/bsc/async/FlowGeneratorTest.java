@@ -17,7 +17,10 @@ public class FlowGeneratorTest {
     @Test
     public void flowGeneratorSubscriberTest() throws Exception {
 
+<<<<<<< HEAD
         //final var executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(20);
+=======
+>>>>>>> develop
         final var executor = DefaultExecutor.builder().build();
 
         final var publisher = new SubmissionPublisher<String>();
@@ -67,12 +70,20 @@ public class FlowGeneratorTest {
         final var future = new CompletableFuture<List<String>>();
 
         FlowGenerator.toPublisher(generator)
+<<<<<<< HEAD
             .subscribe(new java.util.concurrent.Flow.Subscriber<>() {
+=======
+            .subscribe(new Flow.Subscriber<>() {
+>>>>>>> develop
 
                 final List<String> result = new ArrayList<>();
 
                 @Override
+<<<<<<< HEAD
                 public void onSubscribe(java.util.concurrent.Flow.Subscription subscription) {
+=======
+                public void onSubscribe(Flow.Subscription subscription) {
+>>>>>>> develop
                     subscription.request(Long.MAX_VALUE);
                 }
 
@@ -105,7 +116,11 @@ public class FlowGeneratorTest {
 
     @Test
     public void flowGeneratorSubscriberAndCancelTest() throws Exception {
+<<<<<<< HEAD
         //final var executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(20);
+=======
+        final var countDownLatch = new CountDownLatch(4);
+>>>>>>> develop
         final var executor = DefaultExecutor.builder().build();
 
         final var publisher = new SubmissionPublisher<String>();
@@ -123,22 +138,23 @@ public class FlowGeneratorTest {
                     System.out.printf("publishing: %s on thread[%s]\n", value, Thread.currentThread().getName());
                     publisher.submit(value);
 
-                    Thread.sleep(1000);
+                    Thread.sleep(100);
+                    countDownLatch.countDown();
                 }
             } catch( InterruptedException e ) {
-                throw new CompletionException(e);
+                System.err.printf( "interrupted on thread[%s]%n", Thread.currentThread().getName() );
             } finally{
                 publisher.close();
 
             }
-        }, executor );
+        }, generator.executor() );
 
         final var cancellingFuture = CompletableFuture.runAsync( () -> {
             try {
                 System.out.printf("cancelling start on thread[%s]%n",
                         Thread.currentThread().getName());
 
-                Thread.sleep( 4000 );
+                countDownLatch.await();
 
                 System.out.printf("generator cancelled: %s%n",
                         generator.cancel( true) );

@@ -71,13 +71,13 @@ public class GeneratorSubscriber<T> implements AsyncGenerator.Cancellable<T>, Fl
     }
 
     /**
-     * Passes the received item to the delegated queue as an {@link AsyncGenerator.Data} object.
+     * Passes the received item to the delegated queue as an {@link Data} object.
      *
      * @param item The item to be processed and queued.
      */
     @Override
     public void onNext(T item) {
-        dispatcher.dispatchAsync( AsyncGenerator.Data.of( item ) );
+        dispatcher.dispatchAsync( Data.of( item ) );
     }
 
     /**
@@ -87,7 +87,7 @@ public class GeneratorSubscriber<T> implements AsyncGenerator.Cancellable<T>, Fl
      */
     @Override
     public void onError(Throwable error) {
-        dispatcher.dispatchAsync( AsyncGenerator.Data.error(error) );
+        dispatcher.dispatchAsync( Data.error(error) );
     }
 
     /**
@@ -96,7 +96,7 @@ public class GeneratorSubscriber<T> implements AsyncGenerator.Cancellable<T>, Fl
      */
     @Override
     public void onComplete() {
-        dispatcher.dispatchAsync( AsyncGenerator.Data.done( mapResult().map(Supplier::get).orElse(null)));
+        dispatcher.dispatchAsync( Data.done( mapResult().map(Supplier::get).orElse(null)));
     }
 
     /**

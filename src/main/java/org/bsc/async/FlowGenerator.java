@@ -8,7 +8,7 @@ import java.util.concurrent.Flow;
 import java.util.function.Supplier;
 
 /**
- * Provides methods for converting between {@link FlowGenerator} and various {@link java.util.concurrent.Flow.Publisher} types.
+ * Provides methods for converting between {@link FlowGenerator} and various {@link Flow.Publisher} types.
  *
  * @since 3.0.0
  */
