@@ -5,7 +5,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
+import java.io.File;
 import java.lang.ref.WeakReference;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -520,9 +523,53 @@ public class AsyncGeneratorFlowCancellationTest {
             dispatcher.dispatchAsync(AsyncGenerator.Data.done("END"));
         })) {
             assertEquals("END", generator.toCompletableFuture().get(WAIT_SECONDS, TimeUnit.SECONDS));
-            var worker = emitterThread.get(WAIT_SECONDS, TimeUnit.SECONDS);
-            worker.join(TimeUnit.SECONDS.toMillis(2));
-            assertFalse(worker.isAlive(), "Default emitter worker remained alive after the emitter completed");
+            assertWorkerTerminates(emitterThread);
+        }
+    }
+
+    @Test
+    public void theDefaultEmitterThreadTerminatesAfterItsTaskThrows() throws Exception {
+        var emitterThread = new CompletableFuture<Thread>();
+        try (var generator = AsyncGeneratorFlow.builder().<String>build(dispatcher -> {
+            emitterThread.complete(Thread.currentThread());
+            throw new IllegalStateException("emitter failed");
+        })) {
+            assertWorkerTerminates(emitterThread);
+        }
+    }
+
+    private static void assertWorkerTerminates(CompletableFuture<Thread> emitterThread) throws Exception {
+        var worker = emitterThread.get(WAIT_SECONDS, TimeUnit.SECONDS);
+        worker.join(TimeUnit.SECONDS.toMillis(2));
+        assertFalse(worker.isAlive(), "Default emitter worker remained alive after the emitter completed");
+    }
+
+    @Test
+    public void aDefaultEmitterSkippedBeforeStartDoesNotKeepTheJvmAlive() throws Exception {
+        var java = Path.of(System.getProperty("java.home"), "bin", "java");
+        var testClasses = Path.of(AlreadyCancelledParentProbe.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        var mainClasses = Path.of(AsyncGeneratorFlow.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        var process = new ProcessBuilder(java.toString(), "-cp", testClasses + File.pathSeparator + mainClasses,
+                AlreadyCancelledParentProbe.class.getName()).redirectErrorStream(true).start();
+        try {
+            assertTrue(process.waitFor(WAIT_SECONDS, TimeUnit.SECONDS), "Cancelled emitter kept the JVM alive");
+            var output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            assertEquals(0, process.exitValue(), output);
+        } finally {
+            process.destroyForcibly();
+        }
+    }
+
+    public static final class AlreadyCancelledParentProbe {
+        public static void main(String[] args) {
+            try (var parent = AsyncGeneratorFlow.builder().<String>build()) {
+                parent.cancel(false);
+                try (var child = AsyncGeneratorFlow.builder().cancelledBy(parent).<String>build(dispatcher -> {})) {
+                    if (child.next().resultValue() != CANCELLED) {
+                        throw new AssertionError("Expected the child to be cancelled");
+                    }
+                }
+            }
         }
     }
 

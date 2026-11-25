@@ -31,7 +31,18 @@ class CancellableDispatcher<E> implements AsyncGeneratorFlow.Dispatcher<E>, Asyn
         this.ownedExecutor = executor == null ? DefaultExecutor.builder()
                 .name("CancellableDispatcher")
                 .build() : null;
-        this.executor = CancellableExecutor.of(executor == null ? ownedExecutor : executor);
+        this.executor = CancellableExecutor.of(executor == null ? this::executeOnOwnedExecutor : executor);
+    }
+
+    private void executeOnOwnedExecutor(Runnable task) {
+        ownedExecutor.execute(() -> {
+            try {
+                task.run();
+            } finally {
+                // The cancellable task may return before starting the emitter.
+                shutdownOwnedExecutor();
+            }
+        });
     }
 
     void shutdownOwnedExecutor() {

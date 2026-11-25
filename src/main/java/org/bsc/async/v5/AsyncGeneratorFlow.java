@@ -100,11 +100,8 @@ public interface AsyncGeneratorFlow {
             }
             catch( RuntimeException e ) {
                 result.unlinkFromParent();
-                throw e;
-            }
-            finally {
-                // The owned executor has only one submission. Shutdown lets that task finish normally.
                 result.cancellableDispatcher.shutdownOwnedExecutor();
+                throw e;
             }
 
             return result;
