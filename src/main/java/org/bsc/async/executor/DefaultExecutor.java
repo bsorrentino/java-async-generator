@@ -22,8 +22,9 @@ public interface DefaultExecutor {
 
         public Executor build() {
 
-            return Executors.newCachedThreadPool(runnable ->
-                    new Thread(runnable, "%s[%d]".formatted( requireNonNullElse(name, "AsyncGenerator"), ID_GENERATOR.getAndIncrement())));
+            return ( task ) ->
+                        new Thread(task, "%s[%d]".formatted( requireNonNullElse(name, "AsyncGenerator"), ID_GENERATOR.getAndIncrement()))
+                                .start();
         }
     }
 
