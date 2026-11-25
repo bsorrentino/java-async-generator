@@ -100,7 +100,6 @@ public interface AsyncGeneratorFlow {
             }
             catch( RuntimeException e ) {
                 result.unlinkFromParent();
-                result.cancellableDispatcher.shutdownOwnedExecutor();
                 throw e;
             }
 
