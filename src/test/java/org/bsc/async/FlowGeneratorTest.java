@@ -17,10 +17,6 @@ public class FlowGeneratorTest {
     @Test
     public void flowGeneratorSubscriberTest() throws Exception {
 
-<<<<<<< HEAD
-        //final var executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(20);
-=======
->>>>>>> develop
         final var executor = DefaultExecutor.builder().build();
 
         final var publisher = new SubmissionPublisher<String>();
@@ -70,20 +66,12 @@ public class FlowGeneratorTest {
         final var future = new CompletableFuture<List<String>>();
 
         FlowGenerator.toPublisher(generator)
-<<<<<<< HEAD
-            .subscribe(new java.util.concurrent.Flow.Subscriber<>() {
-=======
             .subscribe(new Flow.Subscriber<>() {
->>>>>>> develop
 
                 final List<String> result = new ArrayList<>();
 
                 @Override
-<<<<<<< HEAD
-                public void onSubscribe(java.util.concurrent.Flow.Subscription subscription) {
-=======
                 public void onSubscribe(Flow.Subscription subscription) {
->>>>>>> develop
                     subscription.request(Long.MAX_VALUE);
                 }
 
@@ -116,11 +104,7 @@ public class FlowGeneratorTest {
 
     @Test
     public void flowGeneratorSubscriberAndCancelTest() throws Exception {
-<<<<<<< HEAD
-        //final var executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(20);
-=======
         final var countDownLatch = new CountDownLatch(4);
->>>>>>> develop
         final var executor = DefaultExecutor.builder().build();
 
         final var publisher = new SubmissionPublisher<String>();
