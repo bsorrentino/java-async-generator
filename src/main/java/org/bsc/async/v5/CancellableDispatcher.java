@@ -7,11 +7,11 @@ import org.bsc.async.executor.DefaultExecutor;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
 
 class CancellableDispatcher<E> implements AsyncGeneratorFlow.Dispatcher<E>, AsyncGeneratorFlow.IsCancellableEx {
     private static final Logger log = Logger.getLogger(CancellableDispatcher.class.getName());
@@ -19,7 +19,6 @@ class CancellableDispatcher<E> implements AsyncGeneratorFlow.Dispatcher<E>, Asyn
     private final Object listenersLock = new Object();
     private Set<Listener> listeners = new LinkedHashSet<>();
     private final CancellableExecutor executor;
-    private final Executor ownedExecutor;
 
     private boolean completed;
     private boolean cancelledWithInterrupt;
@@ -28,27 +27,9 @@ class CancellableDispatcher<E> implements AsyncGeneratorFlow.Dispatcher<E>, Asyn
 
     public CancellableDispatcher(AsyncGeneratorFlow.Dispatcher<E> delegate, Executor executor) {
         this.delegate = requireNonNull(delegate, "delegate cannot be null");
-        this.ownedExecutor = executor == null ? DefaultExecutor.builder()
-                .name("CancellableDispatcher")
-                .build() : null;
-        this.executor = CancellableExecutor.of(executor == null ? this::executeOnOwnedExecutor : executor);
-    }
-
-    private void executeOnOwnedExecutor(Runnable task) {
-        ownedExecutor.execute(() -> {
-            try {
-                task.run();
-            } finally {
-                // The cancellable task may return before starting the emitter.
-                shutdownOwnedExecutor();
-            }
-        });
-    }
-
-    void shutdownOwnedExecutor() {
-        if (ownedExecutor instanceof ExecutorService service) {
-            service.shutdown();
-        }
+        this.executor = CancellableExecutor.of(requireNonNullElse(executor, DefaultExecutor.builder()
+                                                                                    .name("CancellableDispatcher")
+                                                                                    .build()));
     }
 
     void complete() {
@@ -135,7 +116,7 @@ class CancellableDispatcher<E> implements AsyncGeneratorFlow.Dispatcher<E>, Asyn
     }
 
 
-    private static void notifyListener(AsyncGeneratorFlow.IsCancellableEx.Listener listener, boolean mayInterruptIfRunning) {
+    private static void notifyListener(Listener listener, boolean mayInterruptIfRunning) {
         try {
             listener.cancelled(mayInterruptIfRunning);
         } catch (RuntimeException ex) {
