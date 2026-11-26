@@ -39,7 +39,6 @@ public class AsyncGeneratorTest {
 
     @Test
     public void asyncGeneratorForEachCancelTest() throws Exception {
-        final var countDownLatch = new CountDownLatch(3);
         final var data = List.of("e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8", "e9", "e10");
         final AsyncGenerator<String> it = AsyncGenerator.from(data.iterator());
         final var stepsBeforeInterruption = new CountDownLatch(3);
