@@ -2,6 +2,48 @@
 
 
 
+<!-- "name: v5.2.1" is a release tag -->
+
+## [v5.2.1](https://github.com/bsorrentino/java-async-generator/releases/tag/v5.2.1) (2026-11-26)
+
+
+### Bug Fixes
+
+ -  **flow**  shut down the owned executor when its task exits ([8e69b6a5c855087](https://github.com/bsorrentino/java-async-generator/commit/8e69b6a5c855087ee7dcfe59a113c7b9d455b044))
+
+ -  **flow**  shut down the owned emitter executor after submission ([66d775f05922412](https://github.com/bsorrentino/java-async-generator/commit/66d775f059224129f21586ced837ceca80dcef0e))
+
+
+
+### Test
+
+ -  **AsyncGeneratoFlowCancellationTest**  add new verification: ([8b680f003f80675](https://github.com/bsorrentino/java-async-generator/commit/8b680f003f80675d1f49b633d838e05a7ee454ea))
+             > - theDefaultEmitterThreadTerminatesAfterItsTaskCompletes
+ > - theDefaultEmitterThreadTerminatesAfterItsTaskThrows
+ > - aDefaultEmitterSkippedBeforeStartDoesNotKeepTheJvmAlive
+ > from PR #13
+
+ -  **AsyncGenerator**  improve cancellation tests with CountDownLatch for better synchronization ([0e1f3841b792504](https://github.com/bsorrentino/java-async-generator/commit/0e1f3841b792504e6bb12f6f65a72f899b6c638d))
+
+ -  improve cancellation handling in AsyncGenerator and FlowGenerator tests ([19efde596b55aeb](https://github.com/bsorrentino/java-async-generator/commit/19efde596b55aebff198be4adc9ed0e08764bf1f))
+
+
+### Documentation
+
+ -  update changelog ([3646a81b2f76a05](https://github.com/bsorrentino/java-async-generator/commit/3646a81b2f76a050bc258908445999b97fc52d50))
+
+
+### ALM
+
+ -  bump to next version 5.2.1 ([feac347bd0ce3fc](https://github.com/bsorrentino/java-async-generator/commit/feac347bd0ce3fc1feeddce8d10345d8d3909a7b))
+
+ -  bump to next dev version 5.2-SNAPSHOT ([039272ae439d390](https://github.com/bsorrentino/java-async-generator/commit/039272ae439d39097526e77bbab58ad89230714f))
+
+
+
+
+
+
 <!-- "name: v5.2.0" is a release tag -->
 
 ## [v5.2.0](https://github.com/bsorrentino/java-async-generator/releases/tag/v5.2.0) (2026-10-27)
