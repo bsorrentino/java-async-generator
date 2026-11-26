@@ -104,6 +104,7 @@ public class FlowGeneratorTest {
 
     @Test
     public void flowGeneratorSubscriberAndCancelTest() throws Exception {
+        final var countDownLatch = new CountDownLatch(4);
         final var executor = DefaultExecutor.builder().build();
 
         final var publisher = new SubmissionPublisher<String>();
@@ -121,7 +122,8 @@ public class FlowGeneratorTest {
                     System.out.printf("publishing: %s on thread[%s]\n", value, Thread.currentThread().getName());
                     publisher.submit(value);
 
-                    Thread.sleep(1000);
+                    Thread.sleep(100);
+                    countDownLatch.countDown();
                 }
             } catch( InterruptedException e ) {
                 System.err.printf( "interrupted on thread[%s]%n", Thread.currentThread().getName() );
@@ -136,7 +138,7 @@ public class FlowGeneratorTest {
                 System.out.printf("cancelling start on thread[%s]%n",
                         Thread.currentThread().getName());
 
-                Thread.sleep( 4000 );
+                countDownLatch.await();
 
                 System.out.printf("generator cancelled: %s%n",
                         generator.cancel( true) );

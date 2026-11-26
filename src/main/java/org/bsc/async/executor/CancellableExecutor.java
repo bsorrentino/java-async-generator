@@ -20,6 +20,22 @@ public class CancellableExecutor implements Executor, AsyncGenerator.IsCancellab
         T call() throws InterruptedException;
     }
 
+    private static final class Run {
+        final Thread thread = Thread.currentThread();
+        final boolean interruptedAtStart = thread.isInterrupted();
+        final Run outer;
+        volatile boolean interruptRequested;
+
+        Run( Run outer ) {
+            this.outer = outer;
+        }
+    }
+
+    private static final class Waiter {
+        final Thread thread = Thread.currentThread();
+        boolean interruptedByCancel;
+    }
+
     private static final ThreadLocal<Run> CURRENT_RUN = new ThreadLocal<>();
 
     private final Executor delegate;
@@ -137,19 +153,4 @@ public class CancellableExecutor implements Executor, AsyncGenerator.IsCancellab
         return false;
     }
 
-    private static final class Run {
-        final Thread thread = Thread.currentThread();
-        final boolean interruptedAtStart = thread.isInterrupted();
-        final Run outer;
-        volatile boolean interruptRequested;
-
-        Run( Run outer ) {
-            this.outer = outer;
-        }
-    }
-
-    private static final class Waiter {
-        final Thread thread = Thread.currentThread();
-        boolean interruptedByCancel;
-    }
 }

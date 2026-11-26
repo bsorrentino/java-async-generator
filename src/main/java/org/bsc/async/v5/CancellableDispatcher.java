@@ -28,8 +28,8 @@ class CancellableDispatcher<E> implements AsyncGeneratorFlow.Dispatcher<E>, Asyn
     public CancellableDispatcher(AsyncGeneratorFlow.Dispatcher<E> delegate, Executor executor) {
         this.delegate = requireNonNull(delegate, "delegate cannot be null");
         this.executor = CancellableExecutor.of(requireNonNullElse(executor, DefaultExecutor.builder()
-                .name("CancellableDispatcher")
-                .build()));
+                                                                                    .name("CancellableDispatcher")
+                                                                                    .build()));
     }
 
     void complete() {
@@ -116,7 +116,7 @@ class CancellableDispatcher<E> implements AsyncGeneratorFlow.Dispatcher<E>, Asyn
     }
 
 
-    private static void notifyListener(AsyncGeneratorFlow.IsCancellableEx.Listener listener, boolean mayInterruptIfRunning) {
+    private static void notifyListener(Listener listener, boolean mayInterruptIfRunning) {
         try {
             listener.cancelled(mayInterruptIfRunning);
         } catch (RuntimeException ex) {
