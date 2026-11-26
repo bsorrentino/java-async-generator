@@ -116,7 +116,7 @@ class CancellableDispatcher<E> implements AsyncGeneratorFlow.Dispatcher<E>, Asyn
     }
 
 
-    private static void notifyListener(AsyncGeneratorFlow.IsCancellableEx.Listener listener, boolean mayInterruptIfRunning) {
+    private static void notifyListener(Listener listener, boolean mayInterruptIfRunning) {
         try {
             listener.cancelled(mayInterruptIfRunning);
         } catch (RuntimeException ex) {
